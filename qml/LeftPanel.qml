@@ -9,6 +9,7 @@ Rectangle
     border.width: 1
 
     property int rowHeight: 40
+    property var flickableRight: null
 
     Column
     {
@@ -159,7 +160,7 @@ Rectangle
         ScrollView
         {
             width: parent.width
-            height: parent.height - 200 - rowHeight
+            height: parent.height - 240
             clip: true
             ScrollBar.vertical.policy: ScrollBar.AlwaysOn
 
@@ -172,7 +173,8 @@ Rectangle
                 {
                     width: groupsListView.width
                 }
-                interactive: true
+                interactive: false
+                contentY: root.flickableRight ? root.flickableRight.contentY : 0
             }
         }
     }

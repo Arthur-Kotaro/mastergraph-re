@@ -59,6 +59,7 @@ ApplicationWindow {
             spacing: 0
             
             LeftPanel {
+                flickableRight: flickableRight
                 id: leftPanel
                 width: 460
                 height: parent.height
