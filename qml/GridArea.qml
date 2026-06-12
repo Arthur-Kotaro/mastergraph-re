@@ -238,8 +238,8 @@ Rectangle {
             color: "transparent"
             
             Text {
-                visible: modelData.type === "group"
-                text: modelData.name
+                visible: modelData && modelData.type === "group"
+                text: (modelData && modelData.name) ? modelData.name : ""
                 anchors.left: parent.left
                 anchors.leftMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
@@ -249,16 +249,16 @@ Rectangle {
             
             Rectangle {
                 id: ganttBar
-                visible: modelData.type === "task"
+                visible: modelData && modelData.type === "task"
                 
                 x: {
-                    if (!modelData.taskStart || !root.displayStart) return 0
+                    if (modelData && (!modelData.taskStart || !root.displayStart)) return 0
                     var daysDiff = Math.floor((modelData.taskStart - root.displayStart) / (1000 * 60 * 60 * 24))
                     return Math.max(0, daysDiff * root.dayWidth)
                 }
                 
                 width: {
-                    if (!modelData.taskStart || !modelData.taskEnd) return 10
+                    if (modelData && (!modelData.taskStart || !modelData.taskEnd)) return 10
                     var daysDiff = Math.floor((modelData.taskEnd - modelData.taskStart) / (1000 * 60 * 60 * 24)) + 1
                     return Math.max(10, daysDiff * root.dayWidth)
                 }

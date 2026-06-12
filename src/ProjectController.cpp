@@ -115,6 +115,7 @@ void ProjectController::openProject(const QString& filePath)
     if (!m_projectData->fromJson(projectData))
     {
         emit errorOccurred("Ошибка загрузки данных проекта");
+    qDebug() << "Project loaded successfully. Groups:" << m_projectData->get_groupModel()->rowCount() << "Tasks:" << m_projectData->get_taskModel()->rowCount() << "Milestones:" << m_projectData->get_milestoneModel()->rowCount();
         return;
     }
     
@@ -197,6 +198,7 @@ void ProjectController::addTask(const QString& groupId, const QString& title,
 
 void ProjectController::removeTask(const QString& taskId)
 {
+    qDebug() << "Removing task:" << taskId;
 #ifdef DEBUG
     qDebug() << "ProjectController::removeTask() called";
 #endif

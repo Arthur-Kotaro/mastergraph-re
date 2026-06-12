@@ -202,7 +202,7 @@ QVariantMap MilestoneModel::getMilestone(const QString& milestoneId) const
 QVariantList MilestoneModel::getAllMilestones() const
 {
     QVariantList result;
-    qDebug() << "getAllMilestones called, count:" << m_milestones.size();
+    // qDebug() << "getAllMilestones called, count:" << m_milestones.size();
     for (const auto& ms : m_milestones)
     {
         QVariantMap map;
@@ -232,16 +232,16 @@ QDate MilestoneModel::getLastMilestoneDate()
 {
     if (m_milestones.isEmpty())
     {
-        qDebug() << "getLastMilestoneDate: milestones is EMPTY!";
+        // qDebug() << "getLastMilestoneDate: milestones is EMPTY!";
         return QDate::currentDate();
     }
     QDate last = m_milestones[0].plannedDate;
     for (const auto& ms : m_milestones)
     {
         if (ms.plannedDate > last) last = ms.plannedDate;
-        qDebug() << "  milestone:" << ms.abbreviation << ms.plannedDate.toString("dd.MM.yyyy");
+        // qDebug() << "  milestone:" << ms.abbreviation << ms.plannedDate.toString("dd.MM.yyyy");
     }
-    qDebug() << "getLastMilestoneDate returning:" << last.toString("dd.MM.yyyy");
+    // qDebug() << "getLastMilestoneDate returning:" << last.toString("dd.MM.yyyy");
     return last;
 }
 

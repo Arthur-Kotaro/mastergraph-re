@@ -1,6 +1,6 @@
 #include "ProjectData.h"
 
-ProjectData::ProjectData(QObject *parent): QObject(parent), m_modified(false)
+ProjectData::ProjectData(QObject *parent): QObject(parent), m_modified(false), m_creationDateTime(QDateTime::currentDateTime()), m_lastModifiedDateTime(QDateTime::currentDateTime())
 {
     m_taskModel = new TaskModel(this);
     m_groupModel = new GroupModel(this);

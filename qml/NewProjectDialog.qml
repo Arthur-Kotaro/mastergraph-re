@@ -3,7 +3,8 @@ import QtQuick.Controls 6.0
 import QtQuick.Layouts 6.0
 import Qt.labs.platform 1.1 as Labs
 
-Dialog {
+Dialog
+{
     id: root
     title: "Создание нового мастерграфика"
     width: 950
@@ -12,47 +13,43 @@ Dialog {
     standardButtons: Dialog.NoButton
     x: (parent.width - width) / 2
     y: (parent.height - height) / 2
-    
+
     property string projectName: ""
     property string projectType: ""
     property date startDate: new Date()
     property string filePath: ""
     property bool useDefaultGroups: true
     property var selectedGroups: []
-    
+
     property var typologiesModel: []
     property var taskGroupsModel: []
-    
-    function loadTypologies() {
-        console.log("loadTypologies called, projectController:", projectController)
-        if (projectController && projectController.resourceManager) {
-            var data = projectController.resourceManager.loadTypologies()
-            console.log("Typologies data:", JSON.stringify(data))
-            typologiesModel = data
-        } else {
-            console.log("loadTypologies: projectController or resourceManager is null")
+
+    function loadTypologies()
+    {
+        if (projectController && projectController.resourceManager)
+        {
+            typologiesModel = projectController.resourceManager.loadTypologies()
         }
     }
-    
-    function loadTaskGroups() {
-        console.log("loadTaskGroups called")
-        if (projectController && projectController.resourceManager) {
-            var data = projectController.resourceManager.loadTaskGroups()
-            console.log("TaskGroups data:", JSON.stringify(data))
-            taskGroupsModel = data
-        } else {
-            console.log("loadTaskGroups: projectController or resourceManager is null")
+
+    function loadTaskGroups()
+    {
+        if (projectController && projectController.resourceManager)
+        {
+            taskGroupsModel = projectController.resourceManager.loadTaskGroups()
         }
     }
-    
-    function refreshData() {
-        console.log("refreshData called")
+
+    function refreshData()
+    {
         loadTypologies()
         loadTaskGroups()
     }
-    
-    function createProject() {
-        if (root.projectName && root.projectType && root.filePath) {
+
+    function createProject()
+    {
+        if (root.projectName && root.projectType && root.filePath)
+        {
             var fullPath = root.filePath
             if (!fullPath.endsWith(".gantt")) fullPath += ".gantt"
             projectController.createNewProject(
@@ -65,43 +62,51 @@ Dialog {
             root.close()
         }
     }
-    
-    ColumnLayout {
+
+    ColumnLayout
+    {
         anchors.fill: parent
         anchors.margins: 15
         spacing: 15
-        
-        RowLayout {
+
+        RowLayout
+        {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 20
-            
-            ColumnLayout {
+
+            ColumnLayout
+            {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: 15
-                
-                GroupBox {
+
+                GroupBox
+                {
                     title: "Основные параметры"
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    
-                    ColumnLayout {
+
+                    ColumnLayout
+                    {
                         anchors.fill: parent
                         anchors.margins: 15
                         spacing: 15
-                        
-                        ColumnLayout {
+
+                        ColumnLayout
+                        {
                             Layout.fillWidth: true
                             spacing: 6
-                            
-                            Label {
+
+                            Label
+                            {
                                 text: "Название проекта:"
                                 font.pixelSize: 14
                                 font.bold: true
                             }
-                            
-                            TextField {
+
+                            TextField
+                            {
                                 id: nameField
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 40
@@ -111,45 +116,53 @@ Dialog {
                                 onAccepted: createProject()
                             }
                         }
-                        
-                        ColumnLayout {
+
+                        ColumnLayout
+                        {
                             Layout.fillWidth: true
                             spacing: 6
-                            
-                            Label {
+
+                            Label
+                            {
                                 text: "Типология проекта:"
                                 font.pixelSize: 14
                                 font.bold: true
                             }
-                            
-                            ComboBox {
+
+                            ComboBox
+                            {
                                 id: typeCombo
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 40
                                 font.pixelSize: 13
                                 model: typologiesModel
                                 textRole: "name"
-                                onCurrentValueChanged: {
+                                onCurrentValueChanged:
+                                {
                                     if (currentValue) root.projectType = currentValue.typology_name
                                 }
                             }
                         }
-                        
-                        ColumnLayout {
+
+                        ColumnLayout
+                        {
                             Layout.fillWidth: true
                             spacing: 6
-                            
-                            Label {
+
+                            Label
+                            {
                                 text: "Дата начала:"
                                 font.pixelSize: 14
                                 font.bold: true
                             }
-                            
-                            RowLayout {
+
+                            RowLayout
+                            {
                                 Layout.fillWidth: true
                                 spacing: 10
-                                
-                                TextField {
+
+                                TextField
+                                {
                                     id: dateField
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: 40
@@ -157,21 +170,26 @@ Dialog {
                                     font.pixelSize: 13
                                     placeholderText: "ДД.ММ.ГГГГ"
                                     inputMethodHints: Qt.ImhDate
-                                    validator: RegularExpressionValidator { 
-                                        regularExpression: /^\d{2}\.\d{2}\.\d{4}$/ 
+                                    validator: RegularExpressionValidator
+                                    {
+                                        regularExpression: /^\d{2}\.\d{2}\.\d{4}$/
                                     }
-                                    onTextChanged: {
+                                    onTextChanged:
+                                    {
                                         var parts = text.split(".")
-                                        if (parts.length === 3) {
+                                        if (parts.length === 3)
+                                        {
                                             var newDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
-                                            if (!isNaN(newDate.getTime())) {
+                                            if (!isNaN(newDate.getTime()))
+                                            {
                                                 root.startDate = newDate
                                             }
                                         }
                                     }
                                 }
-                                
-                                Button {
+
+                                Button
+                                {
                                     text: "📅"
                                     Layout.preferredHeight: 40
                                     Layout.preferredWidth: 40
@@ -179,8 +197,9 @@ Dialog {
                                     onClicked: calendarPopup.open()
                                 }
                             }
-                            
-                            Popup {
+
+                            Popup
+                            {
                                 id: calendarPopup
                                 width: 350
                                 height: 320
@@ -188,48 +207,57 @@ Dialog {
                                 y: 45
                                 modal: true
                                 focus: true
-                                
-                                Rectangle {
+
+                                Rectangle
+                                {
                                     anchors.fill: parent
                                     color: "white"
                                     border.color: "#cccccc"
                                     border.width: 1
                                     radius: 4
-                                    
-                                    ColumnLayout {
+
+                                    ColumnLayout
+                                    {
                                         anchors.fill: parent
                                         anchors.margins: 10
                                         spacing: 10
-                                        
-                                        RowLayout {
+
+                                        RowLayout
+                                        {
                                             Layout.fillWidth: true
-                                            Button {
+                                            Button
+                                            {
                                                 text: "<"
                                                 font.pixelSize: 14
                                                 Layout.preferredWidth: 40
-                                                onClicked: {
+                                                onClicked:
+                                                {
                                                     var newDate = new Date(calendarYear, calendarMonth - 1, 1)
                                                     calendarYear = newDate.getFullYear()
                                                     calendarMonth = newDate.getMonth()
                                                     updateCalendarModel()
                                                 }
                                             }
-                                            Label {
+                                            Label
+                                            {
                                                 Layout.fillWidth: true
                                                 horizontalAlignment: Text.AlignHCenter
                                                 font.pixelSize: 14
                                                 font.bold: true
-                                                text: {
-                                                    var months = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", 
+                                                text:
+                                                {
+                                                    var months = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
                                                                  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
                                                     return months[calendarMonth] + " " + calendarYear
                                                 }
                                             }
-                                            Button {
+                                            Button
+                                            {
                                                 text: ">"
                                                 font.pixelSize: 14
                                                 Layout.preferredWidth: 40
-                                                onClicked: {
+                                                onClicked:
+                                                {
                                                     var newDate = new Date(calendarYear, calendarMonth + 1, 1)
                                                     calendarYear = newDate.getFullYear()
                                                     calendarMonth = newDate.getMonth()
@@ -237,21 +265,25 @@ Dialog {
                                                 }
                                             }
                                         }
-                                        
-                                        GridView {
+
+                                        GridView
+                                        {
                                             id: calendarGrid
                                             Layout.fillWidth: true
                                             Layout.fillHeight: true
                                             cellWidth: 44
                                             cellHeight: 38
-                                            
+
                                             property var dayNames: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
-                                            
-                                            header: Row {
+
+                                            header: Row
+                                            {
                                                 spacing: 2
-                                                Repeater {
+                                                Repeater
+                                                {
                                                     model: calendarGrid.dayNames
-                                                    Label {
+                                                    Label
+                                                    {
                                                         width: 42
                                                         height: 30
                                                         text: modelData
@@ -262,30 +294,36 @@ Dialog {
                                                     }
                                                 }
                                             }
-                                            
+
                                             model: calendarModel
-                                            delegate: Rectangle {
+                                            delegate: Rectangle
+                                            {
                                                 width: 42
                                                 height: 36
-                                                color: {
+                                                color:
+                                                {
                                                     if (modelData === "") return "transparent"
                                                     var cellDate = new Date(calendarYear, calendarMonth, modelData)
                                                     if (cellDate.toDateString() === root.startDate.toDateString()) return "#0078d7"
                                                     return "transparent"
                                                 }
                                                 radius: 3
-                                                
-                                                Text {
+
+                                                Text
+                                                {
                                                     anchors.centerIn: parent
                                                     text: modelData
                                                     color: parent.color === "#0078d7" ? "white" : "black"
                                                     font.pixelSize: 13
                                                 }
-                                                
-                                                MouseArea {
+
+                                                MouseArea
+                                                {
                                                     anchors.fill: parent
-                                                    onClicked: {
-                                                        if (modelData !== "") {
+                                                    onClicked:
+                                                    {
+                                                        if (modelData !== "")
+                                                        {
                                                             var newDate = new Date(calendarYear, calendarMonth, modelData)
                                                             root.startDate = newDate
                                                             dateField.text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
@@ -299,22 +337,26 @@ Dialog {
                                 }
                             }
                         }
-                        
-                        ColumnLayout {
+
+                        ColumnLayout
+                        {
                             Layout.fillWidth: true
                             spacing: 6
-                            
-                            Label {
+
+                            Label
+                            {
                                 text: "Путь к файлу графика:"
                                 font.pixelSize: 14
                                 font.bold: true
                             }
-                            
-                            RowLayout {
+
+                            RowLayout
+                            {
                                 Layout.fillWidth: true
                                 spacing: 8
-                                
-                                TextField {
+
+                                TextField
+                                {
                                     id: filePathField
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: 40
@@ -323,8 +365,9 @@ Dialog {
                                     onTextChanged: root.filePath = text
                                     onAccepted: createProject()
                                 }
-                                
-                                Button {
+
+                                Button
+                                {
                                     text: "Обзор..."
                                     Layout.preferredHeight: 40
                                     Layout.preferredWidth: 90
@@ -336,43 +379,54 @@ Dialog {
                     }
                 }
             }
-            
-            ColumnLayout {
+
+            ColumnLayout
+            {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: 15
-                
-                GroupBox {
+
+                GroupBox
+                {
                     title: "Типовые группы задач"
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    
-                    ColumnLayout {
+
+                    ColumnLayout
+                    {
                         anchors.fill: parent
                         anchors.margins: 12
                         spacing: 12
-                        
-                        ScrollView {
+
+                        ScrollView
+                        {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             clip: true
-                            
-                            ColumnLayout {
+
+                            ColumnLayout
+                            {
                                 width: parent.width
                                 spacing: 6
-                                
-                                Repeater {
+
+                                Repeater
+                                {
                                     id: groupsRepeater
                                     model: taskGroupsModel
-                                    
-                                    delegate: CheckBox {
+
+                                    delegate: CheckBox
+                                    {
                                         text: modelData.name
                                         font.pixelSize: 13
                                         checked: root.useDefaultGroups
-                                        onCheckedChanged: {
-                                            if (checked && !root.selectedGroups.includes(modelData.name)) {
+                                        onCheckedChanged:
+                                        {
+                                            if (checked && !root.selectedGroups.includes(modelData.name))
+                                            {
                                                 root.selectedGroups.push(modelData.name)
-                                            } else if (!checked && root.selectedGroups.includes(modelData.name)) {
+                                            }
+                                            else if (!checked && root.selectedGroups.includes(modelData.name))
+                                            {
                                                 var index = root.selectedGroups.indexOf(modelData.name)
                                                 if (index !== -1) root.selectedGroups.splice(index, 1)
                                             }
@@ -381,18 +435,24 @@ Dialog {
                                 }
                             }
                         }
-                        
-                        CheckBox {
+
+                        CheckBox
+                        {
                             text: "использовать типовые группы задач"
                             font.pixelSize: 13
                             checked: root.useDefaultGroups
-                            onCheckedChanged: {
+                            onCheckedChanged:
+                            {
                                 root.useDefaultGroups = checked
-                                if (!checked) {
+                                if (!checked)
+                                {
                                     root.selectedGroups = []
-                                } else {
+                                }
+                                else
+                                {
                                     root.selectedGroups = []
-                                    for (var i = 0; i < groupsRepeater.model.length; i++) {
+                                    for (var i = 0; i < groupsRepeater.model.length; i++)
+                                    {
                                         root.selectedGroups.push(groupsRepeater.model[i].name)
                                     }
                                 }
@@ -402,20 +462,23 @@ Dialog {
                 }
             }
         }
-        
-        RowLayout {
+
+        RowLayout
+        {
             Layout.alignment: Qt.AlignRight
             spacing: 12
-            
-            Button {
+
+            Button
+            {
                 text: "Отмена"
                 Layout.preferredHeight: 38
                 Layout.preferredWidth: 110
                 font.pixelSize: 14
                 onClicked: root.close()
             }
-            
-            Button {
+
+            Button
+            {
                 text: "Создать"
                 Layout.preferredHeight: 38
                 Layout.preferredWidth: 110
@@ -424,39 +487,43 @@ Dialog {
             }
         }
     }
-    
+
     property int calendarYear: startDate.getFullYear()
     property int calendarMonth: startDate.getMonth()
     property var calendarModel: []
-    
-    function updateCalendarModel() {
+
+    function updateCalendarModel()
+    {
         var firstDay = new Date(calendarYear, calendarMonth, 1)
         var startWeekday = firstDay.getDay()
         var startIndex = (startWeekday === 0) ? 6 : startWeekday - 1
         var daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate()
         var result = []
-        
+
         for (var i = 0; i < startIndex; i++) result.push("")
         for (var i = 1; i <= daysInMonth; i++) result.push(i)
-        
+
         var remaining = (7 - (result.length % 7)) % 7
         for (var i = 0; i < remaining; i++) result.push("")
-        
+
         calendarModel = result
     }
-    
-    Component.onCompleted: {
+
+    Component.onCompleted:
+    {
         updateCalendarModel()
         nameField.forceActiveFocus()
     }
-    
-    Labs.FileDialog {
+
+    Labs.FileDialog
+    {
         id: saveFileDialog
         title: "Выберите место сохранения"
         fileMode: Labs.FileDialog.SaveFile
         defaultSuffix: "gantt"
         nameFilters: ["Файлы графиков (*.gantt)", "Все файлы (*)"]
-        onAccepted: {
+        onAccepted:
+        {
             var localPath = file.toString()
             if (localPath.startsWith("file://")) localPath = localPath.substring(7)
             filePathField.text = localPath

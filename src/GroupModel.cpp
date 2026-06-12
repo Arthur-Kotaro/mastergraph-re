@@ -45,6 +45,7 @@ int GroupModel::findGroupIndex(const QString& groupId) const {
 
 void GroupModel::addGroup(const QString& name) {
     beginInsertRows(QModelIndex(), m_groups.size(), m_groups.size());
+    qDebug() << "Group added:" << name;
     Group group;
     group.id = generateId();
     group.name = name;
@@ -77,6 +78,7 @@ void GroupModel::removeGroup(const QString& groupId) {
 }
 
 void GroupModel::renameGroup(const QString& groupId, const QString& newName) {
+    qDebug() << "Group renamed:" << groupId << "->" << newName;
     int index = findGroupIndex(groupId);
     if (index >= 0) {
         m_groups[index].name = newName;
