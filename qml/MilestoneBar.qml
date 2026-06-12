@@ -1,28 +1,34 @@
 import QtQuick 6.0
 import QtQuick.Controls 6.0
 
-Rectangle {
+Rectangle
+{
     id: root
     color: "#f0f0f0"
     border.color: "#aaaaaa"
     border.width: 1
-    
+
     property var milestonesModel: null
     property date startDate: new Date()
     property int dayWidth: 30
     property var milestones: []
-    
-    function updateMilestones() {
-        if (milestonesModel) {
+
+    function updateMilestones()
+    {
+        if (milestonesModel)
+        {
             milestones = milestonesModel.getAllMilestones()
-        } else {
+        }
+        else
+        {
             milestones = []
         }
     }
-    
+
     Component.onCompleted: updateMilestones()
-    
-    Connections {
+
+    Connections
+    {
         target: milestonesModel || null
         enabled: milestonesModel !== null
         function onModelReset() { updateMilestones() }
@@ -30,28 +36,40 @@ Rectangle {
         function onMilestonesChanged() { updateMilestones() }
         function onMilestoneStatusChanged() { updateMilestones() }
     }
-    
-    Repeater {
+
+    Repeater
+    {
         model: milestones
-        delegate: Item {
+        delegate: Item
+        {
             id: milestoneDelegate
-            x: {
+            x:
+            {
                 var plannedDate = new Date(modelData.plannedDate)
                 var daysDiff = Math.floor((plannedDate - startDate) / (1000 * 60 * 60 * 24))
-                return daysDiff * dayWidth + (dayWidth / 2) - 6
+                return daysDiff * dayWidth + dayWidth / 2 - width / 2
             }
             width: 24
             height: parent.height
-            
-            Rectangle {
+
+            Rectangle
+            {
+                id: diamond
                 width: 12
                 height: 12
                 rotation: 45
-                color: {
-                    if (milestonesModel) {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                anchors.topMargin: 5
+                color:
+                {
+                    if (milestonesModel)
+                    {
                         var ms = milestonesModel.getMilestone(modelData.milestoneId)
-                        if (ms) {
-                            switch(ms.status) {
+                        if (ms)
+                        {
+                            switch(ms.status)
+                            {
                                 case 0: return "#FFD700"
                                 case 1: return "#32CD32"
                                 case 2: return "#888888"
@@ -61,25 +79,40 @@ Rectangle {
                     }
                     return modelData.color || "#FFD700"
                 }
-                anchors.top: parent.top
-                anchors.topMargin: 5
-                anchors.horizontalCenter: parent.horizontalCenter
             }
-            
-            Text {
+
+            Text
+            {
                 text: modelData.abbreviation || ""
                 font.pixelSize: 10
                 font.bold: true
-                anchors.top: parent.top
-                anchors.topMargin: 20
+                anchors.top: diamond.bottom
+                anchors.topMargin: 3
                 anchors.horizontalCenter: parent.horizontalCenter
             }
-            
-            MouseArea {
+
+            ToolTip
+            {
+                visible: mouseArea.containsMouse
+                text:
+                {
+                    var info = ""
+                    if (modelData.fullName) info += modelData.fullName + "\n"
+                    if (modelData.tooltip) info += modelData.tooltip + "\n"
+                    info += "Дата: " + Qt.formatDateTime(modelData.plannedDate, "dd.MM.yyyy")
+                    return info
+                }
+                delay: 500
+            }
+
+            MouseArea
+            {
+                id: mouseArea
                 anchors.fill: parent
                 hoverEnabled: true
                 acceptedButtons: Qt.RightButton
-                onClicked: {
+                onClicked:
+                {
                     milestoneContextMenu.milestoneId = modelData.milestoneId
                     milestoneContextMenu.currentDate = modelData.plannedDate
                     milestoneContextMenu.currentStatus = modelData.status
@@ -91,8 +124,9 @@ Rectangle {
             }
         }
     }
-    
-    Dialog {
+
+    Dialog
+    {
         id: confirmMilestoneDialog
         title: "Подтверждение изменения статуса вехи"
         width: 400
@@ -100,30 +134,35 @@ Rectangle {
         modal: true
         standardButtons: Dialog.Ok | Dialog.Cancel
         anchors.centerIn: Overlay.overlay
-        
+
         property string milestoneId: ""
         property string milestoneName: ""
-        
-        Column {
+
+        Column
+        {
             anchors.fill: parent
             anchors.margins: 15
             spacing: 10
-            Label {
+            Label
+            {
                 width: parent.width
                 text: "Вы действительно хотите изменить статус вехи \"" + confirmMilestoneDialog.milestoneName + "\" на \"Пройдено\"?"
                 wrapMode: Text.WordWrap
             }
         }
-        
-        onAccepted: {
-            if (milestoneId && milestonesModel) {
+
+        onAccepted:
+        {
+            if (milestoneId && milestonesModel)
+            {
                 milestonesModel.setMilestoneCompleted(milestoneId)
                 updateMilestones()
             }
         }
     }
-    
-    Dialog {
+
+    Dialog
+    {
         id: infoMilestoneDialog
         title: "Информация о вехе"
         width: 400
@@ -131,15 +170,16 @@ Rectangle {
         modal: true
         standardButtons: Dialog.Ok
         anchors.centerIn: Overlay.overlay
-        
+
         property string milestoneId: ""
         property string milestoneName: ""
         property string milestoneAbbr: ""
         property int milestoneStatus: 0
         property date milestoneDate: new Date()
         property date milestoneActualDate: new Date()
-        
-        Column {
+
+        Column
+        {
             anchors.fill: parent
             anchors.margins: 15
             spacing: 12
@@ -147,14 +187,16 @@ Rectangle {
             Label { text: "Аббревиатура: " + infoMilestoneDialog.milestoneAbbr }
             Label { text: "Статус: " + (infoMilestoneDialog.milestoneStatus === 0 ? "Запланирована" : (infoMilestoneDialog.milestoneStatus === 1 ? "Пройдена" : "Перенесена")) }
             Label { text: "Плановая дата: " + Qt.formatDateTime(infoMilestoneDialog.milestoneDate, "dd.MM.yyyy") }
-            Label {
+            Label
+            {
                 visible: infoMilestoneDialog.milestoneStatus === 1
                 text: "Дата прохождения: " + Qt.formatDateTime(infoMilestoneDialog.milestoneActualDate, "dd.MM.yyyy")
             }
         }
     }
-    
-    Menu {
+
+    Menu
+    {
         id: milestoneContextMenu
         property string milestoneId: ""
         property date currentDate: new Date()
@@ -162,27 +204,33 @@ Rectangle {
         property string currentAbbreviation: ""
         property string currentFullName: ""
         property date currentActualDate: new Date()
-        
-        MenuItem {
+
+        MenuItem
+        {
             text: "Веха пройдена"
             enabled: milestoneContextMenu.currentStatus !== 1
-            onTriggered: {
+            onTriggered:
+            {
                 confirmMilestoneDialog.milestoneId = milestoneId
                 confirmMilestoneDialog.milestoneName = currentAbbreviation
                 confirmMilestoneDialog.open()
             }
         }
-        MenuItem {
+        MenuItem
+        {
             text: "Перенести дату прохождения"
-            onTriggered: {
+            onTriggered:
+            {
                 if (milestoneId && milestonesModel)
                     changeMilestoneDateDialog.open(milestoneId, currentDate)
             }
         }
         MenuSeparator {}
-        MenuItem {
+        MenuItem
+        {
             text: "Показать информацию"
-            onTriggered: {
+            onTriggered:
+            {
                 infoMilestoneDialog.milestoneId = milestoneId
                 infoMilestoneDialog.milestoneName = currentFullName
                 infoMilestoneDialog.milestoneAbbr = currentAbbreviation
