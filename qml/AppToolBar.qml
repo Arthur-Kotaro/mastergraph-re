@@ -94,21 +94,6 @@ Rectangle
 
         Button
         {
-            id: lockButton
-            text: (projectController && projectController.settingsManager.editingLocked) ? "🔒" : "🔓"
-            font.pixelSize: 22
-            width: 44
-            height: 36
-            anchors.verticalCenter: parent.verticalCenter
-            onClicked:
-            {
-                if(projectController)
-                    projectController.settingsManager.editingLocked = !projectController.settingsManager.editingLocked
-            }
-        }
-
-        Button
-        {
             text: "Настройки"
             onClicked: mainWindow.settingsDialog.open()
         }
