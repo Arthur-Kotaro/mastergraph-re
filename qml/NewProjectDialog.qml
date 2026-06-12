@@ -20,6 +20,37 @@ Dialog {
     property bool useDefaultGroups: true
     property var selectedGroups: []
     
+    property var typologiesModel: []
+    property var taskGroupsModel: []
+    
+    function loadTypologies() {
+        console.log("loadTypologies called, projectController:", projectController)
+        if (projectController && projectController.resourceManager) {
+            var data = projectController.resourceManager.loadTypologies()
+            console.log("Typologies data:", JSON.stringify(data))
+            typologiesModel = data
+        } else {
+            console.log("loadTypologies: projectController or resourceManager is null")
+        }
+    }
+    
+    function loadTaskGroups() {
+        console.log("loadTaskGroups called")
+        if (projectController && projectController.resourceManager) {
+            var data = projectController.resourceManager.loadTaskGroups()
+            console.log("TaskGroups data:", JSON.stringify(data))
+            taskGroupsModel = data
+        } else {
+            console.log("loadTaskGroups: projectController or resourceManager is null")
+        }
+    }
+    
+    function refreshData() {
+        console.log("refreshData called")
+        loadTypologies()
+        loadTaskGroups()
+    }
+    
     function createProject() {
         if (root.projectName && root.projectType && root.filePath) {
             var fullPath = root.filePath
@@ -96,9 +127,11 @@ Dialog {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 40
                                 font.pixelSize: 13
-                                model: projectController.resourceManager.loadTypologies()
+                                model: typologiesModel
                                 textRole: "name"
-                                onCurrentValueChanged: root.projectType = currentValue.typology_name
+                                onCurrentValueChanged: {
+                                    if (currentValue) root.projectType = currentValue.typology_name
+                                }
                             }
                         }
                         
@@ -330,7 +363,7 @@ Dialog {
                                 
                                 Repeater {
                                     id: groupsRepeater
-                                    model: projectController.resourceManager.loadTaskGroups()
+                                    model: taskGroupsModel
                                     
                                     delegate: CheckBox {
                                         text: modelData.name
@@ -398,21 +431,14 @@ Dialog {
     
     function updateCalendarModel() {
         var firstDay = new Date(calendarYear, calendarMonth, 1)
-        // getDay(): 0 = воскресенье, 1 = понедельник, ..., 6 = суббота
         var startWeekday = firstDay.getDay()
-        
-        // Преобразуем в индекс для сетки: понедельник = 0, воскресенье = 6
         var startIndex = (startWeekday === 0) ? 6 : startWeekday - 1
-        
         var daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate()
         var result = []
         
-        // Заполняем пустые ячейки до первого дня месяца
         for (var i = 0; i < startIndex; i++) result.push("")
-        // Заполняем дни месяца
         for (var i = 1; i <= daysInMonth; i++) result.push(i)
         
-        // Заполняем оставшиеся ячейки до конца строки (до воскресенья)
         var remaining = (7 - (result.length % 7)) % 7
         for (var i = 0; i < remaining; i++) result.push("")
         

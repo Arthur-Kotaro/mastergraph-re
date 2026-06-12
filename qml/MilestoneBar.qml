@@ -23,7 +23,7 @@ Rectangle {
     Component.onCompleted: updateMilestones()
     
     Connections {
-        target: milestonesModel
+        target: milestonesModel || null
         enabled: milestonesModel !== null
         function onModelReset() { updateMilestones() }
         function onDataChanged() { updateMilestones() }
@@ -165,7 +165,7 @@ Rectangle {
         
         MenuItem {
             text: "Веха пройдена"
-            enabled: currentStatus !== 1
+            enabled: milestoneContextMenu.currentStatus !== 1
             onTriggered: {
                 confirmMilestoneDialog.milestoneId = milestoneId
                 confirmMilestoneDialog.milestoneName = currentAbbreviation

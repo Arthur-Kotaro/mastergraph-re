@@ -123,7 +123,8 @@ Rectangle {
     Component.onCompleted: refresh()
     
     Connections {
-        target: projectController?.projectData?.milestoneModel
+        target: (projectController && projectController.projectData) ? projectController.projectData.milestoneModel : null
+            enabled: target !== null
         function onMilestonesChanged() { refresh() }
         function onModelReset() { refresh() }
     }

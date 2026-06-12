@@ -99,21 +99,24 @@ Rectangle {
     Component.onCompleted: updateData()
     
     Connections {
-        target: projectController?.projectData?.taskModel
+        target: (projectController && projectController.projectData) ? projectController.projectData.taskModel : null
+            enabled: target !== null
         function onDataChanged() { updateData() }
         function onRowsInserted() { updateData() }
         function onRowsRemoved() { updateData() }
     }
     
     Connections {
-        target: projectController?.projectData?.groupModel
+        target: (projectController && projectController.projectData) ? projectController.projectData.groupModel : null
+            enabled: target !== null
         function onDataChanged() { updateData() }
         function onRowsInserted() { updateData() }
         function onGroupExpandedChanged() { updateData() }
     }
     
     Connections {
-        target: projectController?.projectData?.milestoneModel
+        target: (projectController && projectController.projectData) ? projectController.projectData.milestoneModel : null
+            enabled: target !== null
         function onMilestonesChanged() { updateData() }
     }
     
@@ -378,7 +381,8 @@ Rectangle {
                 }
                 
                 Connections {
-                    target: projectController?.projectData?.taskModel
+                    target: (projectController && projectController.projectData) ? projectController.projectData.taskModel : null
+            enabled: target !== null
                     function onDataChanged() {
                         ganttBar.color = ganttBar.getStatusColor()
                     }

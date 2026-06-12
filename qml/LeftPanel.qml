@@ -36,7 +36,7 @@ Rectangle {
                         color: "#555555"
                     }
                     Text {
-                        text: projectController.projectData?.projectName || ""
+                        text: (projectController && projectController.projectData) ? projectController.projectData.projectName : ""
                         font.pixelSize: 22
                         font.bold: true
                         wrapMode: Text.WordWrap
@@ -145,7 +145,7 @@ Rectangle {
             ListView {
                 id: groupsListView
                 width: parent.width
-                model: projectController.projectData?.groupModel
+                model: (projectController && projectController.projectData) ? projectController.projectData.groupModel : null
                 delegate: GroupDelegate {
                     width: groupsListView.width
                 }

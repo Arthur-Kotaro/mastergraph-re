@@ -28,20 +28,41 @@ QString ResourceManager::getDefaultResourcesPath() const {
 }
 
 QVariantMap ResourceManager::loadJsonFile(const QString& fileName) {
+    qDebug() << "loadJsonFile called for:" << fileName << "fullPath:" << (m_resourcesPath + fileName);
+    
+    // 1. Пробуем qrc
+    QFile qrcFile(":/" + fileName);
+    qDebug() << "Trying qrc:" << qrcFile.fileName() << "exists:" << qrcFile.exists();
+    if (qrcFile.open(QIODevice::ReadOnly)) {
+        QByteArray data = qrcFile.readAll();
+        qDebug() << "qrc data size:" << data.size();
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        if (!doc.isNull()) {
+            qDebug() << "Successfully loaded from qrc:" << fileName;
+            return doc.object().toVariantMap();
+        }
+    }
+    
+    // 2. Пробуем файловую систему
     QString fullPath = m_resourcesPath + fileName;
+    qDebug() << "Trying file:" << fullPath;
     QFile file(fullPath);
     if (!file.open(QIODevice::ReadOnly)) {
+        qDebug() << "Failed to open file:" << fullPath << "error:" << file.errorString();
         emit errorOccurred("Не удалось открыть файл: " + fullPath);
         return QVariantMap();
     }
     
     QByteArray data = file.readAll();
+    qDebug() << "File data size:" << data.size();
     QJsonDocument doc = QJsonDocument::fromJson(data);
     if (doc.isNull()) {
+        qDebug() << "Failed to parse JSON from:" << fullPath;
         emit errorOccurred("Ошибка парсинга JSON: " + fullPath);
         return QVariantMap();
     }
     
+    qDebug() << "Successfully loaded from file:" << fileName;
     return doc.object().toVariantMap();
 }
 
@@ -50,7 +71,6 @@ bool ResourceManager::saveJsonFile(const QString& fileName, const QVariantMap& d
     
     qDebug() << "saveJsonFile: trying to save to" << fullPath;
     
-    // Проверяем, можем ли мы писать в директорию
     QFileInfo fileInfo(fullPath);
     QDir dir = fileInfo.absoluteDir();
     
@@ -66,7 +86,6 @@ bool ResourceManager::saveJsonFile(const QString& fileName, const QVariantMap& d
         qDebug() << "saveJsonFile: directory created successfully";
     }
     
-    // Проверяем права на запись в директорию
     if (!dir.isReadable()) {
         emit errorOccurred("Нет прав на чтение директории: " + dir.absolutePath());
         qDebug() << "saveJsonFile: directory not readable!";
@@ -94,13 +113,19 @@ bool ResourceManager::saveJsonFile(const QString& fileName, const QVariantMap& d
 }
 
 QVariantList ResourceManager::loadTypologies() {
+    qDebug() << "loadTypologies: m_resourcesPath =" << m_resourcesPath;
     QVariantMap data = loadJsonFile("default_typologies.json");
-    return data["typologies"].toList();
+    QVariantList result = data["typologies"].toList();
+    qDebug() << "loadTypologies: result count =" << result.size();
+    return result;
 }
 
 QVariantList ResourceManager::loadTaskGroups() {
+    qDebug() << "loadTaskGroups: m_resourcesPath =" << m_resourcesPath;
     QVariantMap data = loadJsonFile("default_tasks.json");
-    return data["task_groups"].toList();
+    QVariantList result = data["task_groups"].toList();
+    qDebug() << "loadTaskGroups: result count =" << result.size();
+    return result;
 }
 
 bool ResourceManager::saveProjectToFile(const QVariantMap& projectData, const QString& filePath) {

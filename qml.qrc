@@ -22,7 +22,7 @@
         <file>qml/AboutDialog.qml</file>
         <file>qml/HelpDialog.qml</file>
         <file>qml/CurrentTimeLine.qml</file>
-</qresource>
+        <file alias="default_typologies.json">resources/default_typologies.json</file>
+        <file alias="default_tasks.json">resources/default_tasks.json</file>
+    </qresource>
 </RCC>
-
-

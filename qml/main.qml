@@ -41,7 +41,7 @@ ApplicationWindow {
         WelcomeScreen {
             visible: !inEditMode
             anchors.fill: parent
-            onNewProjectRequested: newProjectDialog.open()
+            onNewProjectRequested: { newProjectDialog.refreshData(); newProjectDialog.open() }
             onOpenProjectRequested: openFileDialog.open()
         }
         
