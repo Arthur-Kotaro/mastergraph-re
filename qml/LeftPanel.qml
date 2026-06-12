@@ -1,41 +1,48 @@
 import QtQuick 6.0
 import QtQuick.Controls 6.0
 
-Rectangle {
+Rectangle
+{
     id: root
     color: "#fafafa"
     border.color: "#cccccc"
     border.width: 1
-    
+
     property int rowHeight: 40
-    
-    Column {
+
+    Column
+    {
         anchors.fill: parent
         spacing: 0
-        
-        Row {
+
+        Row
+        {
             width: parent.width
             height: 200
-            
-            Rectangle {
-                width: parent.width - 65
+
+            Rectangle
+            {
+                width: parent.width * 0.77
                 height: parent.height
                 color: "#f0f0f0"
                 border.color: "#cccccc"
                 border.width: 1
-                
-                Column {
+
+                Column
+                {
                     anchors.fill: parent
                     anchors.margins: 10
                     spacing: 5
-                    
-                    Text {
+
+                    Text
+                    {
                         text: "Название проекта:"
                         font.bold: true
                         font.pixelSize: 14
                         color: "#555555"
                     }
-                    Text {
+                    Text
+                    {
                         text: (projectController && projectController.projectData) ? projectController.projectData.projectName : ""
                         font.pixelSize: 22
                         font.bold: true
@@ -45,46 +52,53 @@ Rectangle {
                     }
                 }
             }
-            
-            Rectangle {
-                width: 65
+
+            Rectangle
+            {
+                width: parent.width * 0.23
                 height: parent.height
                 color: "#e8e8e8"
                 border.color: "#cccccc"
                 border.width: 1
-                
-                Column {
+
+                Column
+                {
                     anchors.fill: parent
-                    
-                    Rectangle {
+
+                    Rectangle
+                    {
                         width: parent.width
                         height: rowHeight
                         border.color: "#cccccc"
                         border.width: 1
                         Text { text: "Год"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 12 }
                     }
-                    Rectangle {
+                    Rectangle
+                    {
                         width: parent.width
                         height: rowHeight
                         border.color: "#cccccc"
                         border.width: 1
                         Text { text: "Месяц"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 10 }
                     }
-                    Rectangle {
+                    Rectangle
+                    {
                         width: parent.width
                         height: rowHeight
                         border.color: "#cccccc"
                         border.width: 1
                         Text { text: "Неделя"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 10 }
                     }
-                    Rectangle {
+                    Rectangle
+                    {
                         width: parent.width
                         height: rowHeight
                         border.color: "#cccccc"
                         border.width: 1
                         Text { text: "День"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 12 }
                     }
-                    Rectangle {
+                    Rectangle
+                    {
                         width: parent.width
                         height: rowHeight
                         border.color: "#cccccc"
@@ -94,39 +108,45 @@ Rectangle {
                 }
             }
         }
-        
-        Rectangle {
+
+        Rectangle
+        {
             width: parent.width
             height: rowHeight
             color: "#e8e8e8"
             border.color: "#cccccc"
             border.width: 1
-            
-            Row {
+
+            Row
+            {
                 anchors.fill: parent
-                
-                Rectangle {
+
+                Rectangle
+                {
                     width: parent.width * 0.35
                     height: parent.height
                     border.color: "#cccccc"
                     border.width: 1
                     Text { text: "Название"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 11 }
                 }
-                Rectangle {
+                Rectangle
+                {
                     width: parent.width * 0.20
                     height: parent.height
                     border.color: "#cccccc"
                     border.width: 1
                     Text { text: "Ответственный"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 10 }
                 }
-                Rectangle {
+                Rectangle
+                {
                     width: parent.width * 0.22
                     height: parent.height
                     border.color: "#cccccc"
                     border.width: 1
                     Text { text: "Дата начала"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 10 }
                 }
-                Rectangle {
+                Rectangle
+                {
                     width: parent.width * 0.23
                     height: parent.height
                     border.color: "#cccccc"
@@ -135,18 +155,21 @@ Rectangle {
                 }
             }
         }
-        
-        ScrollView {
+
+        ScrollView
+        {
             width: parent.width
             height: parent.height - 200 - rowHeight
             clip: true
             ScrollBar.vertical.policy: ScrollBar.AlwaysOn
-            
-            ListView {
+
+            ListView
+            {
                 id: groupsListView
                 width: parent.width
                 model: (projectController && projectController.projectData) ? projectController.projectData.groupModel : null
-                delegate: GroupDelegate {
+                delegate: GroupDelegate
+                {
                     width: groupsListView.width
                 }
                 interactive: true

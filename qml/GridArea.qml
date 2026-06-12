@@ -7,6 +7,7 @@ Rectangle
     color: "white"
 
     property int rowHeight: 40
+    property var externalFlickable: null
     property date displayStart: new Date()
     property date displayEnd: new Date()
     property int dayWidth: 30
@@ -16,7 +17,12 @@ Rectangle
     property real contentHeight: totalRows * rowHeight
 
     property var visibleItems: []
-
+    CurrentTimeLine
+    {
+        id: currentTimeLine
+        displayStart: root.displayStart
+        dayWidth: root.dayWidth
+    }
     function getThirdSundayAfter(date)
     {
         var d = new Date(date)
@@ -88,7 +94,7 @@ Rectangle
         }
 
         visibleItems = items
-        totalRows = visibleItems.length + 1
+        totalRows = visibleItems.length
         contentHeight = totalRows * rowHeight
 
         root.width = gridWidth
@@ -216,6 +222,12 @@ Rectangle
             ctx.lineWidth = 1
             ctx.strokeStyle = "#dddddd"
             for (var r = 1; r < totalRows; r++)
+            ctx.beginPath()
+            ctx.lineWidth = 1
+            ctx.strokeStyle = "#dddddd"
+            ctx.moveTo(0, 0)
+            ctx.lineTo(width, 0)
+            ctx.stroke()
             {
                 var y = r * rowHeight
                 if (y < height)
@@ -235,7 +247,7 @@ Rectangle
             {
                 if (visibleItems[vi].type === "group")
                 {
-                    groupRows.push(vi + 1)
+                    groupRows.push(vi)
                 }
             }
             for (var gi = 0; gi < groupRows.length; gi++)
@@ -263,36 +275,6 @@ Rectangle
         }
     }
 
-    Rectangle
-    {
-        id: infoRow
-        width: parent.width
-        height: rowHeight
-        color: "#f5f5f5"
-        border.color: "#dddddd"
-        border.width: 1
-        z: 2
-
-        Row
-        {
-            anchors.fill: parent
-            anchors.leftMargin: 10
-            spacing: 20
-            Text
-            {
-                text: "Создан: " + (projectController?.projectData?.creationDateTime?.toLocaleString() || "не указано")
-                anchors.verticalCenter: parent.verticalCenter
-                font.pixelSize: 11
-            }
-            Text
-            {
-                text: "Изменён: " + (projectController?.projectData?.lastModifiedDateTime?.toLocaleString() || "не указано")
-                anchors.verticalCenter: parent.verticalCenter
-                font.pixelSize: 11
-            }
-        }
-    }
-
     Repeater
     {
         id: groupsRepeater
@@ -301,7 +283,7 @@ Rectangle
         delegate: Rectangle
         {
             id: rowContainer
-            y: infoRow.height + (index * rowHeight)
+            y: index * rowHeight - (modelData && modelData.type === "group" ? 2 : 0)
             width: parent.width
             height: rowHeight
             color: "transparent"
@@ -411,11 +393,12 @@ Rectangle
 
                     onPressed: function(mouse)
                     {
+                        if (root.externalFlickable) root.externalFlickable.interactive = false
+                        if (root.externalFlickable) root.externalFlickable.interactive = false
                         if (mouse.button === Qt.RightButton)
                         {
                             taskContextMenu.taskId = modelData.taskId
                             taskContextMenu.popup()
-                            mouse.accepted = true
                         }
                     }
 
@@ -429,6 +412,7 @@ Rectangle
 
                     onReleased:
                     {
+                        if (root.externalFlickable) root.externalFlickable.interactive = true
                         if (drag.active)
                         {
                             parent.updateDates()
@@ -455,7 +439,9 @@ Rectangle
                         property real startMouseX: 0
 
                         onPressed:
-                        {
+                    {
+                        if (root.externalFlickable) root.externalFlickable.interactive = false
+
                             startWidth = ganttBar.width
                             startMouseX = mouseX
                         }
@@ -476,6 +462,7 @@ Rectangle
 
                         onReleased:
                         {
+                            if (root.externalFlickable) root.externalFlickable.interactive = true
                             ganttBar.updateDates()
                         }
                     }
@@ -567,12 +554,5 @@ Rectangle
                     projectController.removeTask(taskContextMenu.taskId)
             }
         }
-    }
-
-    CurrentTimeLine
-    {
-        id: currentTimeLine
-        displayStart: root.displayStart
-        dayWidth: root.dayWidth
     }
 }

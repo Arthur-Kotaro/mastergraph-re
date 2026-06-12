@@ -69,26 +69,34 @@ ApplicationWindow {
                 width: parent.width - 460
                 height: parent.height
                 color: "white"
+                clip: true
                 
                 // Календарь фиксирован
                 CalendarHeader {
+                    x: -flickableRight.contentX
                     id: calendarHeader
                     width: parent.width
-                    height: 200
+                    height: 240
                 }
                 
                 // Сетка с прокруткой
-                ScrollView {
+                Flickable {
+                    id: flickableRight
+                    contentY: -4
                     anchors.top: calendarHeader.bottom
                     anchors.bottom: parent.bottom
+                    ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AlwaysOn }
+                    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOn }
+                    contentHeight: gridArea.height
+                    contentWidth: gridArea.width
+                    boundsBehavior: Flickable.StopAtBounds
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOn
-                    ScrollBar.vertical.policy: ScrollBar.AlwaysOn
                     clip: true
                     
                     GridArea {
                         id: gridArea
+                        externalFlickable: flickableRight
                         width: calendarHeader.contentWidth
                     }
                 }
