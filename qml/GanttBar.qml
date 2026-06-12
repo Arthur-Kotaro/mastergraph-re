@@ -135,10 +135,10 @@ Rectangle {
         MenuItem { text: "Назначить ответственного"; onTriggered: responsibleDialog.open() }
         Menu {
             title: "Изменить статус"
-            MenuItem { text: "Запланировано"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskId, 0) }
-            MenuItem { text: "Выполнено"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskId, 1) }
-            MenuItem { text: "Имеются риски"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskId, 2) }
-            MenuItem { text: "Блокировано"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskId, 3) }
+            MenuItem { text: "🟡 Запланировано"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskId, 0) }
+            MenuItem { text: "🟢 Выполнено"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskId, 1) }
+            MenuItem { text: "🟠 Имеются риски"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskId, 2) }
+            MenuItem { text: "🔴 Блокировано"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskId, 3) }
         }
         MenuItem { text: "Изменить сроки"; onTriggered: if(editTaskDialog) editTaskDialog.open(taskId) }
         MenuSeparator {}

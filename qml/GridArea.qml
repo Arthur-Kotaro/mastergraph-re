@@ -405,28 +405,28 @@ Rectangle {
         Menu {
             title: "Изменить статус"
             MenuItem { 
-                text: "Запланировано"
+                text: "🟡 Запланировано"
                 onTriggered: { 
                     if(taskContextMenu.taskId && projectController) 
                         projectController.projectData.taskModel.setTaskStatus(taskContextMenu.taskId, 0) 
                 }
             }
             MenuItem { 
-                text: "Выполнено"
+                text: "🟢 Выполнено"
                 onTriggered: { 
                     if(taskContextMenu.taskId && projectController) 
                         projectController.projectData.taskModel.setTaskStatus(taskContextMenu.taskId, 1) 
                 }
             }
             MenuItem { 
-                text: "Имеются риски"
+                text: "🟠 Имеются риски"
                 onTriggered: { 
                     if(taskContextMenu.taskId && projectController) 
                         projectController.projectData.taskModel.setTaskStatus(taskContextMenu.taskId, 2) 
                 }
             }
             MenuItem { 
-                text: "Блокировано"
+                text: "🔴 Блокировано"
                 onTriggered: { 
                     if(taskContextMenu.taskId && projectController) 
                         projectController.projectData.taskModel.setTaskStatus(taskContextMenu.taskId, 3) 
