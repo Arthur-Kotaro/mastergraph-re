@@ -191,6 +191,8 @@ void ProjectController::addTask(const QString& groupId, const QString& title,
         return;
     }
     m_projectData->get_taskModel()->addTask(groupId, title, responsible, startDate, endDate);
+    QString newTaskId = m_projectData->get_taskModel()->data(m_projectData->get_taskModel()->index(m_projectData->get_taskModel()->rowCount() - 1), GanttDefines::IdRole).toString();
+    m_projectData->get_groupModel()->addTaskToGroup(groupId, newTaskId);
     m_projectData->recalculateEndDate();
     m_projectData->set_Modified(true);
     qDebug() << "Task added:" << title << "to group:" << groupId;

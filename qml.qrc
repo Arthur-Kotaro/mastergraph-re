@@ -3,7 +3,7 @@
     <qresource prefix="/">
         <file>qml/main.qml</file>
         <file>qml/InfoPanel.qml</file>
-        <file>qml/ToolBar.qml</file>
+        <file>qml/AppToolBar.qml</file>
         <file>qml/LeftPanel.qml</file>
         <file>qml/GridArea.qml</file>
         <file>qml/CalendarHeader.qml</file>

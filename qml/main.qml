@@ -20,6 +20,12 @@ ApplicationWindow {
     property bool inEditMode: (projectController && projectController.inEditMode) || false
     property alias gridArea: gridArea
     property alias editTaskDialog: editTaskDialog
+    property alias newProjectDialog: newProjectDialog
+    property alias openFileDialog: openFileDialog
+    property alias saveAsDialog: saveAsDialog
+    property alias settingsDialog: settingsDialog
+    property alias aboutDialog: aboutDialog
+    property alias helpDialog: helpDialog
     
     Shortcut { sequence: "Ctrl+N"; onActivated: if (projectController) newProjectDialog.open() }
     Shortcut { sequence: "Ctrl+O"; onActivated: if (projectController) openFileDialog.open() }
@@ -30,11 +36,11 @@ ApplicationWindow {
         else mainWindow.showFullScreen()
     } }
     
-    ToolBar { id: toolBar; anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right }
+    AppToolBar { id: appToolBar; anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right }
     
     Item {
         id: contentArea
-        anchors.top: toolBar.bottom
+        anchors.top: appToolBar.bottom
         anchors.bottom: infoPanel.top
         anchors.left: parent.left
         anchors.right: parent.right
@@ -97,6 +103,8 @@ ApplicationWindow {
     SettingsDialog { id: settingsDialog }
     EditTaskDialog { id: editTaskDialog }
     ChangeMilestoneDateDialog { id: changeMilestoneDateDialog }
+    AboutDialog { id: aboutDialog }
+    HelpDialog { id: helpDialog }
     
     Labs.FileDialog {
         id: openFileDialog
