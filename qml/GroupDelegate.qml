@@ -17,6 +17,7 @@ Item
     {
         if (projectController && projectController.projectData && groupId)
         {
+            tasksRepeater.model = []
             tasksList = projectController.projectData.taskModel.getTasksForGroup(groupId)
             tasksRepeater.model = tasksList
         }
@@ -321,32 +322,24 @@ Item
                         MenuItem
                         {
                             text: "🟡 Запланировано"
-                            icon.color: "#FFD700"
-                            icon.source: ""
                             onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskContextMenu.taskId, 0)
                         }
 
                         MenuItem
                         {
                             text: "🟢 Выполнено"
-                            icon.color: "#32CD32"
-                            icon.source: ""
                             onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskContextMenu.taskId, 1)
                         }
 
                         MenuItem
                         {
                             text: "🟠 Имеются риски"
-                            icon.color: "#FF8C00"
-                            icon.source: ""
                             onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskContextMenu.taskId, 2)
                         }
 
                         MenuItem
                         {
                             text: "🔴 Блокировано"
-                            icon.color: "#FF4444"
-                            icon.source: ""
                             onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskContextMenu.taskId, 3)
                         }
                     }
@@ -356,8 +349,8 @@ Item
                         text: "Изменить сроки"
                         onTriggered:
                         {
-                            if (taskContextMenu.taskId && typeof editTaskDialog !== "undefined")
-                                editTaskDialog.open(taskContextMenu.taskId)
+                            if (taskContextMenu.taskId && typeof mainWindow !== "undefined")
+                                mainWindow.editTaskDialog.openForTask(taskContextMenu.taskId)
                         }
                     }
 

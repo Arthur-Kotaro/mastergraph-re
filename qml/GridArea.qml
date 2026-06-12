@@ -398,7 +398,7 @@ Rectangle {
         MenuItem { 
             text: "Переименовать"
             onTriggered: { 
-                if(taskContextMenu.taskId) editTaskDialog.open(taskContextMenu.taskId) 
+                if(taskContextMenu.taskId) mainWindow.editTaskDialog.openForTask(taskContextMenu.taskId) 
             }
         }
         MenuItem { text: "Назначить ответственного" }
@@ -436,7 +436,7 @@ Rectangle {
         MenuItem { 
             text: "Изменить сроки"
             onTriggered: { 
-                if(taskContextMenu.taskId) editTaskDialog.open(taskContextMenu.taskId) 
+                if(taskContextMenu.taskId) mainWindow.editTaskDialog.openForTask(taskContextMenu.taskId) 
             }
         }
         MenuSeparator {}

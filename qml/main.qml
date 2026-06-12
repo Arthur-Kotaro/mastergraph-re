@@ -19,6 +19,7 @@ ApplicationWindow {
     
     property bool inEditMode: (projectController && projectController.inEditMode) || false
     property alias gridArea: gridArea
+    property alias editTaskDialog: editTaskDialog
     
     Shortcut { sequence: "Ctrl+N"; onActivated: if (projectController) newProjectDialog.open() }
     Shortcut { sequence: "Ctrl+O"; onActivated: if (projectController) openFileDialog.open() }

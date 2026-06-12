@@ -247,7 +247,7 @@ Rectangle {
             MenuItem { text: "🟠 Имеются риски"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskId, 2) }
             MenuItem { text: "🔴 Блокировано"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskId, 3) }
         }
-        MenuItem { text: "Изменить сроки"; onTriggered: { editTaskDialog.open(taskId) } }
+        MenuItem { text: "Изменить сроки"; onTriggered: { mainWindow.editTaskDialog.openForTask(taskId) } }
         MenuSeparator {}
         MenuItem { text: "Добавить задачу сверху" }
         MenuItem { text: "Добавить задачу снизу" }

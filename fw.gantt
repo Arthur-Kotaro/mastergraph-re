@@ -1,0 +1,118 @@
+{
+    "creationDateTime": "12.06.2026 12:25:08",
+    "dependencies": [
+    ],
+    "groups": [
+        {
+            "expanded": true,
+            "id": "0050347f-e666-4feb-8a6c-b0174c3bf854",
+            "name": "Подготовка к вехе"
+        },
+        {
+            "expanded": true,
+            "id": "5597c453-634d-4d42-a572-ff8a2a78c13b",
+            "name": "Входной билет"
+        },
+        {
+            "expanded": true,
+            "id": "db55482f-b2cd-4dbf-ae34-6ebd3dcd16e6",
+            "name": "Документация"
+        },
+        {
+            "expanded": true,
+            "id": "5a254b6a-a2fe-4707-8837-85e4bb802544",
+            "name": "Архитектура"
+        },
+        {
+            "expanded": true,
+            "id": "366e2e26-e543-405c-a6d1-6f4a8dcb694f",
+            "name": "Логистика"
+        },
+        {
+            "expanded": true,
+            "id": "6302e1fa-f24f-4af0-9e06-323d1637e123",
+            "name": "Послепродажное обслуживание"
+        },
+        {
+            "expanded": true,
+            "id": "1f3ef29f-037f-48ee-a0db-d0a633d6726a",
+            "name": "Номинация поставщиков"
+        },
+        {
+            "expanded": true,
+            "id": "e476ac23-0822-414c-9593-4dacd93cb29c",
+            "name": "Прототипы"
+        },
+        {
+            "expanded": true,
+            "id": "2ac92186-431e-4d90-b6c0-0be0fdb51a42",
+            "name": "Валидация"
+        },
+        {
+            "expanded": true,
+            "id": "f4c802e2-fd9b-432a-8dea-97969a8e35bc",
+            "name": "Калибровки"
+        },
+        {
+            "expanded": true,
+            "id": "82cd0330-5de1-4fa1-a29b-62e5c2946889",
+            "name": "Подготовка производства"
+        }
+    ],
+    "lastModifiedDateTime": "12.06.2026 12:25:08",
+    "milestones": [
+        {
+            "abbreviation": "SP",
+            "actualDate": "",
+            "fullName": "Старт проекта",
+            "id": "a1bc185d-bd8f-427b-b097-1a36ba5bc76c",
+            "plannedDate": "12.06.2026",
+            "status": 0
+        },
+        {
+            "abbreviation": "CO",
+            "actualDate": "",
+            "fullName": "Контракт",
+            "id": "7222c450-2402-418b-80b5-e84b7102cf33",
+            "plannedDate": "04.12.2026",
+            "status": 0
+        },
+        {
+            "abbreviation": "TGA",
+            "actualDate": "",
+            "fullName": "Одобрение оснастки",
+            "id": "8832c30f-ee18-4582-b10a-c90579c1a282",
+            "plannedDate": "12.02.2027",
+            "status": 0
+        },
+        {
+            "abbreviation": "ABPT1",
+            "actualDate": "",
+            "fullName": "Проверка производства 1",
+            "id": "a8fee314-c4b0-463e-ab5e-6687b669e6a3",
+            "plannedDate": "03.12.2027",
+            "status": 0
+        },
+        {
+            "abbreviation": "PPC",
+            "actualDate": "",
+            "fullName": "PPC",
+            "id": "8407ab87-50b1-4554-a5df-b1d9605a366f",
+            "plannedDate": "24.12.2027",
+            "status": 0
+        },
+        {
+            "abbreviation": "MA",
+            "actualDate": "",
+            "fullName": "Одобрение производства",
+            "id": "9ecfc8cc-862a-4750-ae9c-a4c956c4b1b5",
+            "plannedDate": "07.01.2028",
+            "status": 0
+        }
+    ],
+    "projectName": "ffw",
+    "projectType": "grandmother",
+    "startDate": "12.06.2026",
+    "tasks": [
+    ]
+}
