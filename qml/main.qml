@@ -28,6 +28,7 @@ ApplicationWindow
     property alias aboutDialog: aboutDialog
     property alias helpDialog: helpDialog
     property alias leftPanel: leftPanel
+    property alias calendarHeader: calendarHeader
 
     Shortcut { sequence: "Ctrl+N"; onActivated: if (projectController) newProjectDialog.open() }
     Shortcut { sequence: "Ctrl+O"; onActivated: if (projectController) openFileDialog.open() }

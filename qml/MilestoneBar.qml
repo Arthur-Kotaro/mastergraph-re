@@ -12,6 +12,7 @@ Rectangle
     property date startDate: new Date()
     property int dayWidth: 30
     property var milestones: []
+    property bool showRescheduled: true
 
     function updateMilestones()
     {
@@ -74,6 +75,7 @@ Rectangle
         delegate: Item
         {
             id: milestoneDelegate
+            visible: modelData.color !== "#888888" || root.showRescheduled
             x:
             {
                 var plannedDate = new Date(modelData.plannedDate)

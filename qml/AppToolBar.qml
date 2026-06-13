@@ -114,9 +114,17 @@ Rectangle
             font.pixelSize: 12
         }
 
+        Button
+        {
+            text: "Переносы"
+            onCheckedChanged: { if (mainWindow.calendarHeader) mainWindow.calendarHeader.milestoneBar.showRescheduled = checked }
+            checkable: true
+            font.pixelSize: 12
+        }
+
         Item
         {
-            width: appToolBar.width - 940
+            width: appToolBar.width - 1060
             height: 1
         }
 
