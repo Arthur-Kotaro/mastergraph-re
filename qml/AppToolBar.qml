@@ -98,6 +98,28 @@ Rectangle
             onClicked: mainWindow.settingsDialog.open()
         }
 
+        Item { width: 180; height: 1 }
+
+        Button
+        {
+            text: "Блокировка"
+            checkable: true
+            font.pixelSize: 12
+        }
+
+        Button
+        {
+            text: "Зависимости"
+            checkable: true
+            font.pixelSize: 12
+        }
+
+        Item
+        {
+            width: appToolBar.width - 940
+            height: 1
+        }
+
         Button
         {
             text: "Помощь"

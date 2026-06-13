@@ -53,6 +53,7 @@ Item
         height: 40
         color: "#e0e0e0"
         border.color: "#cccccc"
+        border.width: 1
 
         Row
         {
