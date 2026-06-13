@@ -9,7 +9,9 @@ Rectangle
     border.width: 1
 
     property int rowHeight: 40
+    property alias groupsListView: groupsListView
     property var flickableRight: null
+    property bool syncing: false
 
     Column
     {
@@ -174,6 +176,13 @@ Rectangle
                     width: groupsListView.width
                 }
                 interactive: false
+                onContentYChanged: {
+                    if (!root.syncing && root.flickableRight) {
+                        root.syncing = true
+                        root.flickableRight.contentY = contentY
+                        root.syncing = false
+                    }
+                }
                 contentY: root.flickableRight ? root.flickableRight.contentY : 0
             }
         }

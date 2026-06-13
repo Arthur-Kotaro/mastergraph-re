@@ -20,7 +20,6 @@ ApplicationWindow
 
     property bool inEditMode: (projectController && projectController.inEditMode) || false
     property alias gridArea: gridArea
-    property alias leftPanel: leftPanel
     property alias editTaskDialog: editTaskDialog
     property alias newProjectDialog: newProjectDialog
     property alias openFileDialog: openFileDialog
@@ -28,6 +27,7 @@ ApplicationWindow
     property alias settingsDialog: settingsDialog
     property alias aboutDialog: aboutDialog
     property alias helpDialog: helpDialog
+    property alias leftPanel: leftPanel
 
     Shortcut { sequence: "Ctrl+N"; onActivated: if (projectController) newProjectDialog.open() }
     Shortcut { sequence: "Ctrl+O"; onActivated: if (projectController) openFileDialog.open() }
