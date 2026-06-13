@@ -113,6 +113,7 @@ void MilestoneModel::rescheduleMilestone(const QString& milestoneId, const QDate
     int index = findMilestoneIndex(milestoneId);
     if (index >= 0 && m_milestones[index].status != GanttDefines::MilestoneStatus::Completed)
     {
+        m_milestones[index].rescheduleHistory.append(m_milestones[index].plannedDate);
         m_milestones[index].plannedDate = newDate;
         m_milestones[index].status = GanttDefines::MilestoneStatus::Rescheduled;
         QModelIndex modelIndex = createIndex(index, 0);
@@ -211,7 +212,12 @@ QVariantList MilestoneModel::getAllMilestones() const
         map["fullName"] = ms.fullName;
         map["tooltip"] = ms.tooltip;
         map["plannedDate"] = ms.plannedDate;
-        map["color"] = GanttDefines::getMilestoneStatusColor(ms.status);
+        QVariantList history;
+        for (const QDate& d : ms.rescheduleHistory)
+            history.append(d.toString("dd.MM.yyyy"));
+        map["rescheduleHistory"] = history;
+        map["status"] = static_cast<int>(ms.status);
+        map["actualDate"] = ms.actualDate;
         result.append(map);
         qDebug() << "  Milestone:" << ms.abbreviation << ms.plannedDate.toString("dd.MM.yyyy");
     }

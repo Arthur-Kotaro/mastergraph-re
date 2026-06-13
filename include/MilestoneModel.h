@@ -20,6 +20,7 @@ public:
         QDate plannedDate;
         QDate actualDate;
         GanttDefines::MilestoneStatus status;
+        QList<QDate> rescheduleHistory;
     };
 
     explicit MilestoneModel(QObject *parent = nullptr);

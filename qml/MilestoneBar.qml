@@ -17,7 +17,37 @@ Rectangle
     {
         if (milestonesModel)
         {
-            milestones = milestonesModel.getAllMilestones()
+            var allMilestones = milestonesModel.getAllMilestones()
+            var result = []
+            for (var i = 0; i < allMilestones.length; i++)
+            {
+                var ms = allMilestones[i]
+                result.push(ms)
+                if (ms.rescheduleHistory && ms.rescheduleHistory.length > 0)
+                {
+                    for (var j = 0; j < ms.rescheduleHistory.length; j++)
+                    {
+                        var dateStr = ms.rescheduleHistory[j]
+                        var parts = dateStr.split(".")
+                        if (parts.length === 3)
+                        {
+                            var oldDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+                            var historyItem = {
+                                milestoneId: ms.milestoneId,
+                                abbreviation: ms.abbreviation,
+                                fullName: ms.fullName,
+                                tooltip: ms.tooltip,
+                                plannedDate: oldDate,
+                                status: 2,
+                                color: "#888888",
+                                actualDate: ms.actualDate
+                            }
+                            result.push(historyItem)
+                        }
+                    }
+                }
+            }
+            milestones = result
         }
         else
         {
@@ -39,6 +69,7 @@ Rectangle
 
     Repeater
     {
+        id: milestonesRepeater
         model: milestones
         delegate: Item
         {
@@ -63,21 +94,11 @@ Rectangle
                 anchors.topMargin: 5
                 color:
                 {
-                    if (milestonesModel)
-                    {
-                        var ms = milestonesModel.getMilestone(modelData.milestoneId)
-                        if (ms)
-                        {
-                            switch(ms.status)
-                            {
-                                case 0: return "#FFD700"
-                                case 1: return "#32CD32"
-                                case 2: return "#888888"
-                                default: return "#FFD700"
-                            }
-                        }
-                    }
-                    return modelData.color || "#FFD700"
+                    if (modelData.color) return modelData.color
+                    var st = modelData.status !== undefined ? modelData.status : 0
+                    if (st === 1) return "#32CD32"
+                    if (st === 2) return "#FFD700"
+                    return "#FFD700"
                 }
             }
 
@@ -93,12 +114,14 @@ Rectangle
 
             ToolTip
             {
-                visible: mouseArea.containsMouse
+                visible: milestoneMouseArea.containsMouse
                 text:
                 {
                     var info = ""
                     if (modelData.fullName) info += modelData.fullName + "\n"
-                    if (modelData.tooltip) info += modelData.tooltip + "\n"
+                    var st = modelData.status !== undefined ? modelData.status : 0
+                    var statusText = st === 1 ? "Пройдена" : (st === 2 ? "Перенесена" : "Запланирована")
+                    info += "Статус: " + statusText + "\n"
                     info += "Дата: " + Qt.formatDateTime(modelData.plannedDate, "dd.MM.yyyy")
                     return info
                 }
@@ -107,19 +130,23 @@ Rectangle
 
             MouseArea
             {
-                id: mouseArea
+                id: milestoneMouseArea
+                enabled: modelData.color !== "#888888"
                 anchors.fill: parent
                 hoverEnabled: true
-                acceptedButtons: Qt.RightButton
-                onClicked:
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: function(mouse)
                 {
-                    milestoneContextMenu.milestoneId = modelData.milestoneId
-                    milestoneContextMenu.currentDate = modelData.plannedDate
-                    milestoneContextMenu.currentStatus = modelData.status
-                    milestoneContextMenu.currentAbbreviation = modelData.abbreviation
-                    milestoneContextMenu.currentFullName = modelData.fullName
-                    milestoneContextMenu.currentActualDate = modelData.actualDate
-                    milestoneContextMenu.popup()
+                    if (mouse.button === Qt.RightButton)
+                    {
+                        milestoneContextMenu.milestoneId = modelData.milestoneId
+                        milestoneContextMenu.currentDate = modelData.plannedDate
+                        milestoneContextMenu.currentStatus = modelData.status !== undefined ? modelData.status : 0
+                        milestoneContextMenu.currentAbbreviation = modelData.abbreviation
+                        milestoneContextMenu.currentFullName = modelData.fullName
+                        milestoneContextMenu.currentActualDate = modelData.actualDate
+                        milestoneContextMenu.popup()
+                    }
                 }
             }
         }
@@ -128,11 +155,11 @@ Rectangle
     Dialog
     {
         id: confirmMilestoneDialog
-        title: "Подтверждение изменения статуса вехи"
-        width: 400
-        height: 150
+        title: "Подтверждение"
+        width: 450
+        height: 180
         modal: true
-        standardButtons: Dialog.Ok | Dialog.Cancel
+        standardButtons: Dialog.NoButton
         anchors.centerIn: Overlay.overlay
 
         property string milestoneId: ""
@@ -141,22 +168,133 @@ Rectangle
         Column
         {
             anchors.fill: parent
-            anchors.margins: 15
-            spacing: 10
+            anchors.margins: 20
+            spacing: 20
+
             Label
             {
                 width: parent.width
-                text: "Вы действительно хотите изменить статус вехи \"" + confirmMilestoneDialog.milestoneName + "\" на \"Пройдено\"?"
+                text: "Вы готовы пройти веху \"" + confirmMilestoneDialog.milestoneName + "\"?"
                 wrapMode: Text.WordWrap
+                font.pixelSize: 14
+            }
+
+            Row
+            {
+                anchors.right: parent.right
+                spacing: 10
+
+                Button
+                {
+                    text: "Нет"
+                    width: 80
+                    height: 35
+                    onClicked: confirmMilestoneDialog.close()
+                }
+
+                Button
+                {
+                    text: "Да"
+                    width: 80
+                    height: 35
+                    onClicked:
+                    {
+                        if (confirmMilestoneDialog.milestoneId && milestonesModel)
+                        {
+                            milestonesModel.setMilestoneCompleted(confirmMilestoneDialog.milestoneId)
+                            updateMilestones()
+                        }
+                        confirmMilestoneDialog.close()
+                    }
+                }
             }
         }
+    }
 
-        onAccepted:
+    Dialog
+    {
+        id: rescheduleMilestoneDialog
+        title: "Перенос даты вехи"
+        width: 400
+        height: 200
+        modal: true
+        standardButtons: Dialog.NoButton
+        anchors.centerIn: Overlay.overlay
+
+        property string milestoneId: ""
+        property date currentDate: new Date()
+
+        Column
         {
-            if (milestoneId && milestonesModel)
+            anchors.fill: parent
+            anchors.margins: 20
+            spacing: 15
+
+            Label
             {
-                milestonesModel.setMilestoneCompleted(milestoneId)
-                updateMilestones()
+                text: "Выберите новую дату прохождения вехи:"
+                font.pixelSize: 13
+            }
+
+            TextField
+            {
+                id: newDateField
+                width: parent.width
+                height: 40
+                text: Qt.formatDateTime(rescheduleMilestoneDialog.currentDate, "dd.MM.yyyy")
+                font.pixelSize: 14
+                horizontalAlignment: Text.AlignHCenter
+                onEditingFinished:
+                {
+                    var parts = text.split(".")
+                    if (parts.length === 3)
+                    {
+                        var d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+                        if (!isNaN(d.getTime()))
+                        {
+                            rescheduleMilestoneDialog.currentDate = d
+                            text = Qt.formatDateTime(d, "dd.MM.yyyy")
+                        }
+                        else
+                        {
+                            text = Qt.formatDateTime(rescheduleMilestoneDialog.currentDate, "dd.MM.yyyy")
+                        }
+                    }
+                    else
+                    {
+                        text = Qt.formatDateTime(rescheduleMilestoneDialog.currentDate, "dd.MM.yyyy")
+                    }
+                }
+            }
+
+            Row
+            {
+                anchors.right: parent.right
+                spacing: 10
+
+                Button
+                {
+                    text: "Отмена"
+                    width: 80
+                    height: 35
+                    onClicked: rescheduleMilestoneDialog.close()
+                }
+
+                Button
+                {
+                    text: "Перенести"
+                    width: 90
+                    height: 35
+                    onClicked:
+                    {
+                        if (rescheduleMilestoneDialog.milestoneId && milestonesModel)
+                        {
+                            milestonesModel.rescheduleMilestone(rescheduleMilestoneDialog.milestoneId, rescheduleMilestoneDialog.currentDate)
+                            updateMilestones()
+                        }
+                        rescheduleMilestoneDialog.close()
+                    }
+                }
             }
         }
     }
@@ -165,8 +303,8 @@ Rectangle
     {
         id: infoMilestoneDialog
         title: "Информация о вехе"
-        width: 400
-        height: 250
+        width: 450
+        height: 350
         modal: true
         standardButtons: Dialog.Ok
         anchors.centerIn: Overlay.overlay
@@ -183,14 +321,30 @@ Rectangle
             anchors.fill: parent
             anchors.margins: 15
             spacing: 12
-            Label { text: "Название: " + infoMilestoneDialog.milestoneName }
-            Label { text: "Аббревиатура: " + infoMilestoneDialog.milestoneAbbr }
-            Label { text: "Статус: " + (infoMilestoneDialog.milestoneStatus === 0 ? "Запланирована" : (infoMilestoneDialog.milestoneStatus === 1 ? "Пройдена" : "Перенесена")) }
-            Label { text: "Плановая дата: " + Qt.formatDateTime(infoMilestoneDialog.milestoneDate, "dd.MM.yyyy") }
+
+            Label { text: "Название: " + infoMilestoneDialog.milestoneName; font.pixelSize: 13 }
+            Label { text: "Аббревиатура: " + infoMilestoneDialog.milestoneAbbr; font.pixelSize: 13 }
+
+            Label
+            {
+                text:
+                {
+                    var st = infoMilestoneDialog.milestoneStatus
+                    if (st === 0) return "Статус: Запланирована"
+                    if (st === 1) return "Статус: Пройдена"
+                    if (st === 2) return "Статус: Перенесена"
+                    return "Статус: Неизвестно"
+                }
+                font.pixelSize: 13
+            }
+
+            Label { text: "Плановая дата: " + Qt.formatDateTime(infoMilestoneDialog.milestoneDate, "dd.MM.yyyy"); font.pixelSize: 13 }
+
             Label
             {
                 visible: infoMilestoneDialog.milestoneStatus === 1
                 text: "Дата прохождения: " + Qt.formatDateTime(infoMilestoneDialog.milestoneActualDate, "dd.MM.yyyy")
+                font.pixelSize: 13
             }
         }
     }
@@ -207,36 +361,40 @@ Rectangle
 
         MenuItem
         {
-            text: "Веха пройдена"
+            text: "Пройти веху"
             enabled: milestoneContextMenu.currentStatus !== 1
             onTriggered:
             {
-                confirmMilestoneDialog.milestoneId = milestoneId
-                confirmMilestoneDialog.milestoneName = currentAbbreviation
+                confirmMilestoneDialog.milestoneId = milestoneContextMenu.milestoneId
+                confirmMilestoneDialog.milestoneName = milestoneContextMenu.currentAbbreviation
                 confirmMilestoneDialog.open()
             }
         }
+
         MenuItem
         {
-            text: "Перенести дату прохождения"
+            text: "Перенести веху"
             onTriggered:
             {
-                if (milestoneId && milestonesModel)
-                    changeMilestoneDateDialog.open(milestoneId, currentDate)
+                rescheduleMilestoneDialog.milestoneId = milestoneContextMenu.milestoneId
+                rescheduleMilestoneDialog.currentDate = milestoneContextMenu.currentDate
+                rescheduleMilestoneDialog.open()
             }
         }
+
         MenuSeparator {}
+
         MenuItem
         {
-            text: "Показать информацию"
+            text: "Подробнее"
             onTriggered:
             {
-                infoMilestoneDialog.milestoneId = milestoneId
-                infoMilestoneDialog.milestoneName = currentFullName
-                infoMilestoneDialog.milestoneAbbr = currentAbbreviation
-                infoMilestoneDialog.milestoneStatus = currentStatus
-                infoMilestoneDialog.milestoneDate = currentDate
-                infoMilestoneDialog.milestoneActualDate = currentActualDate
+                infoMilestoneDialog.milestoneId = milestoneContextMenu.milestoneId
+                infoMilestoneDialog.milestoneName = milestoneContextMenu.currentFullName
+                infoMilestoneDialog.milestoneAbbr = milestoneContextMenu.currentAbbreviation
+                infoMilestoneDialog.milestoneStatus = milestoneContextMenu.currentStatus
+                infoMilestoneDialog.milestoneDate = milestoneContextMenu.currentDate
+                infoMilestoneDialog.milestoneActualDate = milestoneContextMenu.currentActualDate
                 infoMilestoneDialog.open()
             }
         }
