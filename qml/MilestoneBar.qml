@@ -306,7 +306,7 @@ Rectangle
         id: infoMilestoneDialog
         title: "Информация о вехе"
         width: 450
-        height: 350
+        height: 450
         modal: true
         standardButtons: Dialog.Ok
         anchors.centerIn: Overlay.overlay
@@ -317,6 +317,7 @@ Rectangle
         property int milestoneStatus: 0
         property date milestoneDate: new Date()
         property date milestoneActualDate: new Date()
+        property var rescheduleHistory: []
 
         Column
         {
@@ -347,6 +348,28 @@ Rectangle
                 visible: infoMilestoneDialog.milestoneStatus === 1
                 text: "Дата прохождения: " + Qt.formatDateTime(infoMilestoneDialog.milestoneActualDate, "dd.MM.yyyy")
                 font.pixelSize: 13
+            }
+
+            Label
+            {
+                visible: infoMilestoneDialog.rescheduleHistory.length > 0
+                text: "История переносов:"
+                font.bold: true
+                font.pixelSize: 13
+            }
+
+            ListView
+            {
+                visible: infoMilestoneDialog.rescheduleHistory.length > 0
+                width: parent.width
+                height: 150
+                clip: true
+                model: infoMilestoneDialog.rescheduleHistory
+                delegate: Label
+                {
+                    text: modelData
+                    font.pixelSize: 12
+                }
             }
         }
     }
@@ -397,6 +420,7 @@ Rectangle
                 infoMilestoneDialog.milestoneStatus = milestoneContextMenu.currentStatus
                 infoMilestoneDialog.milestoneDate = milestoneContextMenu.currentDate
                 infoMilestoneDialog.milestoneActualDate = milestoneContextMenu.currentActualDate
+                infoMilestoneDialog.rescheduleHistory = milestonesModel.getMilestone(milestoneContextMenu.milestoneId).rescheduleHistory || []
                 infoMilestoneDialog.open()
             }
         }

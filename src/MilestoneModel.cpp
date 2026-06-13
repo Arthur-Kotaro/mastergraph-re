@@ -194,6 +194,10 @@ QVariantMap MilestoneModel::getMilestone(const QString& milestoneId) const
         map["fullName"] = ms.fullName;
         map["plannedDate"] = ms.plannedDate;
         map["actualDate"] = ms.actualDate;
+        QVariantList history;
+        for (const QDate& d : ms.rescheduleHistory)
+            history.append(d.toString("dd.MM.yyyy"));
+        map["rescheduleHistory"] = history;
         map["status"] = static_cast<int>(ms.status);
         return map;
     }
