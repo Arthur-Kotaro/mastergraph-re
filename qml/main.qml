@@ -40,6 +40,12 @@ ApplicationWindow
         else mainWindow.showFullScreen()
     } }
 
+    Connections {
+        target: projectController
+        function onProjectLoaded() {
+            if (gridArea) gridArea.updateData()
+        }
+    }
     AppToolBar { id: appToolBar; anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right }
 
     Item

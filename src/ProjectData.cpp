@@ -106,6 +106,16 @@ void ProjectData::updateLastModified()
     set_Modified(false);
 }
 
+void ProjectData::refreshAll()
+{
+    emit m_taskModel->countChanged();
+    emit m_groupModel->countChanged();
+    emit m_milestoneModel->milestonesChanged();
+    if (m_taskModel->rowCount() > 0)
+        emit m_taskModel->dataChanged(m_taskModel->index(0), m_taskModel->index(m_taskModel->rowCount() - 1));
+    if (m_groupModel->rowCount() > 0)
+        emit m_groupModel->dataChanged(m_groupModel->index(0), m_groupModel->index(m_groupModel->rowCount() - 1));
+}
 
 TaskModel* ProjectData::get_taskModel() const { return m_taskModel; }
 GroupModel* ProjectData::get_groupModel() const { return m_groupModel; }
@@ -215,7 +225,7 @@ bool ProjectData::fromJson(const QVariantMap& json)
     for (const auto& g : groups)
     {
         QVariantMap groupMap = g.toMap();
-        m_groupModel->addGroup(groupMap["name"].toString());
+        m_groupModel->addGroupWithId(groupMap["id"].toString(), groupMap["name"].toString());
     }
 
     QVariantList tasks = json["tasks"].toList();
@@ -224,14 +234,13 @@ bool ProjectData::fromJson(const QVariantMap& json)
         QVariantMap taskMap = t.toMap();
         QDate startDate = QDate::fromString(taskMap["startDate"].toString(), "dd.MM.yyyy");
         QDate endDate = QDate::fromString(taskMap["endDate"].toString(), "dd.MM.yyyy");
-        m_taskModel->addTask(
-            taskMap["groupId"].toString(),
-            taskMap["title"].toString(),
-            taskMap["responsible"].toString(),
-            startDate,
-            endDate
-        );
+        int status = taskMap["status"].toInt();
+        QString taskId = taskMap["id"].toString();
+        QString groupId = taskMap["groupId"].toString();
+        m_taskModel->addTaskWithId(taskId, groupId, taskMap["title"].toString(), taskMap["responsible"].toString(), startDate, endDate, status);
     }
+    emit m_taskModel->countChanged();
+    emit m_groupModel->countChanged();
 
     QVariantList milestones = json["milestones"].toList();
     for (const auto& m : milestones)

@@ -16,6 +16,7 @@ Item
     function refreshTasks()
     {
         if (projectController && projectController.projectData && groupId)
+        console.log("refreshTasks called, groupId:", groupId, "tasks:", tasksList.length)
         {
             tasksRepeater.model = []
             tasksList = projectController.projectData.taskModel.getTasksForGroup(groupId)
@@ -27,8 +28,7 @@ Item
 
     Connections
     {
-        target: projectController && projectController.projectData ? projectController.projectData.taskModel : null
-        enabled: projectController && projectController.projectData
+        target: projectController.projectData.taskModel
         function onCountChanged() { refreshTasks() }
         function onRowsInserted() { refreshTasks() }
         function onRowsRemoved() { refreshTasks() }
@@ -37,8 +37,7 @@ Item
 
     Connections
     {
-        target: projectController && projectController.projectData ? projectController.projectData.groupModel : null
-        enabled: projectController && projectController.projectData
+        target: projectController.projectData.groupModel
         function onDataChanged() { refreshTasks() }
         function onGroupExpandedChanged(changedGroupId)
         {

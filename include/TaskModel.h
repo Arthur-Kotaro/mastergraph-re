@@ -13,7 +13,8 @@ class TaskModel : public QAbstractListModel
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
 public:
-    struct Task {
+    struct Task
+    {
         QString id;
         QString title;
         QString responsible;
@@ -32,6 +33,8 @@ public:
 
     Q_INVOKABLE void addTask(const QString& groupId, const QString& title, const QString& responsible,
                              const QDate& startDate, const QDate& endDate);
+    Q_INVOKABLE void addTaskWithId(const QString& taskId, const QString& groupId, const QString& title,
+                                   const QString& responsible, const QDate& startDate, const QDate& endDate, int status);
     Q_INVOKABLE void removeTask(const QString& taskId);
     Q_INVOKABLE void updateTask(const QString& taskId, const QString& title, const QString& responsible,
                                 const QDate& startDate, const QDate& endDate, int status);

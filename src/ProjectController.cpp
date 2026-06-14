@@ -123,6 +123,7 @@ void ProjectController::openProject(const QString& filePath)
     m_projectData->set_Modified(false);
     set_InEditMode(true);
     emit projectLoaded();
+    m_projectData->refreshAll();
 }
 
 void ProjectController::saveProject()

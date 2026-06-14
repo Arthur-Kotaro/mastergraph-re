@@ -24,6 +24,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     Q_INVOKABLE void addGroup(const QString& name);
+    Q_INVOKABLE void addGroupWithId(const QString& id, const QString& name);
     Q_INVOKABLE void addGroupAt(int position, const QString& name);
     Q_INVOKABLE void removeGroup(const QString& groupId);
     Q_INVOKABLE void renameGroup(const QString& groupId, const QString& newName);

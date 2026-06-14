@@ -55,6 +55,17 @@ void GroupModel::addGroup(const QString& name) {
     emit countChanged();
 }
 
+void GroupModel::addGroupWithId(const QString& id, const QString& name) {
+    beginInsertRows(QModelIndex(), m_groups.size(), m_groups.size());
+    Group group;
+    group.id = id;
+    group.name = name;
+    group.expanded = true;
+    m_groups.append(group);
+    endInsertRows();
+    emit countChanged();
+}
+
 void GroupModel::addGroupAt(int position, const QString& name) {
     if (position < 0 || position > m_groups.size()) position = m_groups.size();
     beginInsertRows(QModelIndex(), position, position);
