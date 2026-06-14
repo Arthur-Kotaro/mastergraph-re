@@ -218,7 +218,7 @@ Rectangle
         id: rescheduleMilestoneDialog
         title: "Перенос даты вехи"
         width: 400
-        height: 200
+        height: 250
         modal: true
         standardButtons: Dialog.NoButton
         anchors.centerIn: Overlay.overlay
@@ -234,7 +234,13 @@ Rectangle
 
             Label
             {
-                text: "Выберите новую дату прохождения вехи:"
+                text: "Текущая дата: " + Qt.formatDateTime(rescheduleMilestoneDialog.currentDate, "dd.MM.yyyy")
+                font.pixelSize: 13
+            }
+
+            Label
+            {
+                text: "Новая дата прохождения вехи:"
                 font.pixelSize: 13
             }
 
@@ -246,6 +252,7 @@ Rectangle
                 text: Qt.formatDateTime(rescheduleMilestoneDialog.currentDate, "dd.MM.yyyy")
                 font.pixelSize: 14
                 horizontalAlignment: Text.AlignHCenter
+                Keys.onReturnPressed: { rescheduleMilestoneDialog.applyReschedule() }
                 onEditingFinished:
                 {
                     var parts = text.split(".")
@@ -287,17 +294,28 @@ Rectangle
                     text: "Перенести"
                     width: 90
                     height: 35
-                    onClicked:
-                    {
-                        if (rescheduleMilestoneDialog.milestoneId && milestonesModel)
-                        {
-                            milestonesModel.rescheduleMilestone(rescheduleMilestoneDialog.milestoneId, rescheduleMilestoneDialog.currentDate)
-                            updateMilestones()
-                        }
-                        rescheduleMilestoneDialog.close()
-                    }
+                    onClicked: rescheduleMilestoneDialog.applyReschedule()
                 }
             }
+        }
+
+        function applyReschedule()
+        {
+            var parts = newDateField.text.split(".")
+            if (parts.length === 3)
+            {
+                var d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+                if (!isNaN(d.getTime()))
+                {
+                    rescheduleMilestoneDialog.currentDate = d
+                }
+            }
+            if (rescheduleMilestoneDialog.milestoneId && milestonesModel)
+            {
+                milestonesModel.rescheduleMilestone(rescheduleMilestoneDialog.milestoneId, rescheduleMilestoneDialog.currentDate)
+                updateMilestones()
+            }
+            rescheduleMilestoneDialog.close()
         }
     }
 
