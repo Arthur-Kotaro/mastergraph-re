@@ -116,6 +116,7 @@ void MilestoneModel::rescheduleMilestone(const QString& milestoneId, const QDate
     if (index >= 0 && m_milestones[index].status != GanttDefines::MilestoneStatus::Completed)
     {
         m_milestones[index].rescheduleHistory.append(m_milestones[index].plannedDate);
+        qDebug() << "rescheduleMilestone: appended" << m_milestones[index].plannedDate << "to history of" << milestoneId << ", new size:" << m_milestones[index].rescheduleHistory.size();
         m_milestones[index].plannedDate = newDate;
         m_milestones[index].status = GanttDefines::MilestoneStatus::Rescheduled;
         QModelIndex modelIndex = createIndex(index, 0);
@@ -200,6 +201,7 @@ QVariantMap MilestoneModel::getMilestone(const QString& milestoneId) const
         for (const QDate& d : ms.rescheduleHistory)
             history.append(d.toString("dd.MM.yyyy"));
         map["rescheduleHistory"] = history;
+    qDebug() << "Milestone" << ms.abbreviation << "history count:" << history.size();
         map["status"] = static_cast<int>(ms.status);
         return map;
     }
@@ -222,6 +224,7 @@ QVariantList MilestoneModel::getAllMilestones() const
         for (const QDate& d : ms.rescheduleHistory)
             history.append(d.toString("dd.MM.yyyy"));
         map["rescheduleHistory"] = history;
+    qDebug() << "Milestone" << ms.abbreviation << "history count:" << history.size();
         map["status"] = static_cast<int>(ms.status);
         map["actualDate"] = ms.actualDate;
         result.append(map);

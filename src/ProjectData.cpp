@@ -259,10 +259,12 @@ bool ProjectData::fromJson(const QVariantMap& json)
         }
         
         QVariantList history = msMap["rescheduleHistory"].toList();
+        qDebug() << "fromJson: milestone" << msMap["abbreviation"].toString() << "history count:" << history.size();
         for (const auto& h : history)
         {
             QDate historyDate = QDate::fromString(h.toString(), "dd.MM.yyyy");
             if (historyDate.isValid())
+            qDebug() << "fromJson: rescheduling" << msMap["abbreviation"].toString() << "to" << historyDate.toString("dd.MM.yyyy");
             {
                 m_milestoneModel->rescheduleMilestone(msId, historyDate);
             }

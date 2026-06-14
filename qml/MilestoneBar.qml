@@ -25,6 +25,7 @@ Rectangle
                 var ms = allMilestones[i]
                 result.push(ms)
                 if (ms.rescheduleHistory && ms.rescheduleHistory.length > 0)
+                    console.log("History found for", ms.abbreviation, "count:", ms.rescheduleHistory.length)
                 {
                     for (var j = 0; j < ms.rescheduleHistory.length; j++)
                     {
@@ -49,6 +50,7 @@ Rectangle
                 }
             }
             milestones = result
+        console.log("updateMilestones: result length =", result.length)
         }
         else
         {
