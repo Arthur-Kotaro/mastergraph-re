@@ -238,36 +238,30 @@ bool ProjectData::fromJson(const QVariantMap& json)
         QString taskId = taskMap["id"].toString();
         QString groupId = taskMap["groupId"].toString();
         m_taskModel->addTaskWithId(taskId, groupId, taskMap["title"].toString(), taskMap["responsible"].toString(), startDate, endDate, status);
+        m_groupModel->addTaskToGroup(groupId, taskId);
     }
     emit m_taskModel->countChanged();
     emit m_groupModel->countChanged();
-
     QVariantList milestones = json["milestones"].toList();
     for (const auto& m : milestones)
     {
         QVariantMap msMap = m.toMap();
         QDate plannedDate = QDate::fromString(msMap["plannedDate"].toString(), "dd.MM.yyyy");
         m_milestoneModel->addMilestone(msMap["abbreviation"].toString(), msMap["fullName"].toString(), plannedDate);
-        
+
         int lastIdx = m_milestoneModel->rowCount() - 1;
         QString msId = m_milestoneModel->data(m_milestoneModel->index(lastIdx), Qt::UserRole + 1).toString();
-        
+
         int status = msMap["status"].toInt();
         if (status == 1)
         {
             m_milestoneModel->setMilestoneCompleted(msId);
         }
-        
+
         QVariantList history = msMap["rescheduleHistory"].toList();
-        qDebug() << "fromJson: milestone" << msMap["abbreviation"].toString() << "history count:" << history.size();
-        for (const auto& h : history)
+        if (!history.isEmpty())
         {
-            QDate historyDate = QDate::fromString(h.toString(), "dd.MM.yyyy");
-            if (historyDate.isValid())
-            qDebug() << "fromJson: rescheduling" << msMap["abbreviation"].toString() << "to" << historyDate.toString("dd.MM.yyyy");
-            {
-                m_milestoneModel->rescheduleMilestone(msId, historyDate);
-            }
+            m_milestoneModel->setRescheduleHistory(msId, history);
         }
     }
     

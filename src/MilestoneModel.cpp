@@ -116,12 +116,41 @@ void MilestoneModel::rescheduleMilestone(const QString& milestoneId, const QDate
     if (index >= 0 && m_milestones[index].status != GanttDefines::MilestoneStatus::Completed)
     {
         m_milestones[index].rescheduleHistory.append(m_milestones[index].plannedDate);
-        qDebug() << "rescheduleMilestone: appended" << m_milestones[index].plannedDate << "to history of" << milestoneId << ", new size:" << m_milestones[index].rescheduleHistory.size();
         m_milestones[index].plannedDate = newDate;
         m_milestones[index].status = GanttDefines::MilestoneStatus::Rescheduled;
         QModelIndex modelIndex = createIndex(index, 0);
         emit dataChanged(modelIndex, modelIndex);
         emit milestoneDateChanged(milestoneId);
+        emit milestonesChanged();
+    }
+}
+
+void MilestoneModel::addRescheduleHistory(const QString& milestoneId, const QDate& date)
+{
+    int index = findMilestoneIndex(milestoneId);
+    if (index >= 0)
+    {
+        m_milestones[index].rescheduleHistory.append(date);
+        QModelIndex modelIndex = createIndex(index, 0);
+        emit dataChanged(modelIndex, modelIndex);
+        emit milestonesChanged();
+    }
+}
+
+void MilestoneModel::setRescheduleHistory(const QString& milestoneId, const QVariantList& history)
+{
+    int index = findMilestoneIndex(milestoneId);
+    if (index >= 0)
+    {
+        m_milestones[index].rescheduleHistory.clear();
+        for (const auto& h : history)
+        {
+            QDate d = QDate::fromString(h.toString(), "dd.MM.yyyy");
+            if (d.isValid())
+                m_milestones[index].rescheduleHistory.append(d);
+        }
+        QModelIndex modelIndex = createIndex(index, 0);
+        emit dataChanged(modelIndex, modelIndex);
         emit milestonesChanged();
     }
 }

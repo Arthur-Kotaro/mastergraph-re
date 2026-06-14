@@ -30,9 +30,11 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     Q_INVOKABLE void addMilestone(const QString& abbreviation, const QString& fullName, const QDate& plannedDate);
-    Q_INVOKABLE void removeMilestone(const QString& milestoneId);
+    Q_INVOKABLE void removeMilestone(const QString& milestoneId); 
     Q_INVOKABLE void setMilestoneCompleted(const QString& milestoneId);
     Q_INVOKABLE void rescheduleMilestone(const QString& milestoneId, const QDate& newDate);
+    Q_INVOKABLE void setRescheduleHistory(const QString& milestoneId, const QVariantList& history);
+    Q_INVOKABLE void addRescheduleHistory(const QString& milestoneId, const QDate& date);
     Q_INVOKABLE void loadFromTemplate(const QVariantList& templates, const QDate& projectStartDate);
     Q_INVOKABLE QVariantMap getMilestone(const QString& milestoneId) const;
     Q_INVOKABLE QVariantList getAllMilestones() const;
