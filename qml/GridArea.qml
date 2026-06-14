@@ -529,79 +529,8 @@ Rectangle
         }
     }
 
-    Menu
+    TaskContextMenu
     {
         id: taskContextMenu
-        property string taskId: ""
-
-        MenuItem
-        {
-            text: "Переименовать"
-            onTriggered:
-            {
-                if(taskContextMenu.taskId) mainWindow.editTaskDialog.openForTask(taskContextMenu.taskId)
-            }
-        }
-        MenuItem { text: "Назначить ответственного" }
-        Menu
-        {
-            title: "Изменить статус"
-            MenuItem
-            {
-                text: "🟡 Запланировано"
-                onTriggered:
-                {
-                    if(taskContextMenu.taskId && projectController)
-                        projectController.projectData.taskModel.setTaskStatus(taskContextMenu.taskId, 0)
-                }
-            }
-            MenuItem
-            {
-                text: "🟢 Выполнено"
-                onTriggered:
-                {
-                    if(taskContextMenu.taskId && projectController)
-                        projectController.projectData.taskModel.setTaskStatus(taskContextMenu.taskId, 1)
-                }
-            }
-            MenuItem
-            {
-                text: "🟠 Имеются риски"
-                onTriggered:
-                {
-                    if(taskContextMenu.taskId && projectController)
-                        projectController.projectData.taskModel.setTaskStatus(taskContextMenu.taskId, 2)
-                }
-            }
-            MenuItem
-            {
-                text: "🔴 Блокировано"
-                onTriggered:
-                {
-                    if(taskContextMenu.taskId && projectController)
-                        projectController.projectData.taskModel.setTaskStatus(taskContextMenu.taskId, 3)
-                }
-            }
-        }
-        MenuItem
-        {
-            text: "Изменить сроки"
-            onTriggered:
-            {
-                if(taskContextMenu.taskId) mainWindow.editTaskDialog.openForTask(taskContextMenu.taskId)
-            }
-        }
-        MenuSeparator {}
-        MenuItem { text: "Добавить задачу сверху" }
-        MenuItem { text: "Добавить задачу снизу" }
-        MenuItem
-        {
-            text: "Удалить"
-            onTriggered:
-            {
-                if(taskContextMenu.taskId && projectController)
-                    projectController.removeTask(taskContextMenu.taskId)
-            }
-        }
     }
 }

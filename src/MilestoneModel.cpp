@@ -202,13 +202,6 @@ void MilestoneModel::loadFromTemplate(const QVariantList& templates, const QDate
               {
                   return a.plannedDate < b.plannedDate;
               });
-#ifdef DEBUG_MILESTONES
-    qDebug() << "Отладка: MilestoneModel::loadFromTemplate() Загружено в m_milestones:";
-    for (const auto mst : m_milestones)
-    {
-        qDebug() << "Веха " << mst.abbreviation << ", " << mst.fullName << ", " << mst.actualDate.toString(Qt::ISODate);
-    }
-#endif
     endResetModel();
     emit milestonesChanged();
     qDebug() << "loadFromTemplate completed, total milestones:" << m_milestones.size();

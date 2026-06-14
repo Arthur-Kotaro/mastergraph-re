@@ -5,9 +5,6 @@
 
 ProjectController::ProjectController(QObject *parent): QObject(parent), m_inEditMode(false)
 {
-#ifdef DEBUG
-    qDebug() << "ProjectController constructor called";
-#endif
     m_projectData = new ProjectData(this);
     m_resourceManager = new ResourceManager(this);
     m_settingsManager = new SettingsManager(this);
@@ -38,9 +35,6 @@ void ProjectController::createNewProject(const QString& projectName, const QStri
                                          const QDate& startDate, const QString& filePath,
                                          const QStringList& selectedTaskGroups)
 {
-#ifdef DEBUG
-    qDebug() << "ProjectController::createNewProject() called";
-#endif
     qDebug() << "Creating new project:" << projectName << "at" << filePath;
     
     m_projectData->clear();
@@ -65,16 +59,6 @@ void ProjectController::createNewProject(const QString& projectName, const QStri
             break;
         }
     }
-
-    // qDebug() << "=== MILESTONE DEBUG ===";
-    // qDebug() << "MilestoneModel rowCount:" << m_projectData->get_milestoneModel()->rowCount();
-    // QVariantList milestones = m_projectData->get_milestoneModel()->getAllMilestones();
-    // qDebug() << "getAllMilestones returned:" << milestones.size();
-    // for (int i = 0; i < milestones.size(); ++i) {
-    //     QVariantMap m = milestones[i].toMap();
-    //     qDebug() << "  Milestone:" << m["abbreviation"].toString() << m["plannedDate"].toDate().toString("dd.MM.yyyy");
-    // }
-    // qDebug() << "======================";
 
     QVariantList milestones = selectedTypology["milestones"].toList();
     m_projectData->get_milestoneModel()->loadFromTemplate(milestones, startDate);
@@ -102,9 +86,6 @@ void ProjectController::createNewProject(const QString& projectName, const QStri
 
 void ProjectController::openProject(const QString& filePath)
 {
-#ifdef DEBUG
-    qDebug() << "ProjectController::openProject() called. Path: " << filePath;
-#endif
     QVariantMap projectData = m_resourceManager->loadProjectFromFile(filePath);
     if (projectData.isEmpty())
     {
@@ -128,9 +109,6 @@ void ProjectController::openProject(const QString& filePath)
 
 void ProjectController::saveProject()
 {
-#ifdef DEBUG
-    qDebug() << "ProjectController::saveProject() called";
-#endif
     if (m_projectData->get_filePath().isEmpty())
     {
         emit errorOccurred("Путь к файлу не указан");
@@ -157,35 +135,23 @@ void ProjectController::saveProject()
 
 void ProjectController::saveProjectAs(const QString& filePath)
 {
-#ifdef DEBUG
-    qDebug() << "ProjectController::saveProjectAs() called";
-#endif
     m_projectData->set_FilePath(filePath);
     saveProject();
 }
 
 void ProjectController::exportToPng(const QString& filePath, int width, int height)
 {
-#ifdef DEBUG
-    qDebug() << "ProjectController::exportToPng() called";
-#endif
     m_exportManager->exportToPng(m_projectData, filePath, width, height);
 }
 
 void ProjectController::exportToPdf(const QString& filePath)
 {
-#ifdef DEBUG
-    qDebug() << "ProjectController::exportToPdf() called";
-#endif
     m_exportManager->exportToPdf(m_projectData, filePath, QDate::currentDate());
 }
 
 void ProjectController::addTask(const QString& groupId, const QString& title,
                                 const QString& responsible, const QDate& startDate, const QDate& endDate)
 {
-#ifdef DEBUG
-    qDebug() << "ProjectController::addTask() called";
-#endif
     if (false && m_settingsManager->editingLocked())
     {
         emit errorOccurred("Редактирование заблокировано");
@@ -202,10 +168,6 @@ void ProjectController::addTask(const QString& groupId, const QString& title,
 void ProjectController::removeTask(const QString& taskId)
 {
     qDebug() << "Removing task:" << taskId;
-#ifdef DEBUG
-    qDebug() << "ProjectController::removeTask() called";
-#endif
-
     if (false && m_settingsManager->editingLocked())
     {
         emit errorOccurred("Редактирование заблокировано");
@@ -219,9 +181,6 @@ void ProjectController::removeTask(const QString& taskId)
 
 void ProjectController::updateTaskDates(const QString& taskId, const QDate& newStart, const QDate& newEnd)
 {
-#ifdef DEBUG
-    qDebug() << "ProjectController::updateTaskDates() called";
-#endif
     if (false && m_settingsManager->editingLocked())
     {
         emit errorOccurred("Редактирование заблокировано");
@@ -242,9 +201,6 @@ void ProjectController::updateTaskDates(const QString& taskId, const QDate& newS
 
 void ProjectController::addDependency(const QString& predecessorId, const QString& successorId)
 {
-#ifdef DEBUG
-    qDebug() << "ProjectController::addDependency() called";
-#endif
     if (false && m_settingsManager->editingLocked())
     {
         emit errorOccurred("Редактирование заблокировано");
@@ -254,16 +210,15 @@ void ProjectController::addDependency(const QString& predecessorId, const QStrin
     if (!m_projectData->get_dependencyModel()->addDependency(predecessorId, successorId))
     {
         emit errorOccurred("Невозможно создать зависимость (циклическая или уже существует)");
-    } else {
+    }
+    else
+    {
         m_projectData->set_Modified(true);
     }
 }
 
 void ProjectController::removeDependency(const QString& dependencyId)
 {
-#ifdef DEBUG
-    qDebug() << "ProjectController::removeDependency() called";
-#endif
     if (false && m_settingsManager->editingLocked())
     {
         emit errorOccurred("Редактирование заблокировано");
@@ -275,9 +230,6 @@ void ProjectController::removeDependency(const QString& dependencyId)
 
 void ProjectController::onTaskDatesChanged(const QString& taskId)
 {
-#ifdef DEBUG
-    qDebug() << "ProjectController::onTaskDatesChanged() called";
-#endif
     QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
     QDate newEndDate = task["endDate"].toDate();
     updateDependentTasks(taskId, newEndDate);
@@ -285,9 +237,6 @@ void ProjectController::onTaskDatesChanged(const QString& taskId)
 
 void ProjectController::updateDependentTasks(const QString& taskId, const QDate& newEndDate)
 {
-#ifdef DEBUG
-    qDebug() << "ProjectController::updateDependentTasks() called";
-#endif
     if (m_updatingTasks.contains(taskId)) return;
     m_updatingTasks.insert(taskId);
     
@@ -307,6 +256,5 @@ void ProjectController::updateDependentTasks(const QString& taskId, const QDate&
             updateDependentTasks(successorId, newSuccessorEnd);
         }
     }
-    
     m_updatingTasks.remove(taskId);
 }

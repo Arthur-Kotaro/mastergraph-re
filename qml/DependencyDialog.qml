@@ -23,6 +23,7 @@ Dialog
     {
         taskList = []
         groupList = projectController.projectData.groupModel.getGroupIds()
+        var depModel = projectController.projectData.dependencyModel
         for (var g = 0; g < groupList.length; g++)
         {
             var groupId = groupList[g]
@@ -31,12 +32,28 @@ Dialog
             {
                 if (tasks[t] !== sourceTaskId)
                 {
-                    taskList.push({
-                        taskId: tasks[t],
-                        groupId: groupId,
-                        title: projectController.projectData.taskModel.getTask(tasks[t]).title,
-                        groupName: projectController.projectData.groupModel.getGroup(groupId).name
-                    })
+                    var alreadyDep = false
+                    for (var dd = 0; dd < depModel.rowCount(); dd++)
+                    {
+                        var idx = depModel.index(dd, 0)
+                        var pred = depModel.data(idx, Qt.UserRole + 2)
+                        var succ = depModel.data(idx, Qt.UserRole + 3)
+                        if ((pred === sourceTaskId && succ === tasks[t]) ||
+                            (pred === tasks[t] && succ === sourceTaskId))
+                        {
+                            alreadyDep = true
+                            break
+                        }
+                    }
+                    if (!alreadyDep)
+                    {
+                        taskList.push({
+                            taskId: tasks[t],
+                            groupId: groupId,
+                            title: projectController.projectData.taskModel.getTask(tasks[t]).title,
+                            groupName: projectController.projectData.groupModel.getGroup(groupId).name
+                        })
+                    }
                 }
             }
         }
@@ -55,7 +72,6 @@ Dialog
 
     onAccepted:
     {
-        console.log("DependencyDialog accepted, targetTaskId:", targetTaskId, "sourceTaskId:", sourceTaskId)
         if (targetTaskId && sourceTaskId)
         {
             if (downstream)
