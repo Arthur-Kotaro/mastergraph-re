@@ -30,7 +30,7 @@ ApplicationWindow
     property alias leftPanel: leftPanel
     property alias calendarHeader: calendarHeader
 
-    Shortcut { sequence: "Ctrl+N"; onActivated: if (projectController) newProjectDialog.open() }
+    Shortcut { sequence: "Ctrl+N"; onActivated: if (projectController) { newProjectDialog.refreshData(); newProjectDialog.open() } }
     Shortcut { sequence: "Ctrl+O"; onActivated: if (projectController) openFileDialog.open() }
     Shortcut { sequence: "Ctrl+S"; onActivated: if (projectController && inEditMode) projectController.saveProject() }
     Shortcut { sequence: "Ctrl+Shift+S"; onActivated: if (projectController && inEditMode) saveAsDialog.open() }
@@ -134,6 +134,11 @@ ApplicationWindow
         id: openFileDialog
         title: "Открыть график"
         nameFilters: ["Файлы графиков (*.gantt)", "Все файлы (*)"]
-        onAccepted: if (projectController) projectController.openProject(file)
+        onAccepted:
+        {
+            var path = file.toString()
+            if (path.startsWith("file://")) path = path.substring(7)
+            if (projectController) projectController.openProject(path)
+        }
     }
 }
