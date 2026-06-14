@@ -23,6 +23,7 @@ QHash<int, QByteArray> MilestoneModel::roleNames() const
     roles[Qt::UserRole + 4] = "actualDate";
     roles[Qt::UserRole + 5] = "status";
     roles[Qt::UserRole + 6] = "color";
+    roles[Qt::UserRole + 7] = "rescheduleHistory";
     return roles;
 }
 
@@ -40,6 +41,7 @@ QVariant MilestoneModel::data(const QModelIndex &index, int role) const
         case Qt::UserRole + 3: return ms.plannedDate;
         case Qt::UserRole + 4: return ms.actualDate;
         case Qt::UserRole + 5: return static_cast<int>(ms.status);
+        case Qt::UserRole + 7: { QVariantList history; for (const QDate& d : ms.rescheduleHistory) history.append(d.toString("dd.MM.yyyy")); return history; }
         case Qt::UserRole + 6: return GanttDefines::getMilestoneStatusColor(ms.status);
         default: return QVariant();
     }

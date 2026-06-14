@@ -81,7 +81,8 @@ void ProjectData::set_Modified(bool mod)
 
 
 QDateTime ProjectData::get_creationDateTime() const { return m_creationDateTime; }
-void ProjectData::set_CreationDateTime(const QDateTime& dt) {
+void ProjectData::set_CreationDateTime(const QDateTime& dt)
+{
     if (m_creationDateTime != dt)
     {
         m_creationDateTime = dt;
@@ -90,7 +91,8 @@ void ProjectData::set_CreationDateTime(const QDateTime& dt) {
 }
 
 QDateTime ProjectData::get_lastModifiedDateTime() const { return m_lastModifiedDateTime; }
-void ProjectData::set_LastModifiedDateTime(const QDateTime& dt) {
+void ProjectData::set_LastModifiedDateTime(const QDateTime& dt)
+{
     if (m_lastModifiedDateTime != dt)
     {
         m_lastModifiedDateTime = dt;
@@ -98,7 +100,8 @@ void ProjectData::set_LastModifiedDateTime(const QDateTime& dt) {
     }
 }
 
-void ProjectData::updateLastModified() {
+void ProjectData::updateLastModified()
+{
     set_LastModifiedDateTime(QDateTime::currentDateTime());
     set_Modified(false);
 }
@@ -121,7 +124,6 @@ void ProjectData::clear()
     m_endDate = QDate();
     m_filePath.clear();
     
-    
     m_creationDateTime = QDateTime();
     m_lastModifiedDateTime = QDateTime();
     
@@ -138,7 +140,6 @@ QVariantMap ProjectData::toJson() const
     result["creationDateTime"] = m_creationDateTime.toString("dd.MM.yyyy hh:mm:ss");
     result["lastModifiedDateTime"] = m_lastModifiedDateTime.toString("dd.MM.yyyy hh:mm:ss");
     
-    // Группы    
     QVariantList groups;
     for (int i = 0; i < m_groupModel->rowCount(); ++i)
     {
@@ -151,7 +152,6 @@ QVariantMap ProjectData::toJson() const
     }
     result["groups"] = groups;
     
-    // Задачи
     QVariantList tasks;
     for (int i = 0; i < m_taskModel->rowCount(); ++i)
     {
@@ -168,7 +168,6 @@ QVariantMap ProjectData::toJson() const
     }
     result["tasks"] = tasks;
     
-    // Вехи
     QVariantList milestones;
     for (int i = 0; i < m_milestoneModel->rowCount(); ++i)
     {
@@ -180,11 +179,11 @@ QVariantMap ProjectData::toJson() const
         ms["plannedDate"] = idx.data(Qt::UserRole + 3).toDate().toString("dd.MM.yyyy");
         ms["actualDate"] = idx.data(Qt::UserRole + 4).toDate().toString("dd.MM.yyyy");
         ms["status"] = idx.data(Qt::UserRole + 5).toInt();
+        ms["rescheduleHistory"] = idx.data(Qt::UserRole + 7).toList();
         milestones.append(ms);
     }
     result["milestones"] = milestones;
     
-    // Зависимости
     QVariantList dependencies;
     for (int i = 0; i < m_dependencyModel->rowCount(); ++i)
     {
@@ -212,8 +211,6 @@ bool ProjectData::fromJson(const QVariantMap& json)
     m_creationDateTime = QDateTime::fromString(json["creationDateTime"].toString(), "dd.MM.yyyy hh:mm:ss");
     m_lastModifiedDateTime = QDateTime::fromString(json["lastModifiedDateTime"].toString(), "dd.MM.yyyy hh:mm:ss");
 
-    
-    // Загрузка групп
     QVariantList groups = json["groups"].toList();
     for (const auto& g : groups)
     {
@@ -221,9 +218,9 @@ bool ProjectData::fromJson(const QVariantMap& json)
         m_groupModel->addGroup(groupMap["name"].toString());
     }
 
-    // Загрузка задач    
     QVariantList tasks = json["tasks"].toList();
-    for (const auto& t : tasks) {
+    for (const auto& t : tasks)
+    {
         QVariantMap taskMap = t.toMap();
         QDate startDate = QDate::fromString(taskMap["startDate"].toString(), "dd.MM.yyyy");
         QDate endDate = QDate::fromString(taskMap["endDate"].toString(), "dd.MM.yyyy");
@@ -234,6 +231,33 @@ bool ProjectData::fromJson(const QVariantMap& json)
             startDate,
             endDate
         );
+    }
+
+    QVariantList milestones = json["milestones"].toList();
+    for (const auto& m : milestones)
+    {
+        QVariantMap msMap = m.toMap();
+        QDate plannedDate = QDate::fromString(msMap["plannedDate"].toString(), "dd.MM.yyyy");
+        m_milestoneModel->addMilestone(msMap["abbreviation"].toString(), msMap["fullName"].toString(), plannedDate);
+        
+        int lastIdx = m_milestoneModel->rowCount() - 1;
+        QString msId = m_milestoneModel->data(m_milestoneModel->index(lastIdx), Qt::UserRole + 1).toString();
+        
+        int status = msMap["status"].toInt();
+        if (status == 1)
+        {
+            m_milestoneModel->setMilestoneCompleted(msId);
+        }
+        
+        QVariantList history = msMap["rescheduleHistory"].toList();
+        for (const auto& h : history)
+        {
+            QDate historyDate = QDate::fromString(h.toString(), "dd.MM.yyyy");
+            if (historyDate.isValid())
+            {
+                m_milestoneModel->rescheduleMilestone(msId, historyDate);
+            }
+        }
     }
     
     recalculateEndDate();
