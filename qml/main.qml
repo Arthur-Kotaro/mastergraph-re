@@ -27,6 +27,7 @@ ApplicationWindow
     property alias settingsDialog: settingsDialog
     property alias aboutDialog: aboutDialog
     property alias helpDialog: helpDialog
+    property alias dependencyDialog: dependencyDialog
     property alias leftPanel: leftPanel
     property alias calendarHeader: calendarHeader
 
@@ -134,6 +135,7 @@ ApplicationWindow
     ChangeMilestoneDateDialog { id: changeMilestoneDateDialog }
     AboutDialog { id: aboutDialog }
     HelpDialog { id: helpDialog }
+    DependencyDialog { id: dependencyDialog }
 
     Labs.FileDialog
     {

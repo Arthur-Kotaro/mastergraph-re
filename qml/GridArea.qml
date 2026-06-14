@@ -137,6 +137,12 @@ Rectangle
         function onMilestonesChanged() { updateData() }
     }
 
+    Connections {
+        target: projectController?.projectData?.dependencyModel
+        function onRowsInserted() { updateData() }
+        function onRowsRemoved() { updateData() }
+    }
+
     width: gridWidth
     height: contentHeight
 
@@ -222,12 +228,6 @@ Rectangle
             ctx.lineWidth = 1
             ctx.strokeStyle = "#dddddd"
             for (var r = 1; r < totalRows; r++)
-            ctx.beginPath()
-            ctx.lineWidth = 1
-            ctx.strokeStyle = "#dddddd"
-            ctx.moveTo(0, 0)
-            ctx.lineTo(width, 0)
-            ctx.stroke()
             {
                 var y = r * rowHeight
                 if (y < height)
@@ -237,6 +237,55 @@ Rectangle
                 }
             }
             ctx.stroke()
+
+            // Отрисовка зависимостей
+            if (projectController && projectController.projectData && projectController.projectData.dependencyModel)
+            {
+                var depModel = projectController.projectData.dependencyModel
+                for (var di = 0; di < depModel.rowCount(); di++)
+                {
+                    var idx = depModel.index(di, 0)
+                    var predId = depModel.data(idx, Qt.UserRole + 2)
+                    var succId = depModel.data(idx, Qt.UserRole + 3)
+                    if (predId && succId)
+                    {
+                        var predTask = projectController.projectData.taskModel.getTask(predId)
+                        var succTask = projectController.projectData.taskModel.getTask(succId)
+                        if (predTask && succTask)
+                        {
+                            var predEnd = new Date(predTask.endDate)
+                            var predDays = Math.floor((predEnd - displayStart) / (1000 * 60 * 60 * 24))
+                            var predX = predDays * dayWidth + dayWidth
+
+                            var predRow = -1
+                            var succRow = -1
+                            for (var vi = 0; vi < visibleItems.length; vi++)
+                            {
+                                if (visibleItems[vi].taskId === predId) predRow = vi
+                                if (visibleItems[vi].taskId === succId) succRow = vi
+                            }
+
+                            if (predRow >= 0 && succRow >= 0)
+                            {
+                                var predY = predRow * rowHeight + rowHeight / 2
+                                var succY = succRow * rowHeight + rowHeight / 2
+                                var succStart = new Date(succTask.startDate)
+                                var succDays = Math.floor((succStart - displayStart) / (1000 * 60 * 60 * 24))
+                                var succX = succDays * dayWidth
+
+                                ctx.beginPath()
+                                ctx.strokeStyle = "#9966cc"
+                                ctx.lineWidth = 2
+                                ctx.moveTo(predX, predY)
+                                ctx.lineTo(predX + 10, predY)
+                                ctx.lineTo(succX - 10, succY)
+                                ctx.lineTo(succX, succY)
+                                ctx.stroke()
+                            }
+                        }
+                    }
+                }
+            }
 
             // Толстые горизонтальные линии для границ групп
             ctx.beginPath()

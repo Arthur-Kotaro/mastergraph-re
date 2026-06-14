@@ -353,7 +353,29 @@ Item
                                 mainWindow.editTaskDialog.openForTask(taskContextMenu.taskId)
                         }
                     }
-
+                    Menu
+                    {
+                        title: "Изменить зависимости"
+                        MenuItem
+                        {
+                            text: "Добавить нисходящую зависимость"
+                            onTriggered: if(mainWindow) mainWindow.dependencyDialog.openForTask(taskContextMenu.taskId, true)
+                        }
+                        MenuItem
+                        {
+                            text: "Добавить восходящую зависимость"
+                            onTriggered: if(mainWindow) mainWindow.dependencyDialog.openForTask(taskContextMenu.taskId, false)
+                        }
+                        MenuSeparator {}
+                        MenuItem
+                        {
+                            text: "Удалить нисходящую зависимость"
+                        }
+                        MenuItem
+                        {
+                            text: "Удалить восходящую зависимость"
+                        }
+                    }
                     MenuSeparator {}
 
                     MenuItem

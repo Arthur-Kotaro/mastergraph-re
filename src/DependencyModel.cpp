@@ -64,6 +64,7 @@ bool DependencyModel::hasCycle(const QString& startTaskId, const QString& newPre
 
 bool DependencyModel::addDependency(const QString& predecessorId, const QString& successorId) {
     if (hasCycle(successorId, predecessorId)) {
+        qDebug() << "addDependency: cycle detected!";
         return false;
     }
     
@@ -80,6 +81,7 @@ bool DependencyModel::addDependency(const QString& predecessorId, const QString&
     dep.successorId = successorId;
     dep.type = GanttDefines::DependencyType::FinishToStart;
     m_dependencies.append(dep);
+    qDebug() << "Dependency added:" << predecessorId << "->" << successorId;
     endInsertRows();
     
     emit dependencyAdded(predecessorId, successorId);
