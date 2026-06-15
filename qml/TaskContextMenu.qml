@@ -66,11 +66,13 @@ Menu
         MenuItem
         {
             text: "Удалить нисходящую зависимость"
+                        onTriggered: if(projectController) projectController.projectData.dependencyModel.removeDownstreamDependency(root.taskId)
         }
 
         MenuItem
         {
             text: "Удалить восходящую зависимость"
+                        onTriggered: if(projectController) projectController.projectData.dependencyModel.removeUpstreamDependency(root.taskId)
         }
     }
 

@@ -98,6 +98,32 @@ void DependencyModel::removeDependency(const QString& dependencyId) {
     }
 }
 
+void DependencyModel::removeDownstreamDependency(const QString& taskId) {
+    for (int i = m_dependencies.size() - 1; i >= 0; --i) {
+        if (m_dependencies[i].predecessorId == taskId) {
+            QString depId = m_dependencies[i].id;
+            beginRemoveRows(QModelIndex(), i, i);
+            m_dependencies.removeAt(i);
+            endRemoveRows();
+            emit dependencyRemoved(depId);
+            return;
+        }
+    }
+}
+
+void DependencyModel::removeUpstreamDependency(const QString& taskId) {
+    for (int i = m_dependencies.size() - 1; i >= 0; --i) {
+        if (m_dependencies[i].successorId == taskId) {
+            QString depId = m_dependencies[i].id;
+            beginRemoveRows(QModelIndex(), i, i);
+            m_dependencies.removeAt(i);
+            endRemoveRows();
+            emit dependencyRemoved(depId);
+            return;
+        }
+    }
+}
+
 void DependencyModel::removeDependenciesForTask(const QString& taskId) {
     QList<int> indicesToRemove;
     for (int i = 0; i < m_dependencies.size(); ++i) {

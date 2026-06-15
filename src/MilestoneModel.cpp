@@ -3,8 +3,6 @@
 #include <QDebug>
 #include <algorithm>
 
-#define DEBUG_MILESTONES
-
 MilestoneModel::MilestoneModel(QObject *parent) : QAbstractListModel(parent) {}
 
 int MilestoneModel::rowCount(const QModelIndex &parent) const
@@ -146,8 +144,7 @@ void MilestoneModel::setRescheduleHistory(const QString& milestoneId, const QVar
         for (const auto& h : history)
         {
             QDate d = QDate::fromString(h.toString(), "dd.MM.yyyy");
-            if (d.isValid())
-                m_milestones[index].rescheduleHistory.append(d);
+            if (d.isValid()) m_milestones[index].rescheduleHistory.append(d);
         }
         QModelIndex modelIndex = createIndex(index, 0);
         emit dataChanged(modelIndex, modelIndex);
@@ -233,7 +230,6 @@ QVariantMap MilestoneModel::getMilestone(const QString& milestoneId) const
 QVariantList MilestoneModel::getAllMilestones() const
 {
     QVariantList result;
-    // qDebug() << "getAllMilestones called, count:" << m_milestones.size();
     for (const auto& ms : m_milestones)
     {
         QVariantMap map;
@@ -259,7 +255,8 @@ QDate MilestoneModel::getFirstMilestoneDate()
 {
     if (m_milestones.isEmpty()) return QDate::currentDate();
     QDate first = m_milestones[0].plannedDate;
-    for (const auto& ms : m_milestones) {
+    for (const auto& ms : m_milestones)
+    {
         if (ms.plannedDate < first) first = ms.plannedDate;
     }
     return first;
@@ -267,18 +264,12 @@ QDate MilestoneModel::getFirstMilestoneDate()
 
 QDate MilestoneModel::getLastMilestoneDate()
 {
-    if (m_milestones.isEmpty())
-    {
-        // qDebug() << "getLastMilestoneDate: milestones is EMPTY!";
-        return QDate::currentDate();
-    }
+    if (m_milestones.isEmpty()) return QDate::currentDate();
     QDate last = m_milestones[0].plannedDate;
     for (const auto& ms : m_milestones)
     {
         if (ms.plannedDate > last) last = ms.plannedDate;
-        // qDebug() << "  milestone:" << ms.abbreviation << ms.plannedDate.toString("dd.MM.yyyy");
     }
-    // qDebug() << "getLastMilestoneDate returning:" << last.toString("dd.MM.yyyy");
     return last;
 }
 

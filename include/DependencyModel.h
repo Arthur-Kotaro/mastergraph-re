@@ -26,6 +26,8 @@ public:
     Q_INVOKABLE bool addDependency(const QString& predecessorId, const QString& successorId);
     Q_INVOKABLE void removeDependency(const QString& dependencyId);
     Q_INVOKABLE void removeDependenciesForTask(const QString& taskId);
+    Q_INVOKABLE void removeDownstreamDependency(const QString& taskId);
+    Q_INVOKABLE void removeUpstreamDependency(const QString& taskId);
     Q_INVOKABLE QStringList getPredecessors(const QString& taskId) const;
     Q_INVOKABLE QStringList getSuccessors(const QString& taskId) const;
     Q_INVOKABLE bool hasCycle(const QString& startTaskId, const QString& newPredecessorId) const;
