@@ -111,22 +111,29 @@ Rectangle
         {
             text: "Зависимости"
             checked: true
-            onCheckedChanged: { if(mainWindow && mainWindow.gridArea) mainWindow.gridArea.showDependencies = checked }
             checkable: true
+            onCheckedChanged: { if(mainWindow && mainWindow.gridArea) mainWindow.gridArea.showDependencies = checked }
             font.pixelSize: 12
         }
 
         Button
         {
+            text: "Добавить каскад"
+            font.pixelSize: 12
+            onClicked: mainWindow.cascadeDialog.open()
+        }
+
+        Button
+        {
             text: "Переносы"
-            onCheckedChanged: { if (mainWindow.calendarHeader) mainWindow.calendarHeader.milestoneBar.showRescheduled = checked }
             checkable: true
+            onCheckedChanged: { if (mainWindow.calendarHeader) mainWindow.calendarHeader.milestoneBar.showRescheduled = checked }
             font.pixelSize: 12
         }
 
         Item
         {
-            width: appToolBar.width - 1060
+            width: appToolBar.width - 1200
             height: 1
         }
 
