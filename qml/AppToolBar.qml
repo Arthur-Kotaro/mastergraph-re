@@ -110,6 +110,8 @@ Rectangle
         Button
         {
             text: "Зависимости"
+            checked: true
+            onCheckedChanged: { if(mainWindow && mainWindow.gridArea) mainWindow.gridArea.showDependencies = checked }
             checkable: true
             font.pixelSize: 12
         }

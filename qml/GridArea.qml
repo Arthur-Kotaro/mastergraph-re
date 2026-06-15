@@ -8,6 +8,8 @@ Rectangle
 
     property int rowHeight: 40
     property var externalFlickable: null
+    property bool showDependencies: true
+    onShowDependenciesChanged: gridCanvas.requestPaint()
     property date displayStart: new Date()
     property date displayEnd: new Date()
     property int dayWidth: 30
@@ -239,6 +241,7 @@ Rectangle
             ctx.stroke()
 
             // Отрисовка зависимостей
+            if (showDependencies) {
             if (projectController && projectController.projectData && projectController.projectData.dependencyModel)
             {
                 var depModel = projectController.projectData.dependencyModel
@@ -287,6 +290,7 @@ Rectangle
                 }
             }
 
+            }
             // Толстые горизонтальные линии для границ групп
             ctx.beginPath()
             ctx.lineWidth = 2
