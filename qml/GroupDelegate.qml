@@ -281,8 +281,10 @@ Item
                 TaskContextMenu
                 {
                     id: taskContextMenu
-                    onAddTaskAbove: function(tId) { addTaskAbove(tId) }
-                    onAddTaskBelow: function(tId) { addTaskBelow(tId) }
+                    onAddTaskAboveCallback: function(tId) { addTaskAbove(tId) }
+                    onAddTaskBelowCallback: function(tId) { addTaskBelow(tId) }
+                    onRenameCallback: function(tId) { renameTaskDialog.openWithTask(tId, projectController.projectData.taskModel.getTask(tId).title) }
+                    onAssignResponsibleCallback: function(tId) { assignResponsibleDialog.openWithTask(tId, projectController.projectData.taskModel.getTask(tId).responsible) }
                 }
             }
         }

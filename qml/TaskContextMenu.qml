@@ -6,22 +6,24 @@ Menu
     id: root
     property string taskId: ""
 
-    signal addTaskAbove(string tId)
-    signal addTaskBelow(string tId)
+    property var onAddTaskAboveCallback: null
+    property var onAddTaskBelowCallback: null
+    property var onRenameCallback: null
+    property var onAssignResponsibleCallback: null
 
     MenuItem
     {
         text: "Переименовать"
         onTriggered:
         {
-            if (root.taskId && typeof mainWindow !== "undefined" && mainWindow.editTaskDialog)
-                mainWindow.editTaskDialog.openForTask(root.taskId)
+            if (root.onRenameCallback) root.onRenameCallback(root.taskId)
         }
     }
 
     MenuItem
     {
         text: "Назначить ответственного"
+        onTriggered: { if (root.onAssignResponsibleCallback) root.onAssignResponsibleCallback(root.taskId) }
     }
 
     Menu
@@ -66,13 +68,13 @@ Menu
         MenuItem
         {
             text: "Удалить нисходящую зависимость"
-                        onTriggered: if(projectController) projectController.projectData.dependencyModel.removeDownstreamDependency(root.taskId)
+            onTriggered: if(projectController) projectController.projectData.dependencyModel.removeDownstreamDependency(root.taskId)
         }
 
         MenuItem
         {
             text: "Удалить восходящую зависимость"
-                        onTriggered: if(projectController) projectController.projectData.dependencyModel.removeUpstreamDependency(root.taskId)
+            onTriggered: if(projectController) projectController.projectData.dependencyModel.removeUpstreamDependency(root.taskId)
         }
     }
 
@@ -81,13 +83,19 @@ Menu
     MenuItem
     {
         text: "Добавить задачу сверху"
-        onTriggered: root.addTaskAbove(root.taskId)
+        onTriggered:
+        {
+            if (root.onAddTaskAboveCallback) root.onAddTaskAboveCallback(root.taskId)
+        }
     }
 
     MenuItem
     {
         text: "Добавить задачу снизу"
-        onTriggered: root.addTaskBelow(root.taskId)
+        onTriggered:
+        {
+            if (root.onAddTaskBelowCallback) root.onAddTaskBelowCallback(root.taskId)
+        }
     }
 
     MenuItem
