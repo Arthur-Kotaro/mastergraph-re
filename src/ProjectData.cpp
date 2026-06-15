@@ -265,6 +265,12 @@ bool ProjectData::fromJson(const QVariantMap& json)
         }
     }
     
+    QVariantList dependencies = json["dependencies"].toList();
+    for (const auto& d : dependencies)
+    {
+        QVariantMap depMap = d.toMap();
+        m_dependencyModel->addDependency(depMap["predecessorId"].toString(), depMap["successorId"].toString());
+    }
     recalculateEndDate();
     set_Modified(false);
     return true;
