@@ -46,7 +46,7 @@ Rectangle
         if (endChanged) displayEnd = end
     }
 
-    property int dayWidth: 30
+    property int dayWidth: projectController && projectController.settingsManager.zoomLevel === 1 ? 10 : 30
     property int totalDays: Math.max(1, Math.floor((displayEnd - displayStart) / 86400000) + 1)
     property real contentWidth: totalDays * dayWidth
 
@@ -176,6 +176,7 @@ Rectangle
                 Rectangle { x: index * dayWidth; width: dayWidth; height: rowHeight; border.color: "#aaaaaa"; border.width: 1;
                     color: { var dow = ((displayStart.getDay() + index) % 7 + 6) % 7; return (dow === 5 || dow === 6) ? "#ffe0e0" : (index % 2 === 0 ? "#ffffff" : "#f8f8f8") }
                     Column { anchors.centerIn: parent; spacing: 2
+                        visible: root.dayWidth >= 15
                         Text { text: ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"][((displayStart.getDay() + index) % 7 + 6) % 7]; anchors.horizontalCenter: parent.horizontalCenter; font.pixelSize: 10; font.bold: true }
                         Text { text: root.dayNumbers[index] || ""; anchors.horizontalCenter: parent.horizontalCenter; font.pixelSize: 11 } } } } }
         }

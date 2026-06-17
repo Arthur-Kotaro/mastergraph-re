@@ -12,7 +12,8 @@ Rectangle
     onShowDependenciesChanged: gridCanvas.requestPaint()
     property date displayStart: new Date()
     property date displayEnd: new Date()
-    property int dayWidth: 30
+    property int dayWidth: projectController && projectController.settingsManager.zoomLevel === 1 ? 10 : 30
+    onDayWidthChanged: { updateData(); gridCanvas.requestPaint() }
     property int totalDays: 1
     property real gridWidth: totalDays * dayWidth
     property int totalRows: 1

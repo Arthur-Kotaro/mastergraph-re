@@ -89,6 +89,16 @@ Rectangle
                             projectController.settingsManager.tracingEnabled = checked
                     }
                 }
+                MenuSeparator {}
+                MenuItem
+                {
+                    text: projectController && projectController.settingsManager.zoomLevel === 0 ? "Масштаб: Неделя" : "Масштаб: День"
+                    onTriggered:
+                    {
+                        if(projectController)
+                            projectController.settingsManager.setZoomLevel(projectController.settingsManager.zoomLevel === 0 ? 1 : 0)
+                    }
+                }
             }
         }
 
