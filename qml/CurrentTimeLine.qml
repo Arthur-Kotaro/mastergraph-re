@@ -10,6 +10,7 @@ Rectangle {
     
     property date displayStart: new Date()
     property int dayWidth: 30
+    onDayWidthChanged: updateLinePosition()
     
     Timer {
         id: timeLineTimer
