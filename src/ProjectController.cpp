@@ -187,6 +187,12 @@ void ProjectController::updateTaskDates(const QString& taskId, const QDate& newS
         return;
     }
     
+    QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
+    if (task["status"].toInt() == static_cast<int>(GanttDefines::TaskStatus::Completed))
+    {
+        emit errorOccurred("Нельзя редактировать выполненную задачу");
+        return;
+    }
     if (newStart > newEnd)
     {
         emit errorOccurred("Дата завершения не может быть раньше даты начала");

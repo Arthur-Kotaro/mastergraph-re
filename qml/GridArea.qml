@@ -436,6 +436,10 @@ Rectangle
                 MouseArea
                 {
                     id: moveArea
+                    enabled: {
+                        var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        return task ? task.status !== 1 : true
+                    }
                     anchors.fill: parent
                     hoverEnabled: true
                     drag.target: parent
@@ -485,6 +489,10 @@ Rectangle
                     MouseArea
                     {
                         id: resizeArea
+                    enabled: {
+                        var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        return task ? task.status !== 1 : true
+                    }
                         anchors.fill: parent
                         cursorShape: Qt.SizeHorCursor
 

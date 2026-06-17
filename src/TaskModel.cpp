@@ -147,6 +147,10 @@ void TaskModel::setTaskStatus(const QString& taskId, GanttDefines::TaskStatus st
     if (index >= 0)
     {
         m_tasks[index].status = status;
+        if (status == GanttDefines::TaskStatus::Completed)
+        {
+            m_tasks[index].endDate = QDate::currentDate();
+        }
         QModelIndex modelIndex = createIndex(index, 0);
         emit dataChanged(modelIndex, modelIndex);
     }
