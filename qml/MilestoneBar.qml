@@ -4,13 +4,15 @@ import QtQuick.Controls 6.0
 Rectangle
 {
     id: root
+    property alias canvas: milestoneCanvas
     color: "#f0f0f0"
     border.color: "#aaaaaa"
     border.width: 1
 
+    property int dayWidth
+    onDayWidthChanged: { console.log("MilestoneBar dayWidth changed to:", dayWidth); updateMilestones(); milestoneCanvas.requestPaint() }
     property var milestonesModel: null
     property date startDate: new Date()
-    property int dayWidth: 30
     property var milestones: []
     property bool showRescheduled: true
 
@@ -25,7 +27,6 @@ Rectangle
                 var ms = allMilestones[i]
                 result.push(ms)
                 if (ms.rescheduleHistory && ms.rescheduleHistory.length > 0)
-                    console.log("History found for", ms.abbreviation, "count:", ms.rescheduleHistory.length)
                 {
                     for (var j = 0; j < ms.rescheduleHistory.length; j++)
                     {
@@ -50,7 +51,7 @@ Rectangle
                 }
             }
             milestones = result
-        console.log("updateMilestones: result length =", result.length)
+        milestoneCanvas.requestPaint()
         }
         else
         {
@@ -58,7 +59,7 @@ Rectangle
         }
     }
 
-    Component.onCompleted: updateMilestones()
+    Component.onCompleted: { updateMilestones(); if (!dayWidth) dayWidth = 30 }
 
     Connections
     {
@@ -70,86 +71,79 @@ Rectangle
         function onMilestoneStatusChanged() { updateMilestones() }
     }
 
-    Repeater
+    Canvas
     {
-        id: milestonesRepeater
-        model: milestones
-        delegate: Item
+        id: milestoneCanvas
+        anchors.fill: parent
+        z: 1
+
+        onPaint:
         {
-            id: milestoneDelegate
-            visible: modelData.color !== "#888888" || root.showRescheduled
-            x:
-            {
-                var plannedDate = new Date(modelData.plannedDate)
-                var daysDiff = Math.floor((plannedDate - startDate) / (1000 * 60 * 60 * 24))
-                return daysDiff * dayWidth + dayWidth / 2 - width / 2
-            }
-            width: 24
-            height: parent.height
+            var ctx = getContext("2d")
+            ctx.clearRect(0, 0, width, height)
 
-            Rectangle
+            for (var i = 0; i < milestones.length; i++)
             {
-                id: diamond
-                width: 12
-                height: 12
-                rotation: 45
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: parent.top
-                anchors.topMargin: 5
-                color:
+                var ms = milestones[i]
+                if (ms.color === "#888888" && !root.showRescheduled) continue
+
+                var plannedDate = new Date(ms.plannedDate)
+                var daysDiff = Math.floor((plannedDate - root.startDate) / (1000 * 60 * 60 * 24))
+                var cx = daysDiff * root.dayWidth + root.dayWidth / 2
+                var cy = 8
+
+                ctx.save()
+                ctx.translate(cx, cy)
+                ctx.rotate(Math.PI / 4)
+
+                if (ms.color) ctx.fillStyle = ms.color
+                else if (ms.status === 1) ctx.fillStyle = "#32CD32"
+                else if (ms.status === 2) ctx.fillStyle = "#FFD700"
+                else ctx.fillStyle = "#FFD700"
+
+                ctx.fillRect(-6, -6, 12, 12)
+                ctx.restore()
+
+                ctx.fillStyle = "#000000"
+                ctx.font = "bold 10px sans-serif"
+                ctx.textAlign = "center"
+                ctx.fillText(ms.abbreviation || "", cx, cy + 16)
+            }
+        }
+    }
+
+    MouseArea
+    {
+        id: milestoneMouseArea
+        anchors.fill: parent
+        hoverEnabled: true
+        acceptedButtons: Qt.RightButton
+
+        onClicked: function(mouse)
+        {
+            if (mouse.button === Qt.RightButton)
+            {
+                var mx = mouse.x
+                for (var i = 0; i < milestones.length; i++)
                 {
-                    if (modelData.color) return modelData.color
-                    var st = modelData.status !== undefined ? modelData.status : 0
-                    if (st === 1) return "#32CD32"
-                    if (st === 2) return "#FFD700"
-                    return "#FFD700"
-                }
-            }
+                    var ms = milestones[i]
+                    if (ms.color === "#888888" && !root.showRescheduled) continue
 
-            Text
-            {
-                text: modelData.abbreviation || ""
-                font.pixelSize: 10
-                font.bold: true
-                anchors.top: diamond.bottom
-                anchors.topMargin: 3
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
+                    var plannedDate = new Date(ms.plannedDate)
+                    var daysDiff = Math.floor((plannedDate - root.startDate) / (1000 * 60 * 60 * 24))
+                    var cx = daysDiff * root.dayWidth + root.dayWidth / 2
+                    var cy = 8
 
-            ToolTip
-            {
-                visible: milestoneMouseArea.containsMouse
-                text:
-                {
-                    var info = ""
-                    if (modelData.fullName) info += modelData.fullName + "\n"
-                    var st = modelData.status !== undefined ? modelData.status : 0
-                    var statusText = st === 1 ? "Пройдена" : (st === 2 ? "Перенесена" : "Запланирована")
-                    info += "Статус: " + statusText + "\n"
-                    info += "Дата: " + Qt.formatDateTime(modelData.plannedDate, "dd.MM.yyyy")
-                    return info
-                }
-                delay: 500
-            }
-
-            MouseArea
-            {
-                id: milestoneMouseArea
-                enabled: modelData.color !== "#888888"
-                anchors.fill: parent
-                hoverEnabled: true
-                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                onClicked: function(mouse)
-                {
-                    if (mouse.button === Qt.RightButton)
+                    if (Math.abs(mx - cx) < 12)
                     {
-                        milestoneContextMenu.milestoneId = modelData.milestoneId
-                        milestoneContextMenu.currentDate = modelData.plannedDate
-                        milestoneContextMenu.currentStatus = modelData.status !== undefined ? modelData.status : 0
-                        milestoneContextMenu.currentAbbreviation = modelData.abbreviation
-                        milestoneContextMenu.currentFullName = modelData.fullName
-                        milestoneContextMenu.currentActualDate = modelData.actualDate
+                        milestoneContextMenu.milestoneId = ms.milestoneId
+                        milestoneContextMenu.currentDate = ms.plannedDate
+                        milestoneContextMenu.currentStatus = ms.status !== undefined ? ms.status : 0
+                        milestoneContextMenu.currentAbbreviation = ms.abbreviation
+                        milestoneContextMenu.currentFullName = ms.fullName
+                        milestoneContextMenu.currentActualDate = ms.actualDate
                         milestoneContextMenu.popup()
+                        return
                     }
                 }
             }

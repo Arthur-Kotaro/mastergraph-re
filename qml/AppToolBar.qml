@@ -97,6 +97,8 @@ Rectangle
                     {
                         if(projectController)
                             projectController.settingsManager.setZoomLevel(projectController.settingsManager.zoomLevel === 0 ? 1 : 0)
+                        if(mainWindow && mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar)
+                            mainWindow.calendarHeader.milestoneBar.canvas.requestPaint()
                     }
                 }
             }
