@@ -4,6 +4,19 @@ import QtQuick.Controls 6.0
 Rectangle
 {
     id: root
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.NoButton
+        onWheel: function(wheel) {
+            if (wheel.modifiers & Qt.ControlModifier) {
+                if (wheel.angleDelta.y > 0)
+                    projectController.settingsManager.setZoomLevel(0)
+                else
+                    projectController.settingsManager.setZoomLevel(1)
+                wheel.accepted = true
+            }
+        }
+    }
     color: "white"
 
     property int rowHeight: 40
