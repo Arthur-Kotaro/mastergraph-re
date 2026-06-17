@@ -29,6 +29,7 @@ ApplicationWindow
     property alias helpDialog: helpDialog
     property alias dependencyDialog: dependencyDialog
     property alias cascadeDialog: cascadeDialog
+    property alias completeTaskDialog: completeTaskDialog
     property alias leftPanel: leftPanel
     property alias calendarHeader: calendarHeader
 
@@ -138,6 +139,7 @@ ApplicationWindow
     HelpDialog { id: helpDialog }
     DependencyDialog { id: dependencyDialog }
     CascadeDialog { id: cascadeDialog }
+    CompleteTaskDialog { id: completeTaskDialog }
 
     Labs.FileDialog
     {

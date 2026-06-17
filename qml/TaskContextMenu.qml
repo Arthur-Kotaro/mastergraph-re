@@ -30,7 +30,7 @@ Menu
     {
         title: "Изменить статус"
         MenuItem { text: "🟡 Запланировано"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(root.taskId, 0) }
-        MenuItem { text: "🟢 Выполнено"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(root.taskId, 1) }
+        MenuItem { text: "🟢 Выполнено"; onTriggered: if(mainWindow) mainWindow.completeTaskDialog.openForTask(root.taskId) }
         MenuItem { text: "🟠 Имеются риски"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(root.taskId, 2) }
         MenuItem { text: "🔴 Блокировано"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(root.taskId, 3) }
     }
