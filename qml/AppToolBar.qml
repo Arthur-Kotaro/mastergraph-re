@@ -1,5 +1,6 @@
 import QtQuick 6.0
 import QtQuick.Controls 6.0
+import QtQuick.Layouts 6.0
 
 Rectangle
 {
@@ -8,60 +9,35 @@ Rectangle
     color: "#e0e0e0"
     z: 10
 
-    Row
+    RowLayout
     {
         anchors.fill: parent
-        anchors.leftMargin: 10
+        anchors.leftMargin: 5
+        anchors.rightMargin: 5
         spacing: 5
 
         Button
         {
             text: "Файл"
+            Layout.preferredWidth: 65
             onClicked: fileMenu.popup()
             Menu
             {
                 id: fileMenu
-                MenuItem
-                {
-                    text: "Создать"
-                    onTriggered: { mainWindow.newProjectDialog.refreshData(); mainWindow.newProjectDialog.open() }
-                }
-                MenuItem
-                {
-                    text: "Открыть"
-                    onTriggered: mainWindow.openFileDialog.open()
-                }
+                MenuItem { text: "Создать"; onTriggered: { mainWindow.newProjectDialog.refreshData(); mainWindow.newProjectDialog.open() } }
+                MenuItem { text: "Открыть"; onTriggered: mainWindow.openFileDialog.open() }
                 MenuSeparator {}
-                MenuItem
-                {
-                    text: "Сохранить"
-                    onTriggered:
-                    {
-                        if(projectController && projectController.inEditMode)
-                            projectController.saveProject()
-                    }
-                }
-                MenuItem
-                {
-                    text: "Сохранить как"
-                    onTriggered:
-                    {
-                        if(projectController && projectController.inEditMode)
-                            mainWindow.saveAsDialog.open()
-                    }
-                }
+                MenuItem { text: "Сохранить"; onTriggered: { if(projectController && projectController.inEditMode) projectController.saveProject() } }
+                MenuItem { text: "Сохранить как"; onTriggered: { if(projectController && projectController.inEditMode) mainWindow.saveAsDialog.open() } }
                 MenuSeparator {}
-                MenuItem
-                {
-                    text: "Выход"
-                    onTriggered: Qt.quit()
-                }
+                MenuItem { text: "Выход"; onTriggered: Qt.quit() }
             }
         }
 
         Button
         {
             text: "Вид"
+            Layout.preferredWidth: 55
             onClicked: viewMenu.popup()
             Menu
             {
@@ -80,25 +56,11 @@ Rectangle
                 MenuSeparator {}
                 MenuItem
                 {
-                    text: "Трассировка"
-                    checkable: true
-                    checked: projectController ? projectController.settingsManager.tracingEnabled : false
-                    onTriggered:
-                    {
-                        if(projectController)
-                            projectController.settingsManager.tracingEnabled = checked
-                    }
-                }
-                MenuSeparator {}
-                MenuItem
-                {
                     text: projectController && projectController.settingsManager.zoomLevel === 0 ? "Масштаб: Неделя" : "Масштаб: День"
                     onTriggered:
                     {
                         if(projectController)
                             projectController.settingsManager.setZoomLevel(projectController.settingsManager.zoomLevel === 0 ? 1 : 0)
-                        if(mainWindow && mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar)
-                            mainWindow.calendarHeader.milestoneBar.canvas.requestPaint()
                     }
                 }
             }
@@ -107,15 +69,27 @@ Rectangle
         Button
         {
             text: "Настройки"
+            Layout.preferredWidth: 95
             onClicked: mainWindow.settingsDialog.open()
         }
 
-        Item { width: 180; height: 1 }
+        Item { Layout.fillWidth: true; Layout.minimumWidth: 5 }
+
+        Button
+        {
+            text: "Добавить каскад"
+            Layout.preferredWidth: 145
+            font.pixelSize: 12
+            onClicked: mainWindow.cascadeDialog.open()
+        }
+
+        Item { Layout.fillWidth: true; Layout.minimumWidth: 5 }
 
         Button
         {
             text: "Блокировка"
             checkable: true
+            Layout.preferredWidth: 105
             font.pixelSize: 12
         }
 
@@ -124,40 +98,34 @@ Rectangle
             text: "Зависимости"
             checked: true
             checkable: true
+            Layout.preferredWidth: 110
             onCheckedChanged: { if(mainWindow && mainWindow.gridArea) mainWindow.gridArea.showDependencies = checked }
             font.pixelSize: 12
         }
 
         Button
         {
-            text: "Добавить каскад"
-            font.pixelSize: 12
-            onClicked: mainWindow.cascadeDialog.open()
-        }
-
-        Button
-        {
             text: "Переносы"
+            checked: true
             checkable: true
-            onCheckedChanged: { if (mainWindow.calendarHeader) mainWindow.calendarHeader.milestoneBar.showRescheduled = checked }
+            Layout.preferredWidth: 95
+            onCheckedChanged: { console.log("Переносы checked:", checked); if (mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar) { mainWindow.calendarHeader.milestoneBar.showRescheduled = checked } else { console.log("milestoneBar not found") } }
             font.pixelSize: 12
         }
 
-        Item
-        {
-            width: appToolBar.width - 1200
-            height: 1
-        }
+        Item { Layout.fillWidth: true; Layout.minimumWidth: 5 }
 
         Button
         {
             text: "Помощь"
+            Layout.preferredWidth: 80
             onClicked: mainWindow.helpDialog.open()
         }
 
         Button
         {
             text: "О программе"
+            Layout.preferredWidth: 115
             onClicked: mainWindow.aboutDialog.open()
         }
     }

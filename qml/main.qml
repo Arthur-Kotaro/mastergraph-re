@@ -9,6 +9,8 @@ ApplicationWindow
     id: mainWindow
     width: 1280
     height: 800
+    minimumWidth: 1000
+    minimumHeight: 700
     visible: true
     title:
     {

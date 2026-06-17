@@ -15,6 +15,7 @@ Rectangle
     property date startDate: new Date()
     property var milestones: []
     property bool showRescheduled: true
+    onShowRescheduledChanged: milestoneCanvas.requestPaint()
 
     function updateMilestones()
     {
