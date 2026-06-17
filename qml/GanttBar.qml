@@ -166,7 +166,8 @@ Rectangle
         }
         onAccepted:
         {
-            if (taskId !== "" && newNameField.text !== "") {
+            if (taskId !== "" && newNameField.text !== "")
+            {
                 projectController.projectData.taskModel.updateTask(taskId, newNameField.text, taskResponsible, taskStart, taskEnd, taskStatus)
                 taskTitle = newNameField.text
             }

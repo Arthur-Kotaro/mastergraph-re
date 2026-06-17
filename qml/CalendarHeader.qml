@@ -141,6 +141,54 @@ Rectangle
     {
         spacing: 0
 
+        // 1. Годы
+        Rectangle
+        {
+            width: contentWidth; height: rowHeight; color: "#e0e0e0"; border.color: "#888888"; border.width: 1
+            Row { Repeater { model: yearData
+                Rectangle { x: modelData.startIdx * dayWidth; width: modelData.days * dayWidth; height: rowHeight; border.color: "#aaaaaa"; border.width: 1; color: "transparent"
+                    Text { text: modelData.year; anchors.centerIn: parent; font.bold: true; font.pixelSize: 14 } } } }
+        }
+
+        // 2. Месяцы
+        Rectangle
+        {
+            width: contentWidth; height: rowHeight; color: "#e8e8e8"; border.color: "#888888"; border.width: 1
+            Row { Repeater { model: monthData
+                Rectangle { x: modelData.startIdx * dayWidth; width: modelData.days * dayWidth; height: rowHeight; border.color: "#aaaaaa"; border.width: 1; color: "transparent"
+                    Text { text: modelData.name; anchors.centerIn: parent; font.pixelSize: 12 } } } }
+        }
+
+        // 3. Недели
+        Rectangle
+        {
+            width: contentWidth; height: rowHeight; color: "#f0f0f0"; border.color: "#aaaaaa"; border.width: 1
+            Row { Repeater { model: weekData
+                Rectangle { x: modelData.startIdx * dayWidth; width: 7 * dayWidth; height: rowHeight; border.color: "#aaaaaa"; border.width: 1; color: "transparent"
+                    Text { text: "КН" + modelData.num; anchors.centerIn: parent; font.pixelSize: 10 } } } }
+        }
+
+        // 4. Дни
+        Rectangle
+        {
+            width: contentWidth; height: rowHeight; color: "#f8f8f8"; border.color: "#aaaaaa"; border.width: 1
+            Row { Repeater { model: totalDays
+                Rectangle { x: index * dayWidth; width: dayWidth; height: rowHeight; border.color: "#aaaaaa"; border.width: 1;
+                    color: { var dow = ((displayStart.getDay() + index) % 7 + 6) % 7; return (dow === 5 || dow === 6) ? "#ffe0e0" : (index % 2 === 0 ? "#ffffff" : "#f8f8f8") }
+                    Column { anchors.centerIn: parent; spacing: 2
+                        Text { text: ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"][((displayStart.getDay() + index) % 7 + 6) % 7]; anchors.horizontalCenter: parent.horizontalCenter; font.pixelSize: 10; font.bold: true }
+                        Text { text: root.dayNumbers[index] || ""; anchors.horizontalCenter: parent.horizontalCenter; font.pixelSize: 11 } } } } }
+        }
+
+        // 5. Вехи
+        MilestoneBar
+        {
+            id: milestoneBar
+            width: contentWidth; height: rowHeight; milestonesModel: projectController?.projectData?.milestoneModel
+            startDate: displayStart; dayWidth: dayWidth
+        }
+
+        // 6. Актуальность (даты создания/изменения)
         Rectangle
         {
             width: contentWidth
@@ -166,48 +214,6 @@ Rectangle
                     font.pixelSize: 11
                 }
             }
-        }
-
-        Rectangle
-        {
-            width: contentWidth; height: rowHeight; color: "#e0e0e0"; border.color: "#888888"; border.width: 1
-            Row { Repeater { model: yearData
-                Rectangle { x: modelData.startIdx * dayWidth; width: modelData.days * dayWidth; height: rowHeight; border.color: "#aaaaaa"; border.width: 1; color: "transparent"
-                    Text { text: modelData.year; anchors.centerIn: parent; font.bold: true; font.pixelSize: 14 } } } }
-        }
-
-        Rectangle
-        {
-            width: contentWidth; height: rowHeight; color: "#e8e8e8"; border.color: "#888888"; border.width: 1
-            Row { Repeater { model: monthData
-                Rectangle { x: modelData.startIdx * dayWidth; width: modelData.days * dayWidth; height: rowHeight; border.color: "#aaaaaa"; border.width: 1; color: "transparent"
-                    Text { text: modelData.name; anchors.centerIn: parent; font.pixelSize: 12 } } } }
-        }
-
-        Rectangle
-        {
-            width: contentWidth; height: rowHeight; color: "#f0f0f0"; border.color: "#aaaaaa"; border.width: 1
-            Row { Repeater { model: weekData
-                Rectangle { x: modelData.startIdx * dayWidth; width: 7 * dayWidth; height: rowHeight; border.color: "#aaaaaa"; border.width: 1; color: "transparent"
-                    Text { text: "КН" + modelData.num; anchors.centerIn: parent; font.pixelSize: 10 } } } }
-        }
-
-        Rectangle
-        {
-            width: contentWidth; height: rowHeight; color: "#f8f8f8"; border.color: "#aaaaaa"; border.width: 1
-            Row { Repeater { model: totalDays
-                Rectangle { x: index * dayWidth; width: dayWidth; height: rowHeight; border.color: "#aaaaaa"; border.width: 1;
-                    color: { var dow = ((displayStart.getDay() + index) % 7 + 6) % 7; return (dow === 5 || dow === 6) ? "#ffe0e0" : (index % 2 === 0 ? "#ffffff" : "#f8f8f8") }
-                    Column { anchors.centerIn: parent; spacing: 2
-                        Text { text: ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"][((displayStart.getDay() + index) % 7 + 6) % 7]; anchors.horizontalCenter: parent.horizontalCenter; font.pixelSize: 10; font.bold: true }
-                        Text { text: root.dayNumbers[index] || ""; anchors.horizontalCenter: parent.horizontalCenter; font.pixelSize: 11 } } } } }
-        }
-
-        MilestoneBar
-        {
-            id: milestoneBar
-            width: contentWidth; height: rowHeight; milestonesModel: projectController?.projectData?.milestoneModel
-            startDate: displayStart; dayWidth: dayWidth
         }
     }
 }
