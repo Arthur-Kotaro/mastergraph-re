@@ -436,10 +436,6 @@ Rectangle
                 MouseArea
                 {
                     id: moveArea
-                    enabled: {
-                        var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
-                        return task ? task.status !== 1 : true
-                    }
                     anchors.fill: parent
                     hoverEnabled: true
                     drag.target: parent
@@ -450,8 +446,15 @@ Rectangle
 
                     onPressed: function(mouse)
                     {
+                        var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        if (task && task.status === 1)
+                        {
+                            mouse.accepted = false
+                            return
+                        }
+
                         if (root.externalFlickable) root.externalFlickable.interactive = false
-                        if (root.externalFlickable) root.externalFlickable.interactive = false
+
                         if (mouse.button === Qt.RightButton)
                         {
                             taskContextMenu.taskId = modelData.taskId
@@ -489,10 +492,6 @@ Rectangle
                     MouseArea
                     {
                         id: resizeArea
-                    enabled: {
-                        var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
-                        return task ? task.status !== 1 : true
-                    }
                         anchors.fill: parent
                         cursorShape: Qt.SizeHorCursor
 
@@ -500,15 +499,20 @@ Rectangle
                         property real startMouseX: 0
 
                         onPressed:
-                    {
-                        if (root.externalFlickable) root.externalFlickable.interactive = false
+                        {
+                            var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                            if (task && task.status === 1) return
 
+                            if (root.externalFlickable) root.externalFlickable.interactive = false
                             startWidth = ganttBar.width
                             startMouseX = mouseX
                         }
 
                         onPositionChanged:
                         {
+                            var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                            if (task && task.status === 1) return
+
                             if (pressed)
                             {
                                 var delta = mouseX - startMouseX
