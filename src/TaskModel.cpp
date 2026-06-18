@@ -132,12 +132,6 @@ void TaskModel::updateTaskDates(const QString& taskId, const QDate& newStart, co
             QPair<QDate, QDate> oldDates(task.startDate, task.endDate);
             task.dateHistory.append(oldDates);
         }
-        if (addToHistory && (newStart > task.startDate || newEnd > task.endDate))
-        {
-            HistoryEntry* entry = new HistoryEntry(
-                taskId, task.startDate, task.endDate, newStart, newEnd, this);
-            task.history.append(entry);
-        }
         
         task.startDate = newStart;
         task.endDate = newEnd;
@@ -154,9 +148,6 @@ void TaskModel::setTaskStatus(const QString& taskId, GanttDefines::TaskStatus st
     if (index >= 0)
     {
         m_tasks[index].status = status;
-        if (status == GanttDefines::TaskStatus::Completed)
-        {
-        }
         QModelIndex modelIndex = createIndex(index, 0);
         emit dataChanged(modelIndex, modelIndex);
     }
@@ -168,6 +159,18 @@ void TaskModel::setTaskComment(const QString& taskId, const QString& comment)
     if (index >= 0)
     {
         m_tasks[index].comment = comment;
+        QModelIndex modelIndex = createIndex(index, 0);
+        emit dataChanged(modelIndex, modelIndex);
+    }
+}
+
+void TaskModel::addDateHistory(const QString& taskId, const QDate& oldStart, const QDate& oldEnd)
+{
+    int index = findTaskIndex(taskId);
+    if (index >= 0)
+    {
+        QPair<QDate, QDate> oldDates(oldStart, oldEnd);
+        m_tasks[index].dateHistory.append(oldDates);
         QModelIndex modelIndex = createIndex(index, 0);
         emit dataChanged(modelIndex, modelIndex);
     }
@@ -198,6 +201,15 @@ QVariantMap TaskModel::getTask(const QString& taskId) const
         map["status"] = static_cast<int>(task.status);
         map["groupId"] = task.groupId;
         map["comment"] = task.comment;
+        QVariantList history;
+        for (const auto& pair : task.dateHistory)
+        {
+            QVariantMap dates;
+            dates["start"] = pair.first.toString("dd.MM.yyyy");
+            dates["end"] = pair.second.toString("dd.MM.yyyy");
+            history.append(dates);
+        }
+        map["dateHistory"] = history;
         return map;
     }
     return QVariantMap();
@@ -235,7 +247,6 @@ QList<HistoryEntry*> TaskModel::getTaskHistory(const QString& taskId) const
 QVariantList TaskModel::getAllTasks() const
 {
     QVariantList result;
-    qDebug() << "TaskModel::getAllTasks() called, m_tasks.size()=" << m_tasks.size();
     for (const auto& task : m_tasks)
     {
         QVariantMap map;
@@ -247,8 +258,16 @@ QVariantList TaskModel::getAllTasks() const
         map["status"] = static_cast<int>(task.status);
         map["groupId"] = task.groupId;
         map["comment"] = task.comment;
+        QVariantList history;
+        for (const auto& pair : task.dateHistory)
+        {
+            QVariantMap dates;
+            dates["start"] = pair.first.toString("dd.MM.yyyy");
+            dates["end"] = pair.second.toString("dd.MM.yyyy");
+            history.append(dates);
+        }
+        map["dateHistory"] = history;
         result.append(map);
-        qDebug() << "  Task:" << task.title << task.startDate.toString("dd.MM.yyyy") << task.endDate.toString("dd.MM.yyyy");
     }
     return result;
 }

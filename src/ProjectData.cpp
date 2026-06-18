@@ -174,6 +174,8 @@ QVariantMap ProjectData::toJson() const
         task["endDate"] = idx.data(GanttDefines::EndDateRole).toDate().toString("dd.MM.yyyy");
         task["status"] = idx.data(GanttDefines::StatusRole).toInt();
         task["groupId"] = idx.data(GanttDefines::GroupIdRole).toString();
+        task["comment"] = m_taskModel->getTask(task["id"].toString())["comment"].toString();
+        task["dateHistory"] = m_taskModel->getTask(task["id"].toString())["dateHistory"].toList();
         tasks.append(task);
     }
     result["tasks"] = tasks;
@@ -239,6 +241,19 @@ bool ProjectData::fromJson(const QVariantMap& json)
         QString groupId = taskMap["groupId"].toString();
         m_taskModel->addTaskWithId(taskId, groupId, taskMap["title"].toString(), taskMap["responsible"].toString(), startDate, endDate, status);
         m_groupModel->addTaskToGroup(groupId, taskId);
+        if (!taskMap["comment"].toString().isEmpty())
+            m_taskModel->setTaskComment(taskId, taskMap["comment"].toString());
+        if (!taskMap["comment"].toString().isEmpty())
+            m_taskModel->setTaskComment(taskId, taskMap["comment"].toString());
+        QVariantList dateHistory = taskMap["dateHistory"].toList();
+        for (const auto& dh : dateHistory)
+        {
+            QVariantMap dates = dh.toMap();
+            QDate oldStart = QDate::fromString(dates["start"].toString(), "dd.MM.yyyy");
+            QDate oldEnd = QDate::fromString(dates["end"].toString(), "dd.MM.yyyy");
+            if (oldStart.isValid() && oldEnd.isValid())
+                m_taskModel->addDateHistory(taskId, oldStart, oldEnd);
+        }
     }
     emit m_taskModel->countChanged();
     emit m_groupModel->countChanged();

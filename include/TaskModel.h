@@ -43,6 +43,7 @@ public:
     Q_INVOKABLE void updateTaskDates(const QString& taskId, const QDate& newStart, const QDate& newEnd, bool addToHistory = true);
     Q_INVOKABLE void setTaskStatus(const QString& taskId, GanttDefines::TaskStatus status);
     Q_INVOKABLE void setTaskComment(const QString& taskId, const QString& comment);
+    void addDateHistory(const QString& taskId, const QDate& oldStart, const QDate& oldEnd);
     Q_INVOKABLE QStringList getTasksForGroup(const QString& groupId) const;
     Q_INVOKABLE QVariantMap getTask(const QString& taskId) const;
     Q_INVOKABLE void moveTask(const QString& taskId, int newPosition);
