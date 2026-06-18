@@ -115,19 +115,23 @@ Rectangle
 
         Button
         {
+            text: "Комментарии"
+            checked: true
+            checkable: true
+            Layout.preferredWidth: 115
+            onCheckedChanged: { if(mainWindow && mainWindow.gridArea) mainWindow.gridArea.showComments = checked }
+            font.pixelSize: 12
+        }
+
+        Button
+        {
             text: "🔄"
             Layout.preferredWidth: 50
             font.pixelSize: 18
             onClicked:
             {
                 if (mainWindow && mainWindow.gridArea)
-                {
                     mainWindow.gridArea.updateData()
-                }
-                if (mainWindow && mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar && mainWindow.calendarHeader.milestoneBar.canvas)
-                {
-                    mainWindow.calendarHeader.milestoneBar.canvas.requestPaint()
-                }
             }
         }
 

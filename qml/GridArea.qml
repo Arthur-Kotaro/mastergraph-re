@@ -22,6 +22,7 @@ Rectangle
     property int rowHeight: 40
     property var externalFlickable: null
     property bool showDependencies: true
+    property bool showComments: true
     onShowDependenciesChanged: gridCanvas.requestPaint()
     property date displayStart: new Date()
     property date displayEnd: new Date()
@@ -371,7 +372,7 @@ Rectangle
                 }
                 anchors.verticalCenter: parent.verticalCenter
                 font.bold: true
-                font.pixelSize: 12
+                font.pixelSize: 14
                 z: 3
             }
 
@@ -400,6 +401,7 @@ Rectangle
                 function getStatusColor()
                 {
                     var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        var forceUpdate = root.updateCounter
                         var forceUpdate = root.updateCounter
                     if (task)
                     {
@@ -443,6 +445,7 @@ Rectangle
                     {
                         var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
                         var forceUpdate = root.updateCounter
+                        var forceUpdate = root.updateCounter
                         if (!task) return ""
                         var duration = Math.floor((task.endDate - task.startDate) / (24 * 60 * 60 * 1000)) + 1
                         var commentText = task.comment ? task.comment : "-"
@@ -467,6 +470,7 @@ Rectangle
                     onPressed: function(mouse)
                     {
                         var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        var forceUpdate = root.updateCounter
                         var forceUpdate = root.updateCounter
                         if (task && task.status === 1)
                         {
@@ -523,6 +527,7 @@ Rectangle
                         {
                             var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
                         var forceUpdate = root.updateCounter
+                        var forceUpdate = root.updateCounter
                             if (task && task.status === 1) return
 
                             if (root.externalFlickable) root.externalFlickable.interactive = false
@@ -533,6 +538,7 @@ Rectangle
                         onPositionChanged:
                         {
                             var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        var forceUpdate = root.updateCounter
                         var forceUpdate = root.updateCounter
                             if (task && task.status === 1) return
 
@@ -563,6 +569,23 @@ Rectangle
                     {
                         ganttBar.color = ganttBar.getStatusColor()
                     }
+                }
+
+                Text
+                {
+                    visible: root.showComments && (modelData && modelData.type === "task")
+                    text:
+                    {
+                        var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        var forceUpdate = root.updateCounter
+                        return task && task.comment ? task.comment : ""
+                    }
+                    x: parent.width + 14
+                    y: 4
+                    font.pixelSize: 14
+                    color: "#666666"
+                    elide: Text.ElideRight
+                    width: Math.min(200, rowContainer.width - ganttBar.x - ganttBar.width - 10)
                 }
             }
         }
