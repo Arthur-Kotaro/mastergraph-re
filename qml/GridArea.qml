@@ -441,7 +441,9 @@ Rectangle
                         var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
                         if (!task) return ""
                         var duration = Math.floor((task.endDate - task.startDate) / (24 * 60 * 60 * 1000)) + 1
-                        return task.title + "\nДлительность: " + duration +
+                        var commentText = task.comment ? task.comment : "-"
+                        return "Название: " + task.title + "\nДлительность: " + duration +
+                               " дней\nОтветственный: " + task.responsible + "\nКомментарий: " + commentText
                                " дней\nОтветственный: " + task.responsible
                     }
                     delay: 500

@@ -14,16 +14,19 @@ Menu
     MenuItem
     {
         text: "Переименовать"
-        onTriggered:
-        {
-            if (root.onRenameCallback) root.onRenameCallback(root.taskId)
-        }
+        onTriggered: { if (root.onRenameCallback) root.onRenameCallback(root.taskId) }
     }
 
     MenuItem
     {
         text: "Назначить ответственного"
         onTriggered: { if (root.onAssignResponsibleCallback) root.onAssignResponsibleCallback(root.taskId) }
+    }
+
+    MenuItem
+    {
+        text: "Изменить комментарий"
+        onTriggered: { if (root.taskId && mainWindow) mainWindow.commentDialog.openForTask(root.taskId) }
     }
 
     Menu

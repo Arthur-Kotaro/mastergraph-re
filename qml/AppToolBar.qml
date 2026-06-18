@@ -109,8 +109,26 @@ Rectangle
             checked: true
             checkable: true
             Layout.preferredWidth: 95
-            onCheckedChanged: { console.log("Переносы checked:", checked); if (mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar) { mainWindow.calendarHeader.milestoneBar.showRescheduled = checked } else { console.log("milestoneBar not found") } }
+            onCheckedChanged: { if (mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar) mainWindow.calendarHeader.milestoneBar.showRescheduled = checked }
             font.pixelSize: 12
+        }
+
+        Button
+        {
+            text: "🔄"
+            Layout.preferredWidth: 50
+            font.pixelSize: 18
+            onClicked:
+            {
+                if (mainWindow && mainWindow.gridArea)
+                {
+                    mainWindow.gridArea.updateData()
+                }
+                if (mainWindow && mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar && mainWindow.calendarHeader.milestoneBar.canvas)
+                {
+                    mainWindow.calendarHeader.milestoneBar.canvas.requestPaint()
+                }
+            }
         }
 
         Item { Layout.fillWidth: true; Layout.minimumWidth: 5 }

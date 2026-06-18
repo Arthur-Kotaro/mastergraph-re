@@ -115,7 +115,7 @@ Item
                         var startDate = new Date()
                         var endDate = new Date()
                         endDate.setDate(endDate.getDate() + 7)
-                        projectController.addTask(groupId, "Новая задача", "", startDate, endDate)
+                        mainWindow.newTaskDialog.openForGroup(groupId)
                         refreshTasks()
                         if (typeof mainWindow !== "undefined" && mainWindow && mainWindow.gridArea)
                         {
@@ -558,50 +558,15 @@ Item
 
     function addTaskAbove(existingTaskId)
     {
-        if (!projectController || !projectController.projectData) return
-
-        var startDate = new Date()
-        var endDate = new Date()
-        endDate.setDate(endDate.getDate() + 7)
-
-        projectController.addTask(groupId, "Новая задача", "", startDate, endDate)
-
-        var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
-        var newTaskId = tasks[tasks.length - 1]
-        var existingIndex = tasks.indexOf(existingTaskId)
-        if (existingIndex < 0) existingIndex = 0
-
-        projectController.projectData.taskModel.moveTaskToGroup(newTaskId, groupId, existingIndex)
-
-        refreshTasks()
-        if (typeof mainWindow !== "undefined" && mainWindow && mainWindow.gridArea)
-        {
-            mainWindow.gridArea.updateData()
-        }
+        mainWindow.newTaskDialog.openForGroup(groupId, existingTaskId)
     }
 
     function addTaskBelow(existingTaskId)
     {
-        if (!projectController || !projectController.projectData) return
-
-        var startDate = new Date()
-        var endDate = new Date()
-        endDate.setDate(endDate.getDate() + 7)
-
-        projectController.addTask(groupId, "Новая задача", "", startDate, endDate)
-
         var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
-        var newTaskId = tasks[tasks.length - 1]
-        var existingIndex = tasks.indexOf(existingTaskId)
-        if (existingIndex < 0) existingIndex = tasks.length - 1
-
-        projectController.projectData.taskModel.moveTaskToGroup(newTaskId, groupId, existingIndex + 1)
-
-        refreshTasks()
-        if (typeof mainWindow !== "undefined" && mainWindow && mainWindow.gridArea)
-        {
-            mainWindow.gridArea.updateData()
-        }
+        var index = tasks.indexOf(existingTaskId)
+        var insertAfter = (index >= 0 && index + 1 < tasks.length) ? tasks[index + 1] : ""
+        mainWindow.newTaskDialog.openForGroup(groupId, insertAfter)
     }
 
     function addGroupAbove()

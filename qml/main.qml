@@ -32,6 +32,8 @@ ApplicationWindow
     property alias dependencyDialog: dependencyDialog
     property alias cascadeDialog: cascadeDialog
     property alias completeTaskDialog: completeTaskDialog
+    property alias newTaskDialog: newTaskDialog
+    property alias commentDialog: commentDialog
     property alias leftPanel: leftPanel
     property alias calendarHeader: calendarHeader
 
@@ -45,9 +47,11 @@ ApplicationWindow
         else mainWindow.showFullScreen()
     } }
 
-    Connections {
+    Connections
+    {
         target: projectController
-        function onProjectLoaded() {
+        function onProjectLoaded()
+        {
             if (gridArea) gridArea.updateData()
         }
     }
@@ -159,6 +163,8 @@ ApplicationWindow
     DependencyDialog { id: dependencyDialog }
     CascadeDialog { id: cascadeDialog }
     CompleteTaskDialog { id: completeTaskDialog }
+    NewTaskDialog { id: newTaskDialog }
+    CommentDialog { id: commentDialog }
 
     Labs.FileDialog
     {

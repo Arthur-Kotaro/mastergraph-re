@@ -21,6 +21,8 @@ public:
         QDate startDate;
         QDate endDate;
         GanttDefines::TaskStatus status;
+        QList<QPair<QDate, QDate>> dateHistory;
+        QString comment;
         QString groupId;
         QList<HistoryEntry*> history;
     };
@@ -40,6 +42,7 @@ public:
                                 const QDate& startDate, const QDate& endDate, int status);
     Q_INVOKABLE void updateTaskDates(const QString& taskId, const QDate& newStart, const QDate& newEnd, bool addToHistory = true);
     Q_INVOKABLE void setTaskStatus(const QString& taskId, GanttDefines::TaskStatus status);
+    Q_INVOKABLE void setTaskComment(const QString& taskId, const QString& comment);
     Q_INVOKABLE QStringList getTasksForGroup(const QString& groupId) const;
     Q_INVOKABLE QVariantMap getTask(const QString& taskId) const;
     Q_INVOKABLE void moveTask(const QString& taskId, int newPosition);

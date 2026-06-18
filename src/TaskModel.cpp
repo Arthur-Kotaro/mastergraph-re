@@ -92,7 +92,8 @@ void TaskModel::addTaskWithId(const QString& taskId, const QString& groupId, con
 void TaskModel::removeTask(const QString& taskId)
 {
     int index = findTaskIndex(taskId);
-    if (index >= 0) {
+    if (index >= 0)
+    {
         beginRemoveRows(QModelIndex(), index, index);
         for (auto* entry : m_tasks[index].history) delete entry;
         m_tasks.removeAt(index);
@@ -119,12 +120,18 @@ void TaskModel::updateTask(const QString& taskId, const QString& title, const QS
     }
 }
 
-void TaskModel::updateTaskDates(const QString& taskId, const QDate& newStart, const QDate& newEnd, bool addToHistory) {
+void TaskModel::updateTaskDates(const QString& taskId, const QDate& newStart, const QDate& newEnd, bool addToHistory)
+{
     int index = findTaskIndex(taskId);
     if (index >= 0 && newStart <= newEnd)
     {
         Task& task = m_tasks[index];
         
+        if (addToHistory)
+        {
+            QPair<QDate, QDate> oldDates(task.startDate, task.endDate);
+            task.dateHistory.append(oldDates);
+        }
         if (addToHistory && (newStart > task.startDate || newEnd > task.endDate))
         {
             HistoryEntry* entry = new HistoryEntry(
@@ -155,6 +162,17 @@ void TaskModel::setTaskStatus(const QString& taskId, GanttDefines::TaskStatus st
     }
 }
 
+void TaskModel::setTaskComment(const QString& taskId, const QString& comment)
+{
+    int index = findTaskIndex(taskId);
+    if (index >= 0)
+    {
+        m_tasks[index].comment = comment;
+        QModelIndex modelIndex = createIndex(index, 0);
+        emit dataChanged(modelIndex, modelIndex);
+    }
+}
+
 QStringList TaskModel::getTasksForGroup(const QString& groupId) const
 {
     QStringList result;
@@ -168,7 +186,8 @@ QStringList TaskModel::getTasksForGroup(const QString& groupId) const
 QVariantMap TaskModel::getTask(const QString& taskId) const
 {
     int index = findTaskIndex(taskId);
-    if (index >= 0) {
+    if (index >= 0)
+    {
         const Task& task = m_tasks[index];
         QVariantMap map;
         map["id"] = task.id;
@@ -178,6 +197,7 @@ QVariantMap TaskModel::getTask(const QString& taskId) const
         map["endDate"] = task.endDate;
         map["status"] = static_cast<int>(task.status);
         map["groupId"] = task.groupId;
+        map["comment"] = task.comment;
         return map;
     }
     return QVariantMap();
@@ -226,6 +246,7 @@ QVariantList TaskModel::getAllTasks() const
         map["endDate"] = task.endDate;
         map["status"] = static_cast<int>(task.status);
         map["groupId"] = task.groupId;
+        map["comment"] = task.comment;
         result.append(map);
         qDebug() << "  Task:" << task.title << task.startDate.toString("dd.MM.yyyy") << task.endDate.toString("dd.MM.yyyy");
     }
