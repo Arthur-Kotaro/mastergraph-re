@@ -5,9 +5,9 @@ import QtQuick.Layouts 6.0
 Dialog
 {
     id: root
-    title: "Новая задача"
+    title: "Создание новой задачи"
     width: 500
-    height: 520
+    height: 540
     modal: true
     standardButtons: Dialog.Ok | Dialog.Cancel
     anchors.centerIn: Overlay.overlay

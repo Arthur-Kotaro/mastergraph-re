@@ -33,6 +33,7 @@ Rectangle
     property real contentHeight: totalRows * rowHeight
 
     property var visibleItems: []
+    property int updateCounter: 0
     CurrentTimeLine
     {
         id: currentTimeLine
@@ -110,6 +111,7 @@ Rectangle
         }
 
         visibleItems = items
+        updateCounter++
         totalRows = visibleItems.length
         contentHeight = totalRows * rowHeight
 
@@ -398,6 +400,7 @@ Rectangle
                 function getStatusColor()
                 {
                     var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        var forceUpdate = root.updateCounter
                     if (task)
                     {
                         switch(task.status)
@@ -439,6 +442,7 @@ Rectangle
                     text:
                     {
                         var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        var forceUpdate = root.updateCounter
                         if (!task) return ""
                         var duration = Math.floor((task.endDate - task.startDate) / (24 * 60 * 60 * 1000)) + 1
                         var commentText = task.comment ? task.comment : "-"
@@ -463,6 +467,7 @@ Rectangle
                     onPressed: function(mouse)
                     {
                         var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        var forceUpdate = root.updateCounter
                         if (task && task.status === 1)
                         {
                             mouse.accepted = false
@@ -517,6 +522,7 @@ Rectangle
                         onPressed:
                         {
                             var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        var forceUpdate = root.updateCounter
                             if (task && task.status === 1) return
 
                             if (root.externalFlickable) root.externalFlickable.interactive = false
@@ -527,6 +533,7 @@ Rectangle
                         onPositionChanged:
                         {
                             var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        var forceUpdate = root.updateCounter
                             if (task && task.status === 1) return
 
                             if (pressed)

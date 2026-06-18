@@ -47,7 +47,6 @@ Dialog
         {
             projectController.projectData.taskModel.setTaskComment(taskId, commentField.text)
             if (mainWindow && mainWindow.gridArea) mainWindow.gridArea.updateData()
-            if (mainWindow && mainWindow.gridArea) mainWindow.gridArea.updateData()
         }
     }
 }
