@@ -142,7 +142,7 @@ Rectangle
                                     items.push({
                                         type: "history",
                                         taskId: items[vi].taskId,
-                                        rowIndex: taskCounter,
+                                        rowIndex: items[vi].rowIndex,
                                         taskTitle: taskData.title,
                                         taskResponsible: taskData.responsible,
                                         taskStart: histStart,
@@ -428,7 +428,7 @@ Rectangle
             Rectangle
             {
                 id: ganttBar
-                visible: modelData && (modelData.type === "task" || modelData.type === "history")
+                visible: modelData && (modelData.type === "task" || (modelData.type === "history" && root.showTaskHistory))
 
                 x:
                 {
