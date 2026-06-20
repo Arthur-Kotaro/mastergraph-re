@@ -588,10 +588,11 @@ Dialog
                     if (startDate <= endDate)
                     {
                         projectController.updateTaskDates(taskId, startDate, endDate)
-                        if (typeof mainWindow !== "undefined" && mainWindow && mainWindow.gridArea)
-                        {
-                            mainWindow.gridArea.updateData()
-                        }
+                        console.log("EditTaskDialog: updateTaskDates called, taskId:", taskId, "start:", startDate, "end:", endDate)
+                        // if (typeof mainWindow !== "undefined" && mainWindow && mainWindow.gridArea)
+                        // {
+                        //     mainWindow.gridArea.updateData()
+                        // }
                         root.close()
                     }
                     else

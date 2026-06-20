@@ -131,6 +131,7 @@ void TaskModel::updateTaskDates(const QString& taskId, const QDate& newStart, co
         {
             QPair<QDate, QDate> oldDates(task.startDate, task.endDate);
             task.dateHistory.append(oldDates);
+    qDebug() << "dateHistory appended, new size:" << task.dateHistory.size();
         }
         
         task.startDate = newStart;

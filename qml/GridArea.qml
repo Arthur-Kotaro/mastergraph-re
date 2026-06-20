@@ -4,11 +4,13 @@ import QtQuick.Controls 6.0
 Rectangle
 {
     id: root
-    MouseArea {
+    MouseArea
+    {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
         onWheel: function(wheel) {
-            if (wheel.modifiers & Qt.ControlModifier) {
+            if (wheel.modifiers & Qt.ControlModifier)
+            {
                 if (wheel.angleDelta.y > 0)
                     projectController.settingsManager.setZoomLevel(0)
                 else
@@ -23,6 +25,7 @@ Rectangle
     property var externalFlickable: null
     property bool showDependencies: true
     property bool showComments: true
+    property bool showTaskHistory: true
     onShowDependenciesChanged: gridCanvas.requestPaint()
     property date displayStart: new Date()
     property date displayEnd: new Date()
@@ -35,6 +38,9 @@ Rectangle
 
     property var visibleItems: []
     property int updateCounter: 0
+
+    Component.onCompleted: updateData()
+
     CurrentTimeLine
     {
         id: currentTimeLine
@@ -92,6 +98,7 @@ Rectangle
                     for (var j = 0; j < tasks.length; j++)
                     {
                         var taskData = projectController.projectData.taskModel.getTask(tasks[j])
+                    console.log("getTask result:", JSON.stringify(taskData))
                         if (taskData)
                         {
                             items.push({
@@ -111,7 +118,46 @@ Rectangle
             }
         }
 
+        if (root.showTaskHistory)
+        {
+            for (var vi = 0; vi < items.length; vi++)
+            {
+                if (items[vi].type === "task")
+                {
+                    var taskData = projectController.projectData.taskModel.getTask(items[vi].taskId);
+                    console.log("getTask result:", JSON.stringify(taskData))
+                    if (taskData && taskData.dateHistory && taskData.dateHistory.length > 0)
+                    {
+                        for (var hi = 0; hi < taskData.dateHistory.length; hi++)
+                        {
+                            var hist = taskData.dateHistory[hi];
+                            var partsStart = hist.start.split(".")
+                            var partsEnd = hist.end.split(".")
+                            if (partsStart.length === 3 && partsEnd.length === 3)
+                            {
+                                var histStart = new Date(parseInt(partsStart[2]), parseInt(partsStart[1]) - 1, parseInt(partsStart[0]))
+                                var histEnd = new Date(parseInt(partsEnd[2]), parseInt(partsEnd[1]) - 1, parseInt(partsEnd[0]))
+                                if (!isNaN(histStart.getTime()) && !isNaN(histEnd.getTime()))
+                                {
+                                    items.push({
+                                        type: "history",
+                                        taskId: items[vi].taskId,
+                                        rowIndex: taskCounter,
+                                        taskTitle: taskData.title,
+                                        taskResponsible: taskData.responsible,
+                                        taskStart: histStart,
+                                        taskEnd: histEnd,
+                                        taskStatus: 2,
+                                        isHistory: true
+                                        });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         visibleItems = items
+        var historyCount = 0; for (var vi = 0; vi < visibleItems.length; vi++) { if (visibleItems[vi].type === "history") historyCount++; } console.log("visibleItems count:", visibleItems.length, "history items:", historyCount)
         updateCounter++
         totalRows = visibleItems.length
         contentHeight = totalRows * rowHeight
@@ -122,6 +168,7 @@ Rectangle
         groupsRepeater.model = visibleItems
         gridCanvas.requestPaint()
         if (currentTimeLine) currentTimeLine.updateLinePosition()
+        }
     }
 
     function updateTaskDates(taskId, newStart, newEnd)
@@ -132,7 +179,7 @@ Rectangle
         }
     }
 
-    Component.onCompleted: updateData()
+
 
     Connections
     {
@@ -156,7 +203,8 @@ Rectangle
         function onMilestonesChanged() { updateData() }
     }
 
-    Connections {
+    Connections
+    {
         target: projectController?.projectData?.dependencyModel
         function onRowsInserted() { updateData() }
         function onRowsRemoved() { updateData() }
@@ -258,56 +306,57 @@ Rectangle
             ctx.stroke()
 
             // Отрисовка зависимостей
-            if (showDependencies) {
-            if (projectController && projectController.projectData && projectController.projectData.dependencyModel)
+            if (showDependencies)
             {
-                var depModel = projectController.projectData.dependencyModel
-                for (var di = 0; di < depModel.rowCount(); di++)
+                if (projectController && projectController.projectData && projectController.projectData.dependencyModel)
                 {
-                    var idx = depModel.index(di, 0)
-                    var predId = depModel.data(idx, Qt.UserRole + 2)
-                    var succId = depModel.data(idx, Qt.UserRole + 3)
-                    if (predId && succId)
+                    var depModel = projectController.projectData.dependencyModel
+                    for (var di = 0; di < depModel.rowCount(); di++)
                     {
-                        var predTask = projectController.projectData.taskModel.getTask(predId)
-                        var succTask = projectController.projectData.taskModel.getTask(succId)
-                        if (predTask && succTask)
+                        var idx = depModel.index(di, 0)
+                        var predId = depModel.data(idx, Qt.UserRole + 2)
+                        var succId = depModel.data(idx, Qt.UserRole + 3)
+                        if (predId && succId)
                         {
-                            var predEnd = new Date(predTask.endDate)
-                            var predDays = Math.floor((predEnd - displayStart) / (1000 * 60 * 60 * 24))
-                            var predX = predDays * dayWidth + dayWidth
-
-                            var predRow = -1
-                            var succRow = -1
-                            for (var vi = 0; vi < visibleItems.length; vi++)
+                            var predTask = projectController.projectData.taskModel.getTask(predId)
+                            var succTask = projectController.projectData.taskModel.getTask(succId)
+                            if (predTask && succTask)
                             {
-                                if (visibleItems[vi].taskId === predId) predRow = vi
-                                if (visibleItems[vi].taskId === succId) succRow = vi
-                            }
+                                var predEnd = new Date(predTask.endDate)
+                                var predDays = Math.floor((predEnd - displayStart) / (1000 * 60 * 60 * 24))
+                                var predX = predDays * dayWidth + dayWidth
 
-                            if (predRow >= 0 && succRow >= 0)
-                            {
-                                var predY = predRow * rowHeight + rowHeight / 2
-                                var succY = succRow * rowHeight + rowHeight / 2
-                                var succStart = new Date(succTask.startDate)
-                                var succDays = Math.floor((succStart - displayStart) / (1000 * 60 * 60 * 24))
-                                var succX = succDays * dayWidth
+                                var predRow = -1
+                                var succRow = -1
+                                for (var vi = 0; vi < visibleItems.length; vi++)
+                                {
+                                    if (visibleItems[vi].taskId === predId) predRow = vi
+                                    if (visibleItems[vi].taskId === succId) succRow = vi
+                                }
 
-                                ctx.beginPath()
-                                ctx.strokeStyle = "#9966cc"
-                                ctx.lineWidth = 2
-                                ctx.moveTo(predX, predY)
-                                ctx.lineTo(predX + 10, predY)
-                                ctx.lineTo(succX - 10, succY)
-                                ctx.lineTo(succX, succY)
-                                ctx.stroke()
+                                if (predRow >= 0 && succRow >= 0)
+                                {
+                                    var predY = predRow * rowHeight + rowHeight / 2
+                                    var succY = succRow * rowHeight + rowHeight / 2
+                                    var succStart = new Date(succTask.startDate)
+                                    var succDays = Math.floor((succStart - displayStart) / (1000 * 60 * 60 * 24))
+                                    var succX = succDays * dayWidth
+
+                                    ctx.beginPath()
+                                    ctx.strokeStyle = "#9966cc"
+                                    ctx.lineWidth = 2
+                                    ctx.moveTo(predX, predY)
+                                    ctx.lineTo(predX + 10, predY)
+                                    ctx.lineTo(succX - 10, succY)
+                                    ctx.lineTo(succX, succY)
+                                    ctx.stroke()
+                                }
                             }
                         }
                     }
                 }
             }
 
-            }
             // Толстые горизонтальные линии для границ групп
             ctx.beginPath()
             ctx.lineWidth = 2
@@ -379,7 +428,7 @@ Rectangle
             Rectangle
             {
                 id: ganttBar
-                visible: modelData && modelData.type === "task"
+                visible: modelData && (modelData.type === "task" || modelData.type === "history")
 
                 x:
                 {
@@ -400,9 +449,8 @@ Rectangle
 
                 function getStatusColor()
                 {
-                    var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
-                        var forceUpdate = root.updateCounter
-                        var forceUpdate = root.updateCounter
+                    if (modelData.isHistory) return "#cccccc";
+                    var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId);
                     if (task)
                     {
                         switch(task.status)
@@ -441,6 +489,7 @@ Rectangle
                 ToolTip
                 {
                     visible: moveArea.containsMouse
+                    enabled: modelData.isHistory !== true
                     text:
                     {
                         var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
@@ -459,6 +508,7 @@ Rectangle
                 MouseArea
                 {
                     id: moveArea
+                    enabled: modelData.isHistory !== true
                     anchors.fill: parent
                     hoverEnabled: true
                     drag.target: parent
@@ -513,10 +563,12 @@ Rectangle
                     color: Qt.darker(parent.color, 1.5)
                     radius: 2
                     visible: moveArea.containsMouse
+                    enabled: modelData.isHistory !== true
 
                     MouseArea
                     {
                         id: resizeArea
+                        enabled: modelData.isHistory !== true
                         anchors.fill: parent
                         cursorShape: Qt.SizeHorCursor
 
@@ -526,8 +578,8 @@ Rectangle
                         onPressed:
                         {
                             var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
-                        var forceUpdate = root.updateCounter
-                        var forceUpdate = root.updateCounter
+                            var forceUpdate = root.updateCounter
+                            var forceUpdate = root.updateCounter
                             if (task && task.status === 1) return
 
                             if (root.externalFlickable) root.externalFlickable.interactive = false

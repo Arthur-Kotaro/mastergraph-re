@@ -109,7 +109,13 @@ Rectangle
             checked: true
             checkable: true
             Layout.preferredWidth: 95
-            onCheckedChanged: { if (mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar) mainWindow.calendarHeader.milestoneBar.showRescheduled = checked }
+            onCheckedChanged:
+            {
+                if (mainWindow && mainWindow.gridArea)
+                    mainWindow.gridArea.showTaskHistory = checked
+                if (mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar)
+                    mainWindow.calendarHeader.milestoneBar.showRescheduled = checked
+            }
             font.pixelSize: 12
         }
 

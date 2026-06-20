@@ -200,7 +200,7 @@ void ProjectController::updateTaskDates(const QString& taskId, const QDate& newS
     }
     
     m_projectData->get_taskModel()->updateTaskDates(taskId, newStart, newEnd,
-        m_settingsManager->tracingEnabled());
+        true);
     m_projectData->recalculateEndDate();
     m_projectData->set_Modified(true);
 }
