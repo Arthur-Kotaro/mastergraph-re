@@ -120,54 +120,18 @@ Rectangle
 
         if (root.showTaskHistory)
         {
-            for (var vi = 0; vi < items.length; vi++)
-            {
-                if (items[vi].type === "task")
-                {
-                    var taskData = projectController.projectData.taskModel.getTask(items[vi].taskId);
-                    console.log("getTask result:", JSON.stringify(taskData))
-                    if (taskData && taskData.dateHistory && taskData.dateHistory.length > 0)
-                    {
-                        for (var hi = 0; hi < taskData.dateHistory.length; hi++)
-                        {
-                            var hist = taskData.dateHistory[hi];
-                            var partsStart = hist.start.split(".")
-                            var partsEnd = hist.end.split(".")
-                            if (partsStart.length === 3 && partsEnd.length === 3)
-                            {
-                                var histStart = new Date(parseInt(partsStart[2]), parseInt(partsStart[1]) - 1, parseInt(partsStart[0]))
-                                var histEnd = new Date(parseInt(partsEnd[2]), parseInt(partsEnd[1]) - 1, parseInt(partsEnd[0]))
-                                if (!isNaN(histStart.getTime()) && !isNaN(histEnd.getTime()))
-                                {
-                                    items.push({
-                                        type: "history",
-                                        taskId: items[vi].taskId,
-                                        rowIndex: items[vi].rowIndex,
-                                        taskTitle: taskData.title,
-                                        taskResponsible: taskData.responsible,
-                                        taskStart: histStart,
-                                        taskEnd: histEnd,
-                                        taskStatus: 2,
-                                        isHistory: true
-                                        });
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        visibleItems = items
-        var historyCount = 0; for (var vi = 0; vi < visibleItems.length; vi++) { if (visibleItems[vi].type === "history") historyCount++; } console.log("visibleItems count:", visibleItems.length, "history items:", historyCount)
-        updateCounter++
-        totalRows = visibleItems.length
-        contentHeight = totalRows * rowHeight
+            visibleItems = items
+        //var historyCount = 0; for (var vi = 0; vi < visibleItems.length; vi++) { if (visibleItems[vi].type === "history") historyCount++; } console.log("visibleItems count:", visibleItems.length, "history items:", historyCount)
+            updateCounter++
+            totalRows = visibleItems.length
+            contentHeight = totalRows * rowHeight
 
-        root.width = gridWidth
-        root.height = contentHeight
+            root.width = gridWidth
+            root.height = contentHeight
 
-        groupsRepeater.model = visibleItems
-        gridCanvas.requestPaint()
-        if (currentTimeLine) currentTimeLine.updateLinePosition()
+            groupsRepeater.model = visibleItems
+            gridCanvas.requestPaint()
+            if (currentTimeLine) currentTimeLine.updateLinePosition()
         }
     }
 
@@ -638,6 +602,49 @@ Rectangle
                     color: "#666666"
                     elide: Text.ElideRight
                     width: Math.min(200, rowContainer.width - ganttBar.x - ganttBar.width - 10)
+                }
+            }
+            Repeater
+            {
+                model:
+                {
+                    if (modelData && modelData.type === "task" && root.showTaskHistory)
+                    {
+                        var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        return task && task.dateHistory ? task.dateHistory : []
+                    }
+                    return []
+                }
+                delegate: Rectangle
+                {
+                    x:
+                    {
+                        var ps = modelData.start.split(".")
+                        if (ps.length === 3)
+                        {
+                            var d = new Date(parseInt(ps[2]), parseInt(ps[1]) - 1, parseInt(ps[0]))
+                            return Math.max(0, Math.floor((d - root.displayStart) / 86400000) * root.dayWidth)
+                        }
+                        return 0
+                    }
+                    width:
+                    {
+                        var ps = modelData.start.split(".")
+                        var pe = modelData.end.split(".")
+                        if (ps.length === 3 && pe.length === 3)
+                        {
+                            var s = new Date(parseInt(ps[2]), parseInt(ps[1]) - 1, parseInt(ps[0]))
+                            var e = new Date(parseInt(pe[2]), parseInt(pe[1]) - 1, parseInt(pe[0]))
+                            return Math.max(10, (Math.floor((e - s) / 86400000) + 1) * root.dayWidth)
+                        }
+                        return 10
+                    }
+                    height: ganttBar.height
+                    y: ganttBar.y
+                    color: "#cccccc"
+                    opacity: 0.7
+                    radius: 4
+                    z: ganttBar.z - 1
                 }
             }
         }
