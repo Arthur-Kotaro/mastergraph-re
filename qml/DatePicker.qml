@@ -15,11 +15,13 @@ Rectangle {
     property int _calendarMonth: selectedDate.getMonth()
     property var _calendarModel: []
     
-    function updateTextField() {
+    function updateTextField()
+    {
         dateField.text = Qt.formatDateTime(root.selectedDate, "dd.MM.yyyy")
     }
     
-    function updateCalendarModel() {
+    function updateCalendarModel()
+    {
         var firstDay = new Date(_calendarYear, _calendarMonth, 1)
         var startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1
         var daysInMonth = new Date(_calendarYear, _calendarMonth + 1, 0).getDate()
@@ -31,45 +33,55 @@ Rectangle {
         _calendarModel = result
     }
     
-    function updateCalendar() {
+    function updateCalendar()
+    {
         _calendarYear = selectedDate.getFullYear()
         _calendarMonth = selectedDate.getMonth()
         updateCalendarModel()
     }
     
-    Component.onCompleted: {
+    Component.onCompleted:
+    {
         updateCalendar()
         updateTextField()
     }
     
-    onSelectedDateChanged: {
+    onSelectedDateChanged:
+    {
         updateCalendar()
         updateTextField()
         dateSelected()
     }
     
-    RowLayout {
+    RowLayout
+    {
         anchors.fill: parent
         spacing: 10
         
-        Label { 
+        Label
+        {
             text: root.title + ":" 
             font.bold: true
             Layout.preferredWidth: 80
         }
         
-        TextField {
+        TextField
+        {
             id: dateField
             Layout.fillWidth: true
             inputMethodHints: Qt.ImhDate
             validator: RegularExpressionValidator { regularExpression: /^\d{2}\.\d{2}\.\d{4}$/ }
             
-            onTextChanged: {
-                if (activeFocus) {
+            onTextChanged:
+            {
+                if (activeFocus)
+                {
                     var parts = text.split(".")
-                    if (parts.length === 3) {
+                    if (parts.length === 3)
+                    {
                         var newDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
-                        if (!isNaN(newDate.getTime()) && newDate.toDateString() !== root.selectedDate.toDateString()) {
+                        if (!isNaN(newDate.getTime()) && newDate.toDateString() !== root.selectedDate.toDateString())
+                        {
                             root.selectedDate = newDate
                         }
                     }
@@ -77,13 +89,15 @@ Rectangle {
             }
         }
         
-        Button {
+        Button
+        {
             text: "📅"
             onClicked: calendarPopup.open()
         }
     }
     
-    Popup {
+    Popup
+    {
         id: calendarPopup
         width: 250
         height: 220
@@ -92,23 +106,28 @@ Rectangle {
         modal: true
         focus: true
         
-        ColumnLayout {
+        ColumnLayout
+        {
             anchors.fill: parent
             spacing: 5
             anchors.margins: 5
             
-            RowLayout {
+            RowLayout
+            {
                 Layout.fillWidth: true
-                Button {
+                Button
+                {
                     text: "<"
-                    onClicked: {
+                    onClicked:
+                    {
                         var newDate = new Date(_calendarYear, _calendarMonth - 1, 1)
                         _calendarYear = newDate.getFullYear()
                         _calendarMonth = newDate.getMonth()
                         updateCalendarModel()
                     }
                 }
-                Label {
+                Label
+                {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     text: {
@@ -117,9 +136,11 @@ Rectangle {
                         return months[_calendarMonth] + " " + _calendarYear
                     }
                 }
-                Button {
+                Button
+                {
                     text: ">"
-                    onClicked: {
+                    onClicked:
+                    {
                         var newDate = new Date(_calendarYear, _calendarMonth + 1, 1)
                         _calendarYear = newDate.getFullYear()
                         _calendarMonth = newDate.getMonth()
@@ -128,7 +149,8 @@ Rectangle {
                 }
             }
             
-            GridView {
+            GridView
+            {
                 id: calendarGrid
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -137,11 +159,14 @@ Rectangle {
                 
                 property var dayNames: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
                 
-                header: Row {
+                header: Row
+                {
                     spacing: 5
-                    Repeater {
+                    Repeater
+                    {
                         model: calendarGrid.dayNames
-                        Label {
+                        Label
+                        {
                             width: 30
                             height: 20
                             text: modelData
@@ -152,10 +177,12 @@ Rectangle {
                 }
                 
                 model: _calendarModel
-                delegate: Rectangle {
+                delegate: Rectangle
+                {
                     width: 28
                     height: 22
-                    color: {
+                    color:
+                    {
                         if (modelData === "") return "transparent"
                         var cellDate = new Date(_calendarYear, _calendarMonth, modelData)
                         if (cellDate.toDateString() === root.selectedDate.toDateString()) return "#0078d7"
@@ -163,16 +190,19 @@ Rectangle {
                     }
                     radius: 3
                     
-                    Text {
+                    Text
+                    {
                         anchors.centerIn: parent
                         text: modelData
                         color: parent.color === "#0078d7" ? "white" : "black"
                     }
                     
-                    MouseArea {
+                    MouseArea
+                    {
                         anchors.fill: parent
                         onClicked: {
-                            if (modelData !== "") {
+                            if (modelData !== "")
+                            {
                                 var newDate = new Date(_calendarYear, _calendarMonth, modelData)
                                 root.selectedDate = newDate
                                 calendarPopup.close()

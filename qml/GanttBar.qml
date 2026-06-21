@@ -17,15 +17,15 @@ Rectangle
     
     property bool hasValidDates: taskId !== "" && taskStart.toString() !== "Invalid Date" && taskEnd.toString() !== "Invalid Date"
     
-    Component.onCompleted:
-    {
-        console.log("GanttBar created: taskId=" + taskId + 
-                    " title=" + taskTitle +
-                    " start=" + (taskStart ? taskStart.toLocaleDateString() : "null") + 
-                    " end=" + (taskEnd ? taskEnd.toLocaleDateString() : "null") +
-                    " displayStart=" + (displayStart ? displayStart.toLocaleDateString() : "null") +
-                    " x=" + x + " width=" + width + " visible=" + visible)
-    }
+    // Component.onCompleted:
+    // {
+    //     console.log("GanttBar created: taskId=" + taskId +
+    //                 " title=" + taskTitle +
+    //                 " start=" + (taskStart ? taskStart.toLocaleDateString() : "null") +
+    //                 " end=" + (taskEnd ? taskEnd.toLocaleDateString() : "null") +
+    //                 " displayStart=" + (displayStart ? displayStart.toLocaleDateString() : "null") +
+    //                 " x=" + x + " width=" + width + " visible=" + visible)
+    // }
     
     function getColor()
     {
@@ -44,7 +44,7 @@ Rectangle
         if (!hasValidDates) return 0
         var daysDiff = Math.floor((taskStart - displayStart) / (1000 * 60 * 60 * 24))
         var result = daysDiff * dayWidth
-        console.log("calculateX: taskId=" + taskId + " daysDiff=" + daysDiff + " result=" + result)
+        // console.log("calculateX: taskId=" + taskId + " daysDiff=" + daysDiff + " result=" + result)
         return Math.max(0, result)
     }
     
@@ -53,7 +53,7 @@ Rectangle
         if (!hasValidDates) return 10
         var daysDiff = Math.floor((taskEnd - taskStart) / (1000 * 60 * 60 * 24)) + 1
         var result = Math.max(10, daysDiff * dayWidth)
-        console.log("calculateWidth: taskId=" + taskId + " daysDiff=" + daysDiff + " result=" + result)
+        //console.log("calculateWidth: taskId=" + taskId + " daysDiff=" + daysDiff + " result=" + result)
         return result
     }
     

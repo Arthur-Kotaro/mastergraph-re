@@ -6,22 +6,25 @@ Rectangle {
     height: 30
     color: "#d0d0d0"
     
-    function getGroupsCount() {
+    function getGroupsCount()
+    {
         return (projectController && projectController.projectData && projectController.projectData.groupModel) 
                ? projectController.projectData.groupModel.count : 0
     }
     
-    function getTasksCount() {
+    function getTasksCount()
+    {
         return (projectController && projectController.projectData && projectController.projectData.taskModel) 
                ? projectController.projectData.taskModel.count : 0
     }
     
-    function isModified() {
-        return (projectController && projectController.projectData) 
-               ? projectController.projectData.modified : false
+    function isModified()
+    {
+        return (projectController && projectController.projectData) ? projectController.projectData.modified : false
     }
     
-    Row {
+    Row
+    {
         anchors.fill: parent
         anchors.leftMargin: 10
         spacing: 20

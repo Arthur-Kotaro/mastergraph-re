@@ -17,7 +17,8 @@ Rectangle {
     property string endDate: taskData?.endDate ? Qt.formatDateTime(taskData.endDate, "dd.MM.yyyy") : ""
     
     // Диалог переименования
-    Dialog {
+    Dialog
+    {
         id: renameDialog
         title: "Переименовать задачу"
         width: 400
@@ -28,18 +29,21 @@ Rectangle {
         
         property string taskId: ""
         
-        ColumnLayout {
+        ColumnLayout
+        {
             anchors.fill: parent
             anchors.margins: 15
             spacing: 15
             
-            Label { 
+            Label
+            {
                 text: "Новое название задачи:" 
                 Layout.fillWidth: true
                 font.pixelSize: 13
             }
             
-            TextField { 
+            TextField
+            {
                 id: newTitleField
                 Layout.fillWidth: true
                 Layout.preferredHeight: 35
@@ -47,27 +51,29 @@ Rectangle {
                 placeholderText: "Введите название задачи"
                 font.pixelSize: 13
                 focus: true
-                onAccepted: {
-                    if (newTitleField.text !== "") {
-                        renameDialog.accept()
-                    }
+                onAccepted:
+                {
+                    if (newTitleField.text !== "") renameDialog.accept()
                 }
             }
             
             Item { Layout.fillHeight: true }
             
-            RowLayout {
+            RowLayout
+            {
                 Layout.fillWidth: true
                 spacing: 10
                 
-                Button {
+                Button
+                {
                     text: "Отмена"
                     Layout.fillWidth: true
                     Layout.preferredHeight: 35
                     onClicked: renameDialog.close()
                 }
                 
-                Button {
+                Button
+                {
                     text: "ОК"
                     Layout.fillWidth: true
                     Layout.preferredHeight: 35
@@ -77,10 +83,12 @@ Rectangle {
             }
         }
         
-        onAccepted: {
+        onAccepted:
+        {
             if (newTitleField.text !== "" && projectController && projectController.projectData) {
                 var task = projectController.projectData.taskModel.getTask(renameDialog.taskId)
-                if (task) {
+                if (task)
+                {
                     projectController.projectData.taskModel.updateTask(
                         renameDialog.taskId, newTitleField.text, task.responsible,
                         task.startDate, task.endDate, task.status
@@ -92,7 +100,8 @@ Rectangle {
     }
     
     // Диалог назначения ответственного
-    Dialog {
+    Dialog
+    {
         id: responsibleDialog
         title: "Назначить ответственного"
         width: 400
@@ -103,18 +112,21 @@ Rectangle {
         
         property string taskId: ""
         
-        ColumnLayout {
+        ColumnLayout
+        {
             anchors.fill: parent
             anchors.margins: 15
             spacing: 15
             
-            Label { 
+            Label
+            {
                 text: "ФИО ответственного:" 
                 Layout.fillWidth: true
                 font.pixelSize: 13
             }
             
-            TextField { 
+            TextField
+            {
                 id: responsibleField
                 Layout.fillWidth: true
                 Layout.preferredHeight: 35
@@ -122,27 +134,29 @@ Rectangle {
                 placeholderText: "Введите ФИО ответственного"
                 font.pixelSize: 13
                 focus: true
-                onAccepted: {
-                    if (responsibleField.text !== "") {
-                        responsibleDialog.accept()
-                    }
+                onAccepted:
+                {
+                    if (responsibleField.text !== "") responsibleDialog.accept()
                 }
             }
             
             Item { Layout.fillHeight: true }
             
-            RowLayout {
+            RowLayout
+            {
                 Layout.fillWidth: true
                 spacing: 10
                 
-                Button {
+                Button
+                {
                     text: "Отмена"
                     Layout.fillWidth: true
                     Layout.preferredHeight: 35
                     onClicked: responsibleDialog.close()
                 }
                 
-                Button {
+                Button
+                {
                     text: "ОК"
                     Layout.fillWidth: true
                     Layout.preferredHeight: 35
@@ -152,10 +166,12 @@ Rectangle {
             }
         }
         
-        onAccepted: {
+        onAccepted:
+        {
             if (responsibleField.text !== "" && projectController && projectController.projectData) {
                 var task = projectController.projectData.taskModel.getTask(responsibleDialog.taskId)
-                if (task) {
+                if (task)
+                {
                     projectController.projectData.taskModel.updateTask(
                         responsibleDialog.taskId, task.title, responsibleField.text,
                         task.startDate, task.endDate, task.status
@@ -172,10 +188,12 @@ Rectangle {
         anchors.rightMargin: 5
         spacing: 0
         
-        Rectangle {
+        Rectangle
+        {
             width: parent.width * 0.35
             height: parent.height
-            Text { 
+            Text
+            {
                 id: titleText
                 text: root.title
                 anchors.left: parent.left
@@ -186,10 +204,12 @@ Rectangle {
                 font.pixelSize: 12
             }
         }
-        Rectangle {
+        Rectangle
+        {
             width: parent.width * 0.20
             height: parent.height
-            Text { 
+            Text
+            {
                 id: responsibleText
                 text: root.responsible
                 anchors.left: parent.left
@@ -211,10 +231,12 @@ Rectangle {
                 font.pixelSize: 12
             }
         }
-        Rectangle {
+        Rectangle
+        {
             width: parent.width * 0.23
             height: parent.height
-            Text { 
+            Text
+            {
                 text: endDate
                 anchors.left: parent.left
                 anchors.leftMargin: 5
@@ -224,23 +246,25 @@ Rectangle {
         }
     }
     
-    MouseArea {
+    MouseArea
+    {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.RightButton
         cursorShape: Qt.ArrowCursor
-        onClicked: (mouse) => {
-            if (mouse.button === Qt.RightButton) {
-                taskContextMenu.popup()
-            }
+        onClicked: (mouse) =>
+        {
+            if (mouse.button === Qt.RightButton) taskContextMenu.popup()
         }
     }
     
-    Menu {
+    Menu
+    {
         id: taskContextMenu
         MenuItem { text: "Переименовать"; onTriggered: { renameDialog.taskId = taskId; renameDialog.open() } }
         MenuItem { text: "Назначить ответственного"; onTriggered: { responsibleDialog.taskId = taskId; responsibleDialog.open() } }
-        Menu {
+        Menu
+        {
             title: "Изменить статус"
             MenuItem { text: "🟡 Запланировано"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskId, 0) }
             MenuItem { text: "🟢 Выполнено"; onTriggered: if(projectController) projectController.projectData.taskModel.setTaskStatus(taskId, 1) }
@@ -254,11 +278,14 @@ Rectangle {
         MenuItem { text: "Удалить"; onTriggered: if(projectController) projectController.removeTask(taskId) }
     }
     
-    Connections {
+    Connections
+    {
         target: projectController?.projectData?.taskModel
-        function onDataChanged() {
+        function onDataChanged()
+        {
             var updatedTask = projectController.projectData.taskModel.getTask(taskId)
-            if (updatedTask) {
+            if (updatedTask)
+            {
                 root.title = updatedTask.title
                 root.responsible = updatedTask.responsible
                 root.startDate = Qt.formatDateTime(updatedTask.startDate, "dd.MM.yyyy")

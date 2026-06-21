@@ -106,8 +106,7 @@ Menu
         text: "Удалить"
         onTriggered:
         {
-            if(root.taskId && projectController)
-                projectController.removeTask(root.taskId)
+            if(root.taskId && projectController) projectController.removeTask(root.taskId)
         }
     }
 }

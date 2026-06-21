@@ -16,7 +16,7 @@ Item
     function refreshTasks()
     {
         if (projectController && projectController.projectData && groupId)
-        console.log("refreshTasks called, groupId:", groupId, "tasks:", tasksList.length)
+        //console.log("refreshTasks called, groupId:", groupId, "tasks:", tasksList.length)
         {
             tasksRepeater.model = []
             tasksList = projectController.projectData.taskModel.getTasksForGroup(groupId)

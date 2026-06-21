@@ -10,7 +10,12 @@ Rectangle
     border.width: 1
 
     property int dayWidth
-    onDayWidthChanged: { console.log("MilestoneBar dayWidth changed to:", dayWidth); updateMilestones(); milestoneCanvas.requestPaint() }
+    onDayWidthChanged:
+    {
+        //console.log("MilestoneBar dayWidth changed to:", dayWidth);
+        updateMilestones();
+        milestoneCanvas.requestPaint()
+    }
     property var milestonesModel: null
     property date startDate: new Date()
     property var milestones: []
@@ -52,7 +57,7 @@ Rectangle
                 }
             }
             milestones = result
-        milestoneCanvas.requestPaint()
+            milestoneCanvas.requestPaint()
         }
         else
         {

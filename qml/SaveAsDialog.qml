@@ -11,29 +11,38 @@ Dialog {
     
     property int selectedFormat: 0
     
-    ColumnLayout {
+    ColumnLayout
+    {
         anchors.fill: parent; spacing: 15
         Label { text: "Выберите формат сохранения:"; font.bold: true }
-        ComboBox { 
+        ComboBox
+        {
             id: formatCombo
             Layout.fillWidth: true
             model: [".gantt (проект)", "PDF документ", "PNG изображение"]
             onCurrentIndexChanged: root.selectedFormat = currentIndex
         }
         
-        Labs.FileDialog { 
+        Labs.FileDialog
+        {
             id: fileDialog
             title: "Сохранить как"
             fileMode: Labs.FileDialog.SaveFile
-            onAccepted: {
+            onAccepted:
+            {
                 var filePath = file
-                if (root.selectedFormat === 0) {
+                if (root.selectedFormat === 0)
+                {
                     if (!filePath.endsWith(".gantt")) filePath += ".gantt"
                     projectController.saveProjectAs(filePath)
-                } else if (root.selectedFormat === 1) {
+                }
+                else if (root.selectedFormat === 1)
+                {
                     if (!filePath.endsWith(".pdf")) filePath += ".pdf"
                     projectController.exportToPdf(filePath)
-                } else {
+                }
+                else
+                {
                     if (!filePath.endsWith(".png")) filePath += ".png"
                     projectController.exportToPng(filePath, 1920, 1080)
                 }

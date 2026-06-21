@@ -8,13 +8,12 @@ Rectangle
     {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
-        onWheel: function(wheel) {
+        onWheel: function(wheel)
+        {
             if (wheel.modifiers & Qt.ControlModifier)
             {
-                if (wheel.angleDelta.y > 0)
-                    projectController.settingsManager.setZoomLevel(0)
-                else
-                    projectController.settingsManager.setZoomLevel(1)
+                if (wheel.angleDelta.y > 0) projectController.settingsManager.setZoomLevel(0)
+                else projectController.settingsManager.setZoomLevel(1)
                 wheel.accepted = true
             }
         }
@@ -98,7 +97,7 @@ Rectangle
                     for (var j = 0; j < tasks.length; j++)
                     {
                         var taskData = projectController.projectData.taskModel.getTask(tasks[j])
-                    console.log("getTask result:", JSON.stringify(taskData))
+                        //console.log("getTask result:", JSON.stringify(taskData))
                         if (taskData)
                         {
                             items.push({
@@ -121,7 +120,9 @@ Rectangle
         if (root.showTaskHistory)
         {
             visibleItems = items
-        //var historyCount = 0; for (var vi = 0; vi < visibleItems.length; vi++) { if (visibleItems[vi].type === "history") historyCount++; } console.log("visibleItems count:", visibleItems.length, "history items:", historyCount)
+            //var historyCount = 0; for (var vi = 0; vi < visibleItems.length; vi++)
+            //{ if (visibleItems[vi].type === "history") historyCount++; }
+            //console.log("visibleItems count:", visibleItems.length, "history items:", historyCount)
             updateCounter++
             totalRows = visibleItems.length
             contentHeight = totalRows * rowHeight
@@ -554,8 +555,8 @@ Rectangle
                         onPositionChanged:
                         {
                             var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
-                        var forceUpdate = root.updateCounter
-                        var forceUpdate = root.updateCounter
+                            var forceUpdate = root.updateCounter
+                            var forceUpdate = root.updateCounter
                             if (task && task.status === 1) return
 
                             if (pressed)

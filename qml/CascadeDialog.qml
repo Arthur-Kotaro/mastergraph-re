@@ -6,8 +6,8 @@ Dialog
 {
     id: root
     title: "Создание каскада задач"
-    width: 900
-    height: 550
+    width: 1380
+    height: 600
     modal: true
     standardButtons: Dialog.Ok | Dialog.Cancel
     anchors.centerIn: Overlay.overlay
@@ -25,14 +25,26 @@ Dialog
                 groupIndex: 0,
                 title: "Задача " + (i + 1),
                 responsible: "",
-                duration: 7
+                duration: 7,
+                comment: ""
             })
         }
         cascadeRepeater.model = cascadeModel
     }
 
+    function resetDialog()
+    {
+        taskCount = 0
+        cascadeModel = []
+        countField.text = "3"
+        startDate = new Date()
+        startDateField.text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
+        cascadeRepeater.model = []
+    }
+
     onOpened:
     {
+        resetDialog()
         countField.forceActiveFocus()
     }
 
@@ -119,53 +131,62 @@ Dialog
 
                         ComboBox
                         {
-                            Layout.preferredWidth: 160
-                            model: projectController.projectData.groupModel.getGroupIds().map(function(id) {
+                            Layout.preferredWidth: 300
+                            model: projectController.projectData.groupModel.getGroupIds().map(function(id)
+                            {
                                 return projectController.projectData.groupModel.getGroup(id).name
                             })
                             onCurrentIndexChanged:
                             {
-                                if (cascadeModel[index])
-                                    cascadeModel[index].groupIndex = currentIndex
+                                if (cascadeModel[index]) cascadeModel[index].groupIndex = currentIndex
                             }
                         }
 
                         TextField
                         {
-                            Layout.fillWidth: true
+                            Layout.preferredWidth: 250
                             text: modelData ? modelData.title : ""
+                            placeholderText: "Название"
                             onTextChanged:
                             {
-                                if (cascadeModel[index])
-                                    cascadeModel[index].title = text
+                                if (cascadeModel[index]) cascadeModel[index].title = text
                             }
                         }
 
                         TextField
                         {
-                            Layout.preferredWidth: 120
+                            Layout.preferredWidth: 250
                             placeholderText: "Ответств."
                             text: modelData ? modelData.responsible : ""
                             onTextChanged:
                             {
-                                if (cascadeModel[index])
-                                    cascadeModel[index].responsible = text
+                                if (cascadeModel[index]) cascadeModel[index].responsible = text
                             }
                         }
 
                         TextField
                         {
-                            Layout.preferredWidth: 60
+                            Layout.preferredWidth: 50
                             text: modelData ? modelData.duration : "7"
                             validator: IntValidator { bottom: 1; top: 365 }
                             onTextChanged:
                             {
-                                if (cascadeModel[index])
-                                    cascadeModel[index].duration = parseInt(text) || 7
+                                if (cascadeModel[index]) cascadeModel[index].duration = parseInt(text) || 7
                             }
                         }
 
                         Label { text: "дн."; Layout.preferredWidth: 30 }
+
+                        TextField
+                        {
+                            Layout.preferredWidth: 375
+                            placeholderText: "Комментарий"
+                            text: modelData ? modelData.comment : ""
+                            onTextChanged:
+                            {
+                                if (cascadeModel[index]) cascadeModel[index].comment = text
+                            }
+                        }
                     }
                 }
             }
@@ -192,6 +213,11 @@ Dialog
             var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
             var newTaskId = tasks[tasks.length - 1]
 
+            if (item.comment)
+            {
+                projectController.projectData.taskModel.setTaskComment(newTaskId, item.comment)
+            }
+
             if (prevTaskId)
             {
                 projectController.addDependency(prevTaskId, newTaskId)
@@ -202,7 +228,6 @@ Dialog
             currentDate.setDate(currentDate.getDate() + 1)
         }
 
-        if (mainWindow && mainWindow.gridArea)
-            mainWindow.gridArea.updateData()
+        if (mainWindow && mainWindow.gridArea) mainWindow.gridArea.updateData()
     }
 }

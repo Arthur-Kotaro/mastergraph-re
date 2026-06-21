@@ -118,8 +118,7 @@ Dialog
                 if (existingIndex >= 0)
                     projectController.projectData.taskModel.moveTaskToGroup(newId, groupId, existingIndex)
             }
-            if (mainWindow && mainWindow.gridArea)
-                mainWindow.gridArea.updateData()
+            if (mainWindow && mainWindow.gridArea) mainWindow.gridArea.updateData()
         }
     }
 }
