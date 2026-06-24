@@ -9,7 +9,7 @@ Menu
     property var onAddTaskAboveCallback: null
     property var onAddTaskBelowCallback: null
     property var onRenameCallback: null
-    property var onAssignResponsibleCallback: null
+    //property var onAssignResponsibleCallback: null
 
     MenuItem
     {
@@ -20,7 +20,10 @@ Menu
     MenuItem
     {
         text: "Назначить ответственного"
-        onTriggered: { if (root.onAssignResponsibleCallback) root.onAssignResponsibleCallback(root.taskId) }
+        onTriggered:
+        {
+            if (root.taskId && mainWindow && mainWindow.responsibleDialog) mainWindow.responsibleDialog.openForTask(root.taskId)
+        }
     }
 
     MenuItem

@@ -486,7 +486,7 @@ Rectangle
                     {
                         var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
                         var forceUpdate = root.updateCounter
-                        var forceUpdate = root.updateCounter
+                        // var forceUpdate = root.updateCounter
                         if (task && task.status === 1)
                         {
                             mouse.accepted = false

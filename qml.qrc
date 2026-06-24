@@ -26,6 +26,7 @@
         <file>qml/CompleteTaskDialog.qml</file>
         <file>qml/NewTaskDialog.qml</file>
         <file>qml/CommentDialog.qml</file>
+        <file>qml/ResponsibleDialog.qml</file>
         <file>qml/TaskContextMenu.qml</file>
         <file>qml/CurrentTimeLine.qml</file>
         <file alias="default_typologies.json">resources/default_typologies.json</file>
