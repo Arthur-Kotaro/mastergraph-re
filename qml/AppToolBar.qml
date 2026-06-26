@@ -138,6 +138,8 @@ Rectangle
             {
                 if (mainWindow && mainWindow.gridArea)
                     mainWindow.gridArea.updateData()
+                if (mainWindow && mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar && mainWindow.calendarHeader.milestoneBar.canvas)
+                    mainWindow.calendarHeader.milestoneBar.canvas.requestPaint()
             }
         }
 

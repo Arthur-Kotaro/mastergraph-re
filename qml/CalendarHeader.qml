@@ -47,7 +47,7 @@ Rectangle
     }
 
     property int dayWidth: projectController && projectController.settingsManager.zoomLevel === 1 ? 10 : 30
-    onDayWidthChanged: { Qt.callLater(function() { if (milestoneBar && milestoneBar.canvas) milestoneBar.canvas.requestPaint() }) }
+    onDayWidthChanged: { if (milestoneBar) milestoneBar.dayWidth = dayWidth }
     property int totalDays: Math.max(1, Math.floor((displayEnd - displayStart) / 86400000) + 1)
     property real contentWidth: totalDays * dayWidth
 

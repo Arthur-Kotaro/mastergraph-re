@@ -9,11 +9,11 @@ Rectangle
     border.color: "#aaaaaa"
     border.width: 1
 
-    property int dayWidth
+    property int dayWidth: 30
     onDayWidthChanged:
     {
-        //console.log("MilestoneBar dayWidth changed to:", dayWidth);
-        updateMilestones();
+        //console.log("MilestoneBar dayWidth changed:", dayWidth)
+        updateMilestones()
         milestoneCanvas.requestPaint()
     }
     property var milestonesModel: null
