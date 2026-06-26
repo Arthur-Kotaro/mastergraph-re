@@ -65,6 +65,8 @@ public:
     Q_INVOKABLE bool fromJson(const QVariantMap& json);
     Q_INVOKABLE void updateLastModified();
     Q_INVOKABLE void refreshAll();
+    Q_INVOKABLE QDate getEarliestDate() const;
+    Q_INVOKABLE QDate getLatestDate() const;
 
 signals:
     void projectNameChanged();

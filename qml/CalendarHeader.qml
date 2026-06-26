@@ -9,13 +9,13 @@ Rectangle
     width: parent?.width || 1000
     height: 240
 
-    property date firstMilestoneDate: projectController?.projectData?.milestoneModel?.getOriginalFirstMilestoneDate() || new Date()
-    property date lastMilestoneDate: projectController?.projectData?.milestoneModel?.getLastMilestoneDate() || new Date()
+    property date firstMilestoneDate: new Date()
+    property date lastMilestoneDate: new Date()
 
     property date displayStart: new Date()
     property date displayEnd: new Date()
 
-    function getThirdSundayAfter(date)
+    function getSecondSundayAfter(date)
     {
         var d = new Date(date)
         if (isNaN(d.getTime())) return new Date()
@@ -25,20 +25,24 @@ Rectangle
         return d
     }
 
+    function getMondayBefore(date, weeks)
+    {
+        var d = new Date(date)
+        while (d.getDay() !== 1) d.setDate(d.getDate() - 1)
+        d.setDate(d.getDate() - weeks * 7)
+        d.setHours(0, 0, 0, 0)
+        return d
+    }
+
     function updateDisplayRange()
     {
-        var first = projectController?.projectData?.milestoneModel?.getOriginalFirstMilestoneDate()
-        var last = projectController?.projectData?.milestoneModel?.getLastMilestoneDate()
+        var earliest = projectController?.projectData?.getEarliestDate()
+        var latest = projectController?.projectData?.getLatestDate()
 
-        if (!first || !last) return
+        if (!earliest || !latest) return
 
-        var start = new Date(first)
-        while (start.getDay() !== 1) start.setDate(start.getDate() - 1)
-        start.setDate(start.getDate() - 28)
-        start.setHours(0, 0, 0, 0)
-
-        var end = getThirdSundayAfter(last)
-        console.log("updateDisplayRange: first=", first, "last=", last, "start=", start, "end=", end)
+        var start = getMondayBefore(earliest, 4)
+        var end = getSecondSundayAfter(latest)
 
         var startChanged = displayStart.toDateString() !== start.toDateString()
         var endChanged = displayEnd.toDateString() !== end.toDateString()
@@ -134,6 +138,15 @@ Rectangle
         enabled: target !== null
         function onMilestonesChanged() { refresh() }
         function onModelReset() { refresh() }
+    }
+
+    Connections
+    {
+        target: projectController?.projectData?.taskModel
+        enabled: target !== null
+        function onRowsInserted() { refresh() }
+        function onRowsRemoved() { refresh() }
+        function onDataChanged() { refresh() }
     }
 
     onDisplayStartChanged: rebuildData()

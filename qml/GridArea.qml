@@ -59,18 +59,21 @@ Rectangle
     {
         if (!projectController || !projectController.projectData) return
 
-        var firstMilestone = projectController.projectData.milestoneModel.getOriginalFirstMilestoneDate()
-        var lastMilestone = projectController.projectData.milestoneModel.getLastMilestoneDate()
+        var earliest = projectController && projectController.projectData ? projectController.projectData.getEarliestDate() : new Date()
+        var latest = projectController && projectController.projectData ? projectController.projectData.getLatestDate() : new Date()
 
-        if (firstMilestone && lastMilestone)
+        if (earliest && latest)
         {
-            var start = new Date(firstMilestone)
+            var start = new Date(earliest)
             while (start.getDay() !== 1) start.setDate(start.getDate() - 1)
             start.setDate(start.getDate() - 28)
             start.setHours(0, 0, 0, 0)
             displayStart = start
 
-            var end = getThirdSundayAfter(lastMilestone)
+            var end = new Date(latest)
+            while (end.getDay() !== 0) end.setDate(end.getDate() + 1)
+            end.setDate(end.getDate() + 14)
+            end.setHours(23, 59, 59, 999)
             displayEnd = end
 
             totalDays = Math.max(1, Math.floor((end - start) / 86400000) + 1)

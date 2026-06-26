@@ -290,3 +290,91 @@ bool ProjectData::fromJson(const QVariantMap& json)
     set_Modified(false);
     return true;
 }
+
+QDate ProjectData::getEarliestDate() const
+{
+    QDate earliest = QDate::currentDate();
+
+    // Вехи и их история переносов
+    for (int i = 0; i < m_milestoneModel->rowCount(); ++i)
+    {
+        QModelIndex idx = m_milestoneModel->index(i);
+        QDate plannedDate = idx.data(Qt::UserRole + 3).toDate();
+        if (plannedDate.isValid() && plannedDate < earliest)
+            earliest = plannedDate;
+
+        QVariantList history = idx.data(Qt::UserRole + 7).toList();
+        for (const auto& h : history)
+        {
+            QDate d = QDate::fromString(h.toString(), "dd.MM.yyyy");
+            if (d.isValid() && d < earliest)
+                earliest = d;
+        }
+    }
+
+    // Задачи и их история переносов
+    for (int i = 0; i < m_taskModel->rowCount(); ++i)
+    {
+        QDate startDate = m_taskModel->data(m_taskModel->index(i), GanttDefines::StartDateRole).toDate();
+        if (startDate.isValid() && startDate < earliest)
+            earliest = startDate;
+
+        QString taskId = m_taskModel->data(m_taskModel->index(i), GanttDefines::IdRole).toString();
+        QVariantMap task = m_taskModel->getTask(taskId);
+        QVariantList dateHistory = task["dateHistory"].toList();
+        for (const auto& dh : dateHistory)
+        {
+            QVariantMap dates = dh.toMap();
+            QDate oldStart = QDate::fromString(dates["start"].toString(), "dd.MM.yyyy");
+            if (oldStart.isValid() && oldStart < earliest)
+                earliest = oldStart;
+        }
+    }
+
+    qDebug() << "getEarliestDate: returning" << earliest.toString("dd.MM.yyyy");
+    return earliest;
+}
+
+QDate ProjectData::getLatestDate() const
+{
+    QDate latest = QDate(1900, 1, 1);
+
+    // Вехи и их история переносов
+    for (int i = 0; i < m_milestoneModel->rowCount(); ++i)
+    {
+        QModelIndex idx = m_milestoneModel->index(i);
+        QDate plannedDate = idx.data(Qt::UserRole + 3).toDate();
+        if (plannedDate.isValid() && plannedDate > latest)
+            latest = plannedDate;
+
+        QVariantList history = idx.data(Qt::UserRole + 7).toList();
+        for (const auto& h : history)
+        {
+            QDate d = QDate::fromString(h.toString(), "dd.MM.yyyy");
+            if (d.isValid() && d > latest)
+                latest = d;
+        }
+    }
+
+    // Задачи и их история переносов
+    for (int i = 0; i < m_taskModel->rowCount(); ++i)
+    {
+        QDate endDate = m_taskModel->data(m_taskModel->index(i), GanttDefines::EndDateRole).toDate();
+        if (endDate.isValid() && endDate > latest)
+            latest = endDate;
+
+        QString taskId = m_taskModel->data(m_taskModel->index(i), GanttDefines::IdRole).toString();
+        QVariantMap task = m_taskModel->getTask(taskId);
+        QVariantList dateHistory = task["dateHistory"].toList();
+        for (const auto& dh : dateHistory)
+        {
+            QVariantMap dates = dh.toMap();
+            QDate oldEnd = QDate::fromString(dates["end"].toString(), "dd.MM.yyyy");
+            if (oldEnd.isValid() && oldEnd > latest)
+                latest = oldEnd;
+        }
+    }
+
+    qDebug() << "getLatestDate: returning" << latest.toString("dd.MM.yyyy");
+    return latest;
+}
