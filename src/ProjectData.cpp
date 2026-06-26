@@ -216,8 +216,8 @@ bool ProjectData::fromJson(const QVariantMap& json)
 {
     clear();
     
-    m_projectName = json["projectName"].toString();
-    m_projectType = json["projectType"].toString();
+    set_ProjectName(json["projectName"].toString());
+    set_ProjectType(json["projectType"].toString());
     m_startDate = QDate::fromString(json["startDate"].toString(), "dd.MM.yyyy");
    
     m_creationDateTime = QDateTime::fromString(json["creationDateTime"].toString(), "dd.MM.yyyy hh:mm:ss");
