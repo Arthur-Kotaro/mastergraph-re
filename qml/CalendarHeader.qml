@@ -9,7 +9,7 @@ Rectangle
     width: parent?.width || 1000
     height: 240
 
-    property date firstMilestoneDate: projectController?.projectData?.milestoneModel?.getFirstMilestoneDate() || new Date()
+    property date firstMilestoneDate: projectController?.projectData?.milestoneModel?.getOriginalFirstMilestoneDate() || new Date()
     property date lastMilestoneDate: projectController?.projectData?.milestoneModel?.getLastMilestoneDate() || new Date()
 
     property date displayStart: new Date()
@@ -27,7 +27,7 @@ Rectangle
 
     function updateDisplayRange()
     {
-        var first = projectController?.projectData?.milestoneModel?.getFirstMilestoneDate()
+        var first = projectController?.projectData?.milestoneModel?.getOriginalFirstMilestoneDate()
         var last = projectController?.projectData?.milestoneModel?.getLastMilestoneDate()
 
         if (!first || !last) return
@@ -38,6 +38,7 @@ Rectangle
         start.setHours(0, 0, 0, 0)
 
         var end = getThirdSundayAfter(last)
+        console.log("updateDisplayRange: first=", first, "last=", last, "start=", start, "end=", end)
 
         var startChanged = displayStart.toDateString() !== start.toDateString()
         var endChanged = displayEnd.toDateString() !== end.toDateString()

@@ -9,7 +9,7 @@ ApplicationWindow
     id: mainWindow
     width: 1280
     height: 800
-    minimumWidth: 1000
+    minimumWidth: 1120
     minimumHeight: 700
     visible: true
     title:

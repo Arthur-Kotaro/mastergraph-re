@@ -39,6 +39,7 @@ public:
     Q_INVOKABLE QVariantMap getMilestone(const QString& milestoneId) const;
     Q_INVOKABLE QVariantList getAllMilestones() const;
     Q_INVOKABLE QDate getFirstMilestoneDate();
+    Q_INVOKABLE QDate getOriginalFirstMilestoneDate();
     Q_INVOKABLE QDate getLastMilestoneDate();
 
     void clear();
@@ -50,6 +51,7 @@ signals:
 
 private:
     QList<Milestone> m_milestones;
+    QDate m_originalFirstDate;
     QString generateId() const;
     int findMilestoneIndex(const QString& milestoneId) const;
     

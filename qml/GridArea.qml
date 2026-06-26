@@ -59,7 +59,7 @@ Rectangle
     {
         if (!projectController || !projectController.projectData) return
 
-        var firstMilestone = projectController.projectData.milestoneModel.getFirstMilestoneDate()
+        var firstMilestone = projectController.projectData.milestoneModel.getOriginalFirstMilestoneDate()
         var lastMilestone = projectController.projectData.milestoneModel.getLastMilestoneDate()
 
         if (firstMilestone && lastMilestone)
@@ -128,6 +128,7 @@ Rectangle
             contentHeight = totalRows * rowHeight
 
             root.width = gridWidth
+        console.log("GridArea updateData: gridWidth=", gridWidth, "totalDays=", totalDays)
             root.height = contentHeight
 
             groupsRepeater.model = visibleItems
