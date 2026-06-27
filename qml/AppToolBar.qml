@@ -83,6 +83,14 @@ Rectangle
             onClicked: mainWindow.cascadeDialog.open()
         }
 
+        Button
+        {
+            text: "Добавить список"
+            Layout.preferredWidth: 145
+            font.pixelSize: 12
+            onClicked: mainWindow.listDialog.open()
+        }
+
         Item { Layout.fillWidth: true; Layout.minimumWidth: 5 }
 
         Button

@@ -40,12 +40,12 @@ Dialog {
         }
         
         Text {
-            text: "Иван Иванов"
+            text: "Артур Котаро"
             font.pixelSize: 14
         }
         
         Text {
-            text: "ivan.ivanov@example.com"
+            text: "arthur.kotaro@yandex.ru"
             font.pixelSize: 14
         }
         

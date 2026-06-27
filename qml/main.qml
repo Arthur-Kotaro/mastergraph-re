@@ -7,10 +7,10 @@ import GanttProject 1.0
 ApplicationWindow
 {
     id: mainWindow
-    width: 1280
-    height: 800
-    minimumWidth: 1120
-    minimumHeight: 700
+    width: 1400
+    height: 750
+    minimumWidth: 1400
+    minimumHeight: 750
     visible: true
     title:
     {
@@ -31,6 +31,7 @@ ApplicationWindow
     property alias helpDialog: helpDialog
     property alias dependencyDialog: dependencyDialog
     property alias cascadeDialog: cascadeDialog
+    property alias listDialog: listDialog
     property alias completeTaskDialog: completeTaskDialog
     property alias newTaskDialog: newTaskDialog
     property alias commentDialog: commentDialog
@@ -163,6 +164,7 @@ ApplicationWindow
     HelpDialog { id: helpDialog }
     DependencyDialog { id: dependencyDialog }
     CascadeDialog { id: cascadeDialog }
+    ListDialog { id: listDialog }
     CompleteTaskDialog { id: completeTaskDialog }
     NewTaskDialog { id: newTaskDialog }
     CommentDialog { id: commentDialog }

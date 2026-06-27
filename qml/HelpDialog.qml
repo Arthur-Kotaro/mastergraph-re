@@ -6,7 +6,7 @@ Dialog {
     id: root
     title: "Справка"
     width: 1100
-    height: 850
+    height: 950
     modal: true
     standardButtons: Dialog.Ok
     anchors.centerIn: Overlay.overlay

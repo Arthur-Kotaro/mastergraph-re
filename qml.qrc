@@ -23,6 +23,7 @@
         <file>qml/HelpDialog.qml</file>
         <file>qml/DependencyDialog.qml</file>
         <file>qml/CascadeDialog.qml</file>
+        <file>qml/ListDialog.qml</file>
         <file>qml/CompleteTaskDialog.qml</file>
         <file>qml/NewTaskDialog.qml</file>
         <file>qml/CommentDialog.qml</file>
