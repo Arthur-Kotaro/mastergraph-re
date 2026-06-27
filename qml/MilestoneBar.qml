@@ -96,7 +96,7 @@ Rectangle
                 var plannedDate = new Date(ms.plannedDate)
                 var daysDiff = Math.floor((plannedDate - root.startDate) / (1000 * 60 * 60 * 24))
                 var cx = daysDiff * root.dayWidth + root.dayWidth / 2
-                var cy = 8
+                var cy = 15
 
                 ctx.save()
                 ctx.translate(cx, cy)

@@ -488,7 +488,11 @@ Rectangle
 
                     onPressed: function(mouse)
                     {
-                        if (projectController && projectController.settingsManager.editingLocked) return
+                    if (projectController && projectController.settingsManager.editingLocked) {
+                        drag.target = null
+                        return
+                    }
+                    drag.target = parent
 
                         var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
                         if (task && task.status === 1)
@@ -508,7 +512,11 @@ Rectangle
 
                     onPositionChanged:
                     {
-                        if (projectController && projectController.settingsManager.editingLocked) return
+                    if (projectController && projectController.settingsManager.editingLocked) {
+                        drag.target = null
+                        return
+                    }
+                    drag.target = parent
                         if (drag.active)
                         {
                             parent.x = Math.round(parent.x / root.dayWidth) * root.dayWidth
@@ -547,7 +555,11 @@ Rectangle
 
                         onPressed:
                         {
-                            if (projectController && projectController.settingsManager.editingLocked) return
+                    if (projectController && projectController.settingsManager.editingLocked) {
+                        drag.target = null
+                        return
+                    }
+                    drag.target = parent
 
                             var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
                             if (task && task.status === 1) return
@@ -560,7 +572,11 @@ Rectangle
 
                         onPositionChanged:
                         {
-                            if (projectController && projectController.settingsManager.editingLocked) return
+                    if (projectController && projectController.settingsManager.editingLocked) {
+                        drag.target = null
+                        return
+                    }
+                    drag.target = parent
                             var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
                             var forceUpdate = root.updateCounter
                             var forceUpdate = root.updateCounter
