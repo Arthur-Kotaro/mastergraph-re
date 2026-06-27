@@ -88,6 +88,8 @@ Rectangle
         Button
         {
             text: "Блокировка"
+            checked: projectController ? projectController.settingsManager.editingLocked : false
+            onCheckedChanged: { if (projectController) projectController.settingsManager.editingLocked = checked }
             checkable: true
             Layout.preferredWidth: 105
             font.pixelSize: 12

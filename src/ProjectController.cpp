@@ -152,7 +152,7 @@ void ProjectController::exportToPdf(const QString& filePath)
 void ProjectController::addTask(const QString& groupId, const QString& title,
                                 const QString& responsible, const QDate& startDate, const QDate& endDate)
 {
-    if (false && m_settingsManager->editingLocked())
+    if (m_settingsManager->editingLocked())
     {
         emit errorOccurred("Редактирование заблокировано");
         return;
@@ -168,7 +168,7 @@ void ProjectController::addTask(const QString& groupId, const QString& title,
 void ProjectController::removeTask(const QString& taskId)
 {
     qDebug() << "Removing task:" << taskId;
-    if (false && m_settingsManager->editingLocked())
+    if (m_settingsManager->editingLocked())
     {
         emit errorOccurred("Редактирование заблокировано");
         return;
@@ -181,7 +181,7 @@ void ProjectController::removeTask(const QString& taskId)
 
 void ProjectController::updateTaskDates(const QString& taskId, const QDate& newStart, const QDate& newEnd)
 {
-    if (false && m_settingsManager->editingLocked())
+    if (m_settingsManager->editingLocked())
     {
         emit errorOccurred("Редактирование заблокировано");
         return;
@@ -207,7 +207,7 @@ void ProjectController::updateTaskDates(const QString& taskId, const QDate& newS
 
 void ProjectController::addDependency(const QString& predecessorId, const QString& successorId)
 {
-    if (false && m_settingsManager->editingLocked())
+    if (m_settingsManager->editingLocked())
     {
         emit errorOccurred("Редактирование заблокировано");
         return;
@@ -225,7 +225,7 @@ void ProjectController::addDependency(const QString& predecessorId, const QStrin
 
 void ProjectController::removeDependency(const QString& dependencyId)
 {
-    if (false && m_settingsManager->editingLocked())
+    if (m_settingsManager->editingLocked())
     {
         emit errorOccurred("Редактирование заблокировано");
         return;
