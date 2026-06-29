@@ -266,22 +266,17 @@ Dialog
                                             }
                                         }
 
-                                        GridView
+                                        Rectangle
                                         {
-                                            id: calendarGrid
                                             Layout.fillWidth: true
-                                            Layout.fillHeight: true
-                                            cellWidth: 44
-                                            cellHeight: 38
-
-                                            property var dayNames: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
-
-                                            header: Row
+                                            height: 30
+                                            color: "#f0f0f0"
+                                            Row
                                             {
                                                 spacing: 2
                                                 Repeater
                                                 {
-                                                    model: calendarGrid.dayNames
+                                                    model: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
                                                     Label
                                                     {
                                                         width: 42
@@ -294,40 +289,51 @@ Dialog
                                                     }
                                                 }
                                             }
+                                        }
 
-                                            model: calendarModel
-                                            delegate: Rectangle
+                                        Grid
+                                        {
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            columns: 7
+                                            spacing: 2
+
+                                            Repeater
                                             {
-                                                width: 42
-                                                height: 36
-                                                color:
+                                                model: calendarModel
+                                                Rectangle
                                                 {
-                                                    if (modelData === "") return "transparent"
-                                                    var cellDate = new Date(calendarYear, calendarMonth, modelData)
-                                                    if (cellDate.toDateString() === root.startDate.toDateString()) return "#0078d7"
-                                                    return "transparent"
-                                                }
-                                                radius: 3
-
-                                                Text
-                                                {
-                                                    anchors.centerIn: parent
-                                                    text: modelData
-                                                    color: parent.color === "#0078d7" ? "white" : "black"
-                                                    font.pixelSize: 13
-                                                }
-
-                                                MouseArea
-                                                {
-                                                    anchors.fill: parent
-                                                    onClicked:
+                                                    width: 42
+                                                    height: 36
+                                                    color:
                                                     {
-                                                        if (modelData !== "")
+                                                        if (modelData === "") return "transparent"
+                                                        var cellDate = new Date(calendarYear, calendarMonth, modelData)
+                                                        if (cellDate.toDateString() === root.startDate.toDateString()) return "#0078d7"
+                                                        return "transparent"
+                                                    }
+                                                    radius: 3
+
+                                                    Text
+                                                    {
+                                                        anchors.centerIn: parent
+                                                        text: modelData
+                                                        color: parent.color === "#0078d7" ? "white" : "black"
+                                                        font.pixelSize: 13
+                                                    }
+
+                                                    MouseArea
+                                                    {
+                                                        anchors.fill: parent
+                                                        onClicked:
                                                         {
-                                                            var newDate = new Date(calendarYear, calendarMonth, modelData)
-                                                            root.startDate = newDate
-                                                            dateField.text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
-                                                            calendarPopup.close()
+                                                            if (modelData !== "")
+                                                            {
+                                                                var newDate = new Date(calendarYear, calendarMonth, modelData)
+                                                                root.startDate = newDate
+                                                                dateField.text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
+                                                                calendarPopup.close()
+                                                            }
                                                         }
                                                     }
                                                 }
