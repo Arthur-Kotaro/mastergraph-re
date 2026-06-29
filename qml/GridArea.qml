@@ -555,36 +555,27 @@ Rectangle
 
                         onPressed:
                         {
-                    if (projectController && projectController.settingsManager.editingLocked) {
-                        drag.target = null
-                        return
-                    }
-                    drag.target = parent
+                            if (projectController && projectController.settingsManager.editingLocked) return
 
                             var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
                             if (task && task.status === 1) return
 
                             if (root.externalFlickable) root.externalFlickable.interactive = false
                             startWidth = ganttBar.width
-                            startMouseX = mouseX
+                            startMouseX = mapToItem(ganttBar, mouseX, 0).x
                         }
-
 
                         onPositionChanged:
                         {
-                    if (projectController && projectController.settingsManager.editingLocked) {
-                        drag.target = null
-                        return
-                    }
-                    drag.target = parent
+                            if (projectController && projectController.settingsManager.editingLocked) return
+
                             var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
-                            var forceUpdate = root.updateCounter
-                            var forceUpdate = root.updateCounter
                             if (task && task.status === 1) return
 
                             if (pressed)
                             {
-                                var delta = mouseX - startMouseX
+                                var currentX = mapToItem(ganttBar, mouseX, 0).x
+                                var delta = currentX - startMouseX
                                 var newWidth = startWidth + delta
                                 newWidth = Math.max(10, Math.round(newWidth / root.dayWidth) * root.dayWidth)
                                 if (newWidth !== ganttBar.width)
