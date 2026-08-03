@@ -616,7 +616,7 @@ Rectangle
                     font.pixelSize: 14
                     color: "#666666"
                     elide: Text.ElideRight
-                    width: Math.min(200, rowContainer.width - ganttBar.x - ganttBar.width - 10)
+                    width: Math.min(350, rowContainer.width - ganttBar.x - ganttBar.width - 10)
                 }
             }
             Repeater
