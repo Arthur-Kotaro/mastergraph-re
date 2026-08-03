@@ -7,7 +7,7 @@ Dialog
     id: root
     title: "Завершить задачу"
     width: 450
-    height: 300
+    height: 340
     modal: true
     standardButtons: Dialog.NoButton
     anchors.centerIn: Overlay.overlay
@@ -23,7 +23,7 @@ Dialog
         if (task)
         {
             startDate = task.startDate
-            endDate = new Date()
+            endDate = task.endDate   // ← берём плановую дату завершения из графика
         }
         else
         {
@@ -113,6 +113,16 @@ Dialog
                     text = Qt.formatDateTime(root.endDate, "dd.MM.yyyy")
                 }
             }
+        }
+
+        Label
+        {
+            id: todayDate
+            Layout.fillWidth: true
+            font.pixelSize: 13
+            font.bold: true
+            horizontalAlignment: Text.AlignLeft
+            text: "Сегодняшняя дата: " + Qt.formatDateTime(new Date, "dd.MM.yyyy")
         }
 
         RowLayout
