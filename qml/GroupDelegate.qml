@@ -199,41 +199,51 @@ Item
 
                     Rectangle
                     {
-                        width: parent.width * 0.35
+                        width: parent.width - 200
                         height: parent.height
                         color: "transparent"
-                        Text
+
+                        Row
                         {
-                            text: taskData ? taskData.title : ""
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
-                            anchors.verticalCenter: parent.verticalCenter
-                            elide: Text.ElideRight
-                            width: parent.width - 20
-                            font.pixelSize: 12
+                            anchors.fill: parent
+                            Rectangle
+                            {
+                                width: parent.width * 0.64
+                                height: parent.height
+                                color: "transparent"
+                                Text
+                                {
+                                    text: taskData ? taskData.title : ""
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 10
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    elide: Text.ElideRight
+                                    width: parent.width - 20
+                                    font.pixelSize: 12
+                                }
+                            }
+                            Rectangle
+                            {
+                                width: parent.width * 0.36
+                                height: parent.height
+                                color: "transparent"
+                                Text
+                                {
+                                    text: taskData ? taskData.responsible : ""
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 5
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    elide: Text.ElideRight
+                                    width: parent.width - 10
+                                    font.pixelSize: 12
+                                }
+                            }
                         }
                     }
 
                     Rectangle
                     {
-                        width: parent.width * 0.20
-                        height: parent.height
-                        color: "transparent"
-                        Text
-                        {
-                            text: taskData ? taskData.responsible : ""
-                            anchors.left: parent.left
-                            anchors.leftMargin: 5
-                            anchors.verticalCenter: parent.verticalCenter
-                            elide: Text.ElideRight
-                            width: parent.width - 10
-                            font.pixelSize: 12
-                        }
-                    }
-
-                    Rectangle
-                    {
-                        width: parent.width * 0.22
+                        width: 100
                         height: parent.height
                         color: "transparent"
                         Text
@@ -248,7 +258,7 @@ Item
 
                     Rectangle
                     {
-                        width: parent.width * 0.23
+                        width: 100
                         height: parent.height
                         color: "transparent"
                         Text

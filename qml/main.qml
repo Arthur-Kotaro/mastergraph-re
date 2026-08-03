@@ -21,6 +21,7 @@ ApplicationWindow
     }
 
     property bool inEditMode: (projectController && projectController.inEditMode) || false
+    property int leftPanelWidth: 460
     property alias gridArea: gridArea
     property alias editTaskDialog: editTaskDialog
     property alias newProjectDialog: newProjectDialog
@@ -85,20 +86,41 @@ ApplicationWindow
             {
                 flickableRight: flickableRight
                 id: leftPanel
-                width: 460
+                width: leftPanelWidth
                 height: parent.height
             }
 
             Rectangle
             {
-                width: 2
+                id: splitter
+                width: 6
                 height: parent.height
                 color: "#888888"
+
+                MouseArea
+                {
+                    anchors.fill: parent
+                    anchors.leftMargin: -4
+                    anchors.rightMargin: -4
+                    cursorShape: Qt.SizeHorCursor
+                    drag.target: splitter
+                    drag.axis: Drag.XAxis
+                    drag.minimumX: 460
+                    drag.maximumX: 800
+
+                    onPositionChanged:
+                    {
+                        if (drag.active)
+                        {
+                            leftPanelWidth = splitter.x
+                        }
+                    }
+                }
             }
 
             Rectangle
             {
-                width: parent.width - 462
+                width: parent.width - leftPanelWidth - 6
                 height: parent.height
                 color: "white"
                 clip: true

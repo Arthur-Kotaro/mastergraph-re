@@ -25,7 +25,7 @@ Rectangle
 
             Rectangle
             {
-                width: parent.width * 0.77
+                width: parent.width - 100
                 height: parent.height
                 color: "#f0f0f0"
                 border.color: "#cccccc"
@@ -58,7 +58,10 @@ Rectangle
 
             Rectangle
             {
-                width: parent.width * 0.23
+
+                // width: parent.width * 0.23
+                width: 100
+
                 height: parent.height
                 color: "#e8e8e8"
                 border.color: "#cccccc"
@@ -126,31 +129,45 @@ Rectangle
 
                 Rectangle
                 {
-                    width: parent.width * 0.35
+                    width: parent.width - 200
                     height: parent.height
                     border.color: "#cccccc"
                     border.width: 1
-                    Text { text: "Название"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 11 }
+
+                    Row
+                    {
+                        anchors.fill: parent
+                        Rectangle
+                        {
+                            width: parent.width * 0.64
+                            height: parent.height
+                            border.color: "#cccccc"
+                            border.width: 1
+                            Text { text: "Название"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 11 }
+                        }
+                        Rectangle
+                        {
+                            width: parent.width * 0.36
+                            height: parent.height
+                            border.color: "#cccccc"
+                            border.width: 1
+                            Text { text: "Ответственный"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 10 }
+                        }
+                    }
                 }
+
                 Rectangle
                 {
-                    width: parent.width * 0.20
-                    height: parent.height
-                    border.color: "#cccccc"
-                    border.width: 1
-                    Text { text: "Ответственный"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 10 }
-                }
-                Rectangle
-                {
-                    width: parent.width * 0.22
+                    width: 100
                     height: parent.height
                     border.color: "#cccccc"
                     border.width: 1
                     Text { text: "Дата начала"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 10 }
                 }
+
                 Rectangle
                 {
-                    width: parent.width * 0.23
+                    width: 100
                     height: parent.height
                     border.color: "#cccccc"
                     border.width: 1
