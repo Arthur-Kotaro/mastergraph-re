@@ -10,6 +10,7 @@
         <file>qml/WelcomeScreen.qml</file>
         <file>qml/NewProjectDialog.qml</file>
         <file>qml/EditTaskDialog.qml</file>
+        <file>qml/EditForecastDatesDialog.qml</file>
         <file>qml/ChangeMilestoneDateDialog.qml</file>
         <file>qml/SaveAsDialog.qml</file>
         <file>qml/SettingsDialog.qml</file>

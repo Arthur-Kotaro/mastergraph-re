@@ -9,9 +9,9 @@ ProjectController::ProjectController(QObject *parent): QObject(parent), m_inEdit
     m_resourceManager = new ResourceManager(this);
     m_settingsManager = new SettingsManager(this);
     m_exportManager = new ExportManager(this);
-    
+
     m_resourceManager->setResourcesPath(m_settingsManager->resourcesPath());
-    
+
     connect(m_projectData->get_taskModel(), &TaskModel::taskDatesChanged,
             this, &ProjectController::onTaskDatesChanged);
 }
@@ -36,17 +36,16 @@ void ProjectController::createNewProject(const QString& projectName, const QStri
                                          const QStringList& selectedTaskGroups)
 {
     qDebug() << "Creating new project:" << projectName << "at" << filePath;
-    
+
     m_projectData->clear();
     m_projectData->set_ProjectName(projectName);
     m_projectData->set_ProjectType(projectType);
     m_projectData->set_StartDate(startDate);
     m_projectData->set_FilePath(filePath);
-    
+
     m_projectData->set_CreationDateTime(QDateTime::currentDateTime());
     m_projectData->set_LastModifiedDateTime(QDateTime::currentDateTime());
 
-    // Загружаем вехи из выбранной типологии
     QVariantList typologies = m_resourceManager->loadTypologies();
     QVariantMap selectedTypology;
     for (const auto& t : typologies)
@@ -61,8 +60,7 @@ void ProjectController::createNewProject(const QString& projectName, const QStri
 
     QVariantList milestones = selectedTypology["milestones"].toList();
     m_projectData->get_milestoneModel()->loadFromTemplate(milestones, startDate);
-    
-    // Загружаем группы задач
+
     QVariantList taskGroups = m_resourceManager->loadTaskGroups();
     for (const auto& groupData : taskGroups)
     {
@@ -74,11 +72,10 @@ void ProjectController::createNewProject(const QString& projectName, const QStri
             qDebug() << "Added group:" << groupName;
         }
     }
-    
+
     m_projectData->recalculateEndDate();
     m_projectData->set_Modified(false);
-    
-    // Сохраняем файл
+
     saveProject();
     set_InEditMode(true);
 }
@@ -91,13 +88,13 @@ void ProjectController::openProject(const QString& filePath)
         emit errorOccurred("Не удалось загрузить проект");
         return;
     }
-    
+
     if (!m_projectData->fromJson(projectData))
     {
         emit errorOccurred("Ошибка загрузки данных проекта");
         return;
     }
-    
+
     m_projectData->set_FilePath(filePath);
     m_projectData->set_Modified(false);
     set_InEditMode(true);
@@ -182,7 +179,7 @@ void ProjectController::updateTaskDates(const QString& taskId, const QDate& newS
         emit errorOccurred("Редактирование заблокировано");
         return;
     }
-    
+
     QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
     if (task["status"].toInt() == static_cast<int>(GanttDefines::TaskStatus::Completed))
     {
@@ -194,10 +191,33 @@ void ProjectController::updateTaskDates(const QString& taskId, const QDate& newS
         emit errorOccurred("Дата завершения не может быть раньше даты начала");
         return;
     }
-    
-    m_projectData->get_taskModel()->updateTaskDates(taskId, newStart, newEnd,
-        true);
+
+    m_projectData->get_taskModel()->updateTaskDates(taskId, newStart, newEnd, true);
     m_projectData->recalculateEndDate();
+    m_projectData->set_Modified(true);
+}
+
+void ProjectController::updateForecastDates(const QString& taskId, const QDate& newForecastStart, const QDate& newForecastEnd)
+{
+    if (m_settingsManager->editingLocked())
+    {
+        emit errorOccurred("Редактирование заблокировано");
+        return;
+    }
+
+    QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
+    if (task["status"].toInt() == static_cast<int>(GanttDefines::TaskStatus::Completed))
+    {
+        emit errorOccurred("Нельзя редактировать прогноз завершённой задачи");
+        return;
+    }
+    if (newForecastStart > newForecastEnd)
+    {
+        emit errorOccurred("Дата завершения прогноза не может быть раньше даты начала");
+        return;
+    }
+
+    m_projectData->get_taskModel()->updateForecastDates(taskId, newForecastStart, newForecastEnd);
     m_projectData->set_Modified(true);
 }
 
@@ -208,7 +228,7 @@ void ProjectController::addDependency(const QString& predecessorId, const QStrin
         emit errorOccurred("Редактирование заблокировано");
         return;
     }
-    
+
     if (!m_projectData->get_dependencyModel()->addDependency(predecessorId, successorId))
     {
         emit errorOccurred("Невозможно создать зависимость (циклическая или уже существует)");
@@ -241,7 +261,7 @@ void ProjectController::updateDependentTasks(const QString& taskId, const QDate&
 {
     if (m_updatingTasks.contains(taskId)) return;
     m_updatingTasks.insert(taskId);
-    
+
     QStringList successors = m_projectData->get_dependencyModel()->getSuccessors(taskId);
     for (const QString& successorId : successors)
     {
@@ -249,7 +269,7 @@ void ProjectController::updateDependentTasks(const QString& taskId, const QDate&
         QDate successorStart = successor["startDate"].toDate();
         QDate successorEnd = successor["endDate"].toDate();
         int duration = successorStart.daysTo(successorEnd);
-        
+
         if (successorStart < newEndDate)
         {
             QDate newSuccessorStart = newEndDate;

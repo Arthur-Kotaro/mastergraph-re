@@ -58,6 +58,16 @@ Menu
         }
     }
 
+    MenuItem
+    {
+        text: "Изменить прогнозные сроки"
+        onTriggered:
+        {
+            if (root.taskId && typeof mainWindow !== "undefined" && mainWindow.editForecastDatesDialog)
+                mainWindow.editForecastDatesDialog.openForTask(root.taskId)
+        }
+    }
+
     MenuSeparator {}
 
     Menu

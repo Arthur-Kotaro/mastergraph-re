@@ -24,6 +24,7 @@ ApplicationWindow
     property int leftPanelWidth: 460
     property alias gridArea: gridArea
     property alias editTaskDialog: editTaskDialog
+    property alias editForecastDatesDialog: editForecastDatesDialog
     property alias newProjectDialog: newProjectDialog
     property alias openFileDialog: openFileDialog
     property alias saveAsDialog: saveAsDialog
@@ -182,6 +183,7 @@ ApplicationWindow
     SaveAsDialog { id: saveAsDialog }
     SettingsDialog { id: settingsDialog }
     EditTaskDialog { id: editTaskDialog }
+    EditForecastDatesDialog { id: editForecastDatesDialog }
     ChangeMilestoneDateDialog { id: changeMilestoneDateDialog }
     AboutDialog { id: aboutDialog }
     HelpDialog { id: helpDialog }

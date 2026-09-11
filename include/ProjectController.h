@@ -40,6 +40,7 @@ public:
                              const QString& responsible, const QDate& startDate, const QDate& endDate);
     Q_INVOKABLE void removeTask(const QString& taskId);
     Q_INVOKABLE void updateTaskDates(const QString& taskId, const QDate& newStart, const QDate& newEnd);
+    Q_INVOKABLE void updateForecastDates(const QString& taskId, const QDate& newForecastStart, const QDate& newForecastEnd);
     Q_INVOKABLE void addDependency(const QString& predecessorId, const QString& successorId);
     Q_INVOKABLE void removeDependency(const QString& dependencyId);
 
