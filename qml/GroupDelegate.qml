@@ -11,16 +11,52 @@ Item
     property bool expanded: model.expanded
     property var flickableRight: null
 
-    property var tasksList: []
+    property var rowsModel: []
+
+    function currentViewMode()
+    {
+        return projectController && projectController.settingsManager
+               ? projectController.settingsManager.viewMode : 0
+    }
 
     function refreshTasks()
     {
-        if (projectController && projectController.projectData && groupId)
+        if (!projectController || !projectController.projectData || !groupId)
         {
-            tasksRepeater.model = []
-            tasksList = projectController.projectData.taskModel.getTasksForGroup(groupId)
-            tasksRepeater.model = tasksList
+            rowsModel = []
+            return
         }
+
+        var mode = currentViewMode()
+        var taskIds = projectController.projectData.taskModel.getTasksForGroup(groupId)
+        var rows = []
+
+        for (var i = 0; i < taskIds.length; i++)
+        {
+            var taskData = projectController.projectData.taskModel.getTask(taskIds[i])
+            if (!taskData) continue
+            var isCompleted = (taskData.status === 1)
+
+            if (mode === 0)
+            {
+                rows.push({taskId: taskIds[i], rowKind: "target", data: taskData, isCompleted: isCompleted})
+            }
+            else if (mode === 1)
+            {
+                if (isCompleted)
+                    rows.push({taskId: taskIds[i], rowKind: "target", data: taskData, isCompleted: true})
+                else
+                    rows.push({taskId: taskIds[i], rowKind: "forecast", data: taskData, isCompleted: false})
+            }
+            else
+            {
+                rows.push({taskId: taskIds[i], rowKind: "target", data: taskData, isCompleted: isCompleted})
+                if (!isCompleted)
+                    rows.push({taskId: taskIds[i], rowKind: "forecast", data: taskData, isCompleted: false})
+            }
+        }
+
+        rowsModel = rows
     }
 
     Component.onCompleted: refreshTasks()
@@ -55,6 +91,12 @@ Item
 
         function onRowsInserted() { refreshTasks() }
         function onRowsRemoved() { refreshTasks() }
+    }
+
+    Connections
+    {
+        target: projectController?.settingsManager
+        function onViewModeChanged() { refreshTasks() }
     }
 
     Rectangle
@@ -173,12 +215,12 @@ Item
         y: groupHeader.height
         width: parent.width
         visible: root.expanded
-        height: tasksRepeater.count * 40
+        height: rowsRepeater.count * 40
 
         Repeater
         {
-            id: tasksRepeater
-            model: []
+            id: rowsRepeater
+            model: root.rowsModel
 
             delegate: Rectangle
             {
@@ -188,15 +230,22 @@ Item
                 border.color: "#eeeeee"
                 border.width: 1
 
-                property string taskId: modelData
-                property var taskData: null
+                property string taskId: modelData ? modelData.taskId : ""
+                property string rowKind: modelData ? modelData.rowKind : "target"
+                property var taskData: modelData ? modelData.data : null
 
-                Component.onCompleted:
+                function startDateText()
                 {
-                    if (projectController && projectController.projectData && taskId)
-                    {
-                        taskData = projectController.projectData.taskModel.getTask(taskId)
-                    }
+                    if (!taskData) return ""
+                    var d = (rowKind === "forecast" && !modelData.isCompleted) ? taskData.forecastStart : taskData.startDate
+                    return d ? Qt.formatDateTime(d, "dd.MM.yyyy") : ""
+                }
+
+                function endDateText()
+                {
+                    if (!taskData) return ""
+                    var d = (rowKind === "forecast" && !modelData.isCompleted) ? taskData.forecastEnd : taskData.endDate
+                    return d ? Qt.formatDateTime(d, "dd.MM.yyyy") : ""
                 }
 
                 Row
@@ -222,13 +271,15 @@ Item
                                 color: "transparent"
                                 Text
                                 {
-                                    text: taskData ? taskData.title : ""
+                                    text: (rowKind === "forecast") ? "Прогноз" :
+                                          (taskData ? taskData.title : "")
                                     anchors.left: parent.left
                                     anchors.leftMargin: 10
                                     anchors.verticalCenter: parent.verticalCenter
                                     elide: Text.ElideRight
                                     width: parent.width - 20
                                     font.pixelSize: 12
+                                    color: (rowKind === "forecast") ? "#666666" : "#222222"
                                 }
                             }
                             Rectangle
@@ -257,7 +308,7 @@ Item
                         color: "transparent"
                         Text
                         {
-                            text: taskData && taskData.startDate ? Qt.formatDateTime(taskData.startDate, "dd.MM.yyyy") : ""
+                            text: startDateText()
                             anchors.left: parent.left
                             anchors.leftMargin: 30
                             anchors.verticalCenter: parent.verticalCenter
@@ -272,7 +323,7 @@ Item
                         color: "transparent"
                         Text
                         {
-                            text: taskData && taskData.endDate ? Qt.formatDateTime(taskData.endDate, "dd.MM.yyyy") : ""
+                            text: endDateText()
                             anchors.left: parent.left
                             anchors.leftMargin: 30
                             anchors.verticalCenter: parent.verticalCenter
@@ -289,7 +340,7 @@ Item
                     cursorShape: Qt.ArrowCursor
                     onClicked: function(mouse)
                     {
-                        if (mouse.button === Qt.RightButton)
+                        if (mouse.button === Qt.RightButton && taskId)
                         {
                             taskContextMenu.taskId = taskId
                             taskContextMenu.popup()
@@ -387,97 +438,6 @@ Item
             if (newNameField.text !== "" && projectController && projectController.projectData && groupId)
             {
                 projectController.projectData.groupModel.renameGroup(groupId, newNameField.text)
-            }
-        }
-    }
-
-    Dialog
-    {
-        id: assignResponsibleDialog
-        title: "Назначить ответственного"
-        width: 400
-        height: 230
-        modal: true
-        standardButtons: Dialog.NoButton
-        anchors.centerIn: Overlay.overlay
-
-        property string taskId: ""
-
-        function openWithTask(tId, tResponsible)
-        {
-            taskId = tId
-            responsibleField.text = tResponsible ? tResponsible : ""
-            open()
-        }
-
-        ColumnLayout
-        {
-            anchors.fill: parent
-            anchors.margins: 15
-            spacing: 15
-
-            Label
-            {
-                text: "ФИО ответственного:"
-                Layout.fillWidth: true
-                font.pixelSize: 13
-            }
-
-            TextField
-            {
-                id: responsibleField
-                Layout.fillWidth: true
-                Layout.preferredHeight: 35
-                placeholderText: "Введите ФИО ответственного"
-                font.pixelSize: 13
-                focus: true
-                onAccepted:
-                {
-                    if (responsibleField.text !== "")
-                    {
-                        assignResponsibleDialog.accept()
-                    }
-                }
-            }
-
-            Item { Layout.fillHeight: true }
-
-            RowLayout
-            {
-                Layout.fillWidth: true
-                spacing: 10
-
-                Button
-                {
-                    text: "Отмена"
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 35
-                    onClicked: assignResponsibleDialog.close()
-                }
-
-                Button
-                {
-                    text: "ОК"
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 35
-                    enabled: responsibleField.text !== ""
-                    onClicked: assignResponsibleDialog.accept()
-                }
-            }
-        }
-
-        onAccepted:
-        {
-            if (responsibleField.text !== "" && projectController && projectController.projectData && taskId)
-            {
-                var task = projectController.projectData.taskModel.getTask(taskId)
-                if (task)
-                {
-                    projectController.projectData.taskModel.updateTask(
-                        taskId, task.title, responsibleField.text,
-                        task.startDate, task.endDate, task.status
-                    )
-                }
             }
         }
     }

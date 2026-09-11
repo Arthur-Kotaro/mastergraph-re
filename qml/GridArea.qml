@@ -47,6 +47,18 @@ Rectangle
         dayWidth: root.dayWidth
     }
 
+    Connections
+    {
+        target: projectController?.settingsManager
+        function onViewModeChanged() { updateData() }
+    }
+
+    function currentViewMode()
+    {
+        return projectController && projectController.settingsManager
+               ? projectController.settingsManager.viewMode : 0
+    }
+
     function updateData()
     {
         if (!projectController || !projectController.projectData) return
@@ -72,6 +84,7 @@ Rectangle
             gridWidth = totalDays * dayWidth
         }
 
+        var mode = currentViewMode()
         var items = []
         var groups = projectController.projectData.groupModel
         var taskCounter = 0
@@ -92,20 +105,44 @@ Rectangle
                     for (var j = 0; j < tasks.length; j++)
                     {
                         var taskData = projectController.projectData.taskModel.getTask(tasks[j])
-                        if (taskData)
+                        if (!taskData) continue
+
+                        var isCompleted = (taskData.status === 1)
+
+                        function pushRow(kind, startDate, endDate)
                         {
                             items.push({
                                 type: "task",
+                                rowKind: kind,
                                 taskId: tasks[j],
                                 rowIndex: taskCounter,
                                 taskTitle: taskData.title,
                                 taskResponsible: taskData.responsible,
-                                taskStart: taskData.startDate,
-                                taskEnd: taskData.endDate,
+                                taskStart: startDate,
+                                taskEnd: endDate,
                                 taskStatus: taskData.status,
-                                taskComment: taskData.comment
+                                taskComment: taskData.comment,
+                                isCompleted: isCompleted
                             })
                             taskCounter++
+                        }
+
+                        if (mode === 0)
+                        {
+                            pushRow("target", taskData.startDate, taskData.endDate)
+                        }
+                        else if (mode === 1)
+                        {
+                            if (isCompleted)
+                                pushRow("target", taskData.startDate, taskData.endDate)
+                            else
+                                pushRow("forecast", taskData.forecastStart, taskData.forecastEnd)
+                        }
+                        else
+                        {
+                            pushRow("target", taskData.startDate, taskData.endDate)
+                            if (!isCompleted)
+                                pushRow("forecast", taskData.forecastStart, taskData.forecastEnd)
                         }
                     }
                 }
@@ -133,6 +170,14 @@ Rectangle
         if (projectController)
         {
             projectController.updateTaskDates(taskId, newStart, newEnd)
+        }
+    }
+
+    function updateForecastDates(taskId, newStart, newEnd)
+    {
+        if (projectController)
+        {
+            projectController.updateForecastDates(taskId, newStart, newEnd)
         }
     }
 
@@ -170,6 +215,46 @@ Rectangle
 
     width: gridWidth
     height: contentHeight
+
+    // Возвращает { targetRow, forecastRow } — индексы строк в visibleItems
+    function getRowIndicesForTask(taskId)
+    {
+        var result = { targetRow: -1, forecastRow: -1 }
+        for (var i = 0; i < visibleItems.length; i++)
+        {
+            var it = visibleItems[i]
+            if (it.type !== "task" || it.taskId !== taskId) continue
+            if (it.rowKind === "target") result.targetRow = i
+            else if (it.rowKind === "forecast") result.forecastRow = i
+        }
+        return result
+    }
+
+    function drawDependencyLine(ctx, fromRow, toRow)
+    {
+        if (fromRow < 0 || toRow < 0) return
+        var fromData = visibleItems[fromRow]
+        var toData = visibleItems[toRow]
+
+        var fromEnd = new Date(fromData.taskEnd)
+        var fromDays = Math.floor((fromEnd - displayStart) / 86400000)
+        var fromX = fromDays * dayWidth + dayWidth
+
+        var fromY = fromRow * rowHeight + rowHeight / 2
+        var toY = toRow * rowHeight + rowHeight / 2
+        var toStart = new Date(toData.taskStart)
+        var toDays = Math.floor((toStart - displayStart) / 86400000)
+        var toX = toDays * dayWidth
+
+        ctx.beginPath()
+        ctx.strokeStyle = "#9966cc"
+        ctx.lineWidth = 2
+        ctx.moveTo(fromX, fromY)
+        ctx.lineTo(fromX + 10, fromY)
+        ctx.lineTo(toX - 10, toY)
+        ctx.lineTo(toX, toY)
+        ctx.stroke()
+    }
 
     Canvas
     {
@@ -262,47 +347,51 @@ Rectangle
             {
                 if (projectController && projectController.projectData && projectController.projectData.dependencyModel)
                 {
+                    var mode = root.currentViewMode()
                     var depModel = projectController.projectData.dependencyModel
+
                     for (var di = 0; di < depModel.rowCount(); di++)
                     {
                         var idx = depModel.index(di, 0)
                         var predId = depModel.data(idx, Qt.UserRole + 2)
                         var succId = depModel.data(idx, Qt.UserRole + 3)
-                        if (predId && succId)
+                        if (!predId || !succId) continue
+
+                        var predTask = projectController.projectData.taskModel.getTask(predId)
+                        var succTask = projectController.projectData.taskModel.getTask(succId)
+                        if (!predTask || !succTask) continue
+
+                        var predCompleted = (predTask.status === 1)
+                        var succCompleted = (succTask.status === 1)
+
+                        var predRows = root.getRowIndicesForTask(predId)
+                        var succRows = root.getRowIndicesForTask(succId)
+
+                        if (mode === 0)
                         {
-                            var predTask = projectController.projectData.taskModel.getTask(predId)
-                            var succTask = projectController.projectData.taskModel.getTask(succId)
-                            if (predTask && succTask)
+                            // Только целевые
+                            root.drawDependencyLine(ctx, predRows.targetRow, succRows.targetRow)
+                        }
+                        else if (mode === 1)
+                        {
+                            // Одна строка на задачу: завершённые — target, незавершённые — forecast
+                            var predSrc = predCompleted ? predRows.targetRow : predRows.forecastRow
+                            var succDst = succCompleted ? succRows.targetRow : succRows.forecastRow
+                            if (predSrc < 0) predSrc = predRows.targetRow
+                            if (succDst < 0) succDst = succRows.targetRow
+                            root.drawDependencyLine(ctx, predSrc, succDst)
+                        }
+                        else // mode === 2, Combined
+                        {
+                            // target-линия — всегда
+                            root.drawDependencyLine(ctx, predRows.targetRow, succRows.targetRow)
+
+                            // forecast-линия — только если у последователя есть forecast-строка
+                            if (succRows.forecastRow >= 0)
                             {
-                                var predEnd = new Date(predTask.endDate)
-                                var predDays = Math.floor((predEnd - displayStart) / (1000 * 60 * 60 * 24))
-                                var predX = predDays * dayWidth + dayWidth
-
-                                var predRow = -1
-                                var succRow = -1
-                                for (var vi = 0; vi < visibleItems.length; vi++)
-                                {
-                                    if (visibleItems[vi].taskId === predId) predRow = vi
-                                    if (visibleItems[vi].taskId === succId) succRow = vi
-                                }
-
-                                if (predRow >= 0 && succRow >= 0)
-                                {
-                                    var predY = predRow * rowHeight + rowHeight / 2
-                                    var succY = succRow * rowHeight + rowHeight / 2
-                                    var succStart = new Date(succTask.startDate)
-                                    var succDays = Math.floor((succStart - displayStart) / (1000 * 60 * 60 * 24))
-                                    var succX = succDays * dayWidth
-
-                                    ctx.beginPath()
-                                    ctx.strokeStyle = "#9966cc"
-                                    ctx.lineWidth = 2
-                                    ctx.moveTo(predX, predY)
-                                    ctx.lineTo(predX + 10, predY)
-                                    ctx.lineTo(succX - 10, succY)
-                                    ctx.lineTo(succX, succY)
-                                    ctx.stroke()
-                                }
+                                var predForecastSrc = predCompleted ? predRows.targetRow : predRows.forecastRow
+                                if (predForecastSrc >= 0)
+                                    root.drawDependencyLine(ctx, predForecastSrc, succRows.forecastRow)
                             }
                         }
                     }
@@ -352,7 +441,7 @@ Rectangle
         delegate: Rectangle
         {
             id: rowContainer
-            y: index * rowHeight - (modelData && modelData.type === "group" ? 2 : 0)
+            y: index * rowHeight
             width: parent.width
             height: rowHeight
             color: "transparent"
@@ -378,7 +467,7 @@ Rectangle
             Rectangle
             {
                 id: ganttBar
-                visible: modelData && (modelData.type === "task" || (modelData.type === "history" && root.showTaskHistory))
+                visible: modelData && modelData.type === "task"
 
                 x:
                 {
@@ -399,23 +488,33 @@ Rectangle
 
                 function getStatusColor()
                 {
-                    if (modelData.isHistory) return "#cccccc";
-                    var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId);
-                    if (task)
+                    if (!modelData) return "#FFD700"
+                    switch (modelData.taskStatus)
                     {
-                        switch(task.status)
-                        {
-                            case 0: return "#FFD700"
-                            case 1: return "#32CD32"
-                            case 2: return "#FF8C00"
-                            case 3: return "#FF4444"
-                            default: return "#FFD700"
-                        }
+                        case 0: return "#FFD700"
+                        case 1: return "#32CD32"
+                        case 2: return "#FF8C00"
+                        case 3: return "#FF4444"
+                        default: return "#FFD700"
                     }
-                    return "#FFD700"
                 }
 
-                color: getStatusColor()
+                function getBarColor()
+                {
+                    if (modelData && modelData.rowKind === "forecast")
+                        return Qt.lighter(getStatusColor(), 1.2)
+                    return getStatusColor()
+                }
+
+                function getBarOpacity()
+                {
+                    if (modelData && modelData.rowKind === "forecast")
+                        return 0.6
+                    return 1.0
+                }
+
+                color: getBarColor()
+                opacity: getBarOpacity()
                 radius: 4
                 border.color: Qt.darker(color, 1.2)
                 border.width: 1
@@ -432,23 +531,25 @@ Rectangle
 
                     if (newStart < newEnd)
                     {
-                        root.updateTaskDates(modelData.taskId, newStart, newEnd)
+                        if (modelData && modelData.rowKind === "forecast")
+                            root.updateForecastDates(modelData.taskId, newStart, newEnd)
+                        else
+                            root.updateTaskDates(modelData.taskId, newStart, newEnd)
                     }
                 }
 
                 ToolTip
                 {
                     visible: moveArea.containsMouse
-                    enabled: modelData.isHistory !== true
                     text:
                     {
-                        var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
-                        if (!task) return ""
-                        var duration = Math.floor((task.endDate - task.startDate) / (24 * 60 * 60 * 1000)) + 1
+                        if (!modelData) return ""
+                        var label = (modelData.rowKind === "forecast") ? "Прогноз: " : ""
+                        var duration = Math.floor((modelData.taskEnd - modelData.taskStart) / (24 * 60 * 60 * 1000)) + 1
                         var commentText = (modelData.taskComment && modelData.taskComment !== "") ? modelData.taskComment : "-"
-                        return "Название: " + task.title +
+                        return label + modelData.taskTitle +
                                "\nДлительность: " + duration + " дней" +
-                               "\nОтветственный: " + task.responsible +
+                               "\nОтветственный: " + modelData.taskResponsible +
                                "\nКомментарий: " + commentText
                     }
                     delay: 500
@@ -457,7 +558,6 @@ Rectangle
                 MouseArea
                 {
                     id: moveArea
-                    enabled: modelData.isHistory !== true
                     anchors.fill: parent
                     hoverEnabled: true
                     drag.target: parent
@@ -468,14 +568,14 @@ Rectangle
 
                     onPressed: function(mouse)
                     {
-                    if (projectController && projectController.settingsManager.editingLocked) {
-                        drag.target = null
-                        return
-                    }
-                    drag.target = parent
+                        if (projectController && projectController.settingsManager.editingLocked)
+                        {
+                            drag.target = null
+                            return
+                        }
+                        drag.target = parent
 
-                        var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
-                        if (task && task.status === 1)
+                        if (modelData && modelData.isCompleted)
                         {
                             mouse.accepted = false
                             return
@@ -492,11 +592,12 @@ Rectangle
 
                     onPositionChanged:
                     {
-                    if (projectController && projectController.settingsManager.editingLocked) {
-                        drag.target = null
-                        return
-                    }
-                    drag.target = parent
+                        if (projectController && projectController.settingsManager.editingLocked)
+                        {
+                            drag.target = null
+                            return
+                        }
+                        drag.target = parent
                         if (drag.active)
                         {
                             parent.x = Math.round(parent.x / root.dayWidth) * root.dayWidth
@@ -521,12 +622,12 @@ Rectangle
                     color: Qt.darker(parent.color, 1.5)
                     radius: 2
                     visible: moveArea.containsMouse
-                    enabled: modelData.isHistory !== true
+                    enabled: !(modelData && modelData.isCompleted)
 
                     MouseArea
                     {
                         id: resizeArea
-                        enabled: modelData.isHistory !== true
+                        enabled: !(modelData && modelData.isCompleted)
                         anchors.fill: parent
                         cursorShape: Qt.SizeHorCursor
 
@@ -536,9 +637,7 @@ Rectangle
                         onPressed:
                         {
                             if (projectController && projectController.settingsManager.editingLocked) return
-
-                            var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
-                            if (task && task.status === 1) return
+                            if (modelData && modelData.isCompleted) return
 
                             if (root.externalFlickable) root.externalFlickable.interactive = false
                             startWidth = ganttBar.width
@@ -548,9 +647,7 @@ Rectangle
                         onPositionChanged:
                         {
                             if (projectController && projectController.settingsManager.editingLocked) return
-
-                            var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
-                            if (task && task.status === 1) return
+                            if (modelData && modelData.isCompleted) return
 
                             if (pressed)
                             {
@@ -573,23 +670,14 @@ Rectangle
                     }
                 }
 
-                Connections
-                {
-                    target: projectController?.projectData?.taskModel
-                    function onDataChanged()
-                    {
-                        ganttBar.color = ganttBar.getStatusColor()
-                    }
-                }
-
                 Text
                 {
-                    visible: root.showComments && (modelData && modelData.type === "task")
+                    visible: root.showComments && (modelData && modelData.type === "task" && modelData.rowKind === "target")
                     text:
                     {
-                        var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
+                        if (!modelData) return ""
                         var forceUpdate = root.updateCounter
-                        return task && task.comment ? task.comment : ""
+                        return modelData.taskComment ? modelData.taskComment : ""
                     }
                     x: parent.width + 14
                     y: 4
@@ -599,11 +687,12 @@ Rectangle
                     width: Math.min(350, rowContainer.width - ganttBar.x - ganttBar.width - 10)
                 }
             }
+
             Repeater
             {
                 model:
                 {
-                    if (modelData && modelData.type === "task" && root.showTaskHistory)
+                    if (modelData && modelData.type === "task" && modelData.rowKind === "target" && root.showTaskHistory)
                     {
                         var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
                         return task && task.dateHistory ? task.dateHistory : []
