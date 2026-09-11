@@ -13,7 +13,6 @@
         <file>qml/ChangeMilestoneDateDialog.qml</file>
         <file>qml/SaveAsDialog.qml</file>
         <file>qml/SettingsDialog.qml</file>
-        <file>qml/TaskDelegate.qml</file>
         <file>qml/GroupDelegate.qml</file>
         <file>qml/GanttBar.qml</file>
         <file>qml/MenuButton.qml</file>
