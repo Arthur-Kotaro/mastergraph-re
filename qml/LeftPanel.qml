@@ -9,9 +9,7 @@ Rectangle
     border.width: 1
 
     property int rowHeight: 40
-    property alias groupsListView: groupsListView
     property var flickableRight: null
-    property bool syncing: false
 
     Column
     {
@@ -58,10 +56,7 @@ Rectangle
 
             Rectangle
             {
-
-                // width: parent.width * 0.23
                 width: 100
-
                 height: parent.height
                 color: "#e8e8e8"
                 border.color: "#cccccc"
@@ -176,31 +171,36 @@ Rectangle
             }
         }
 
-        ScrollView
+        Flickable
         {
+            id: groupsFlickable
             width: parent.width
             height: parent.height - 240
             clip: true
-            ScrollBar.vertical.policy: ScrollBar.AlwaysOn
+            contentWidth: width
+            contentHeight: groupsColumn.height
+            boundsBehavior: Flickable.StopAtBounds
 
-            ListView
+            interactive: false
+
+            contentY: root.flickableRight ? root.flickableRight.contentY : 0
+
+            Column
             {
-                id: groupsListView
+                id: groupsColumn
                 width: parent.width
-                model: (projectController && projectController.projectData) ? projectController.projectData.groupModel : null
-                delegate: GroupDelegate
+                spacing: 0
+
+                Repeater
                 {
-                    width: groupsListView.width
-                }
-                interactive: false
-                onContentYChanged: {
-                    if (!root.syncing && root.flickableRight) {
-                        root.syncing = true
-                        root.flickableRight.contentY = contentY
-                        root.syncing = false
+                    model: (projectController && projectController.projectData) ? projectController.projectData.groupModel : null
+
+                    delegate: GroupDelegate
+                    {
+                        width: groupsColumn.width
+                        flickableRight: root.flickableRight
                     }
                 }
-                contentY: root.flickableRight ? root.flickableRight.contentY : 0
             }
         }
     }

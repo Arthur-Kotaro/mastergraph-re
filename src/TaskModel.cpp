@@ -20,6 +20,7 @@ QHash<int, QByteArray> TaskModel::roleNames() const
     roles[GanttDefines::EndDateRole] = "endDate";
     roles[GanttDefines::StatusRole] = "status";
     roles[GanttDefines::GroupIdRole] = "groupId";
+    roles[GanttDefines::CommentRole] = "comment";
     return roles;
 }
 
@@ -37,6 +38,7 @@ QVariant TaskModel::data(const QModelIndex &index, int role) const
         case GanttDefines::EndDateRole: return task.endDate;
         case GanttDefines::StatusRole: return static_cast<int>(task.status);
         case GanttDefines::GroupIdRole: return task.groupId;
+        case GanttDefines::CommentRole: return task.comment;
         default: return QVariant();
     }
 }
@@ -161,7 +163,7 @@ void TaskModel::setTaskComment(const QString& taskId, const QString& comment)
     {
         m_tasks[index].comment = comment;
         QModelIndex modelIndex = createIndex(index, 0);
-        emit dataChanged(modelIndex, modelIndex);
+        emit dataChanged(modelIndex, modelIndex, {GanttDefines::CommentRole});
     }
 }
 

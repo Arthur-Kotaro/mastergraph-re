@@ -8,13 +8,15 @@ Menu
 
     property var onAddTaskAboveCallback: null
     property var onAddTaskBelowCallback: null
-    property var onRenameCallback: null
-    //property var onAssignResponsibleCallback: null
 
     MenuItem
     {
         text: "Переименовать"
-        onTriggered: { if (root.onRenameCallback) root.onRenameCallback(root.taskId) }
+        onTriggered:
+        {
+            if (root.taskId && mainWindow && mainWindow.renameTaskDialog)
+                mainWindow.renameTaskDialog.openForTask(root.taskId)
+        }
     }
 
     MenuItem
@@ -22,14 +24,19 @@ Menu
         text: "Назначить ответственного"
         onTriggered:
         {
-            if (root.taskId && mainWindow && mainWindow.responsibleDialog) mainWindow.responsibleDialog.openForTask(root.taskId)
+            if (root.taskId && mainWindow && mainWindow.responsibleDialog)
+                mainWindow.responsibleDialog.openForTask(root.taskId)
         }
     }
 
     MenuItem
     {
         text: "Изменить комментарий"
-        onTriggered: { if (root.taskId && mainWindow) mainWindow.commentDialog.openForTask(root.taskId) }
+        onTriggered:
+        {
+            if (root.taskId && mainWindow && mainWindow.commentDialog)
+                mainWindow.commentDialog.openForTask(root.taskId)
+        }
     }
 
     Menu

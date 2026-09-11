@@ -33,7 +33,7 @@ Rectangle
     property int totalDays: 1
     property real gridWidth: totalDays * dayWidth
     property int totalRows: 1
-    property real contentHeight: totalRows * rowHeight
+    property real contentHeight: 0
 
     property var visibleItems: []
     property int updateCounter: 0
@@ -45,14 +45,6 @@ Rectangle
         id: currentTimeLine
         displayStart: root.displayStart
         dayWidth: root.dayWidth
-    }
-    function getThirdSundayAfter(date)
-    {
-        var d = new Date(date)
-        while (d.getDay() !== 0) d.setDate(d.getDate() + 1)
-        d.setDate(d.getDate() + 14)
-        d.setHours(23, 59, 59, 999)
-        return d
     }
 
     function updateData()
@@ -100,7 +92,6 @@ Rectangle
                     for (var j = 0; j < tasks.length; j++)
                     {
                         var taskData = projectController.projectData.taskModel.getTask(tasks[j])
-                        //console.log("getTask result:", JSON.stringify(taskData))
                         if (taskData)
                         {
                             items.push({
@@ -111,7 +102,8 @@ Rectangle
                                 taskResponsible: taskData.responsible,
                                 taskStart: taskData.startDate,
                                 taskEnd: taskData.endDate,
-                                taskStatus: taskData.status
+                                taskStatus: taskData.status,
+                                taskComment: taskData.comment
                             })
                             taskCounter++
                         }
@@ -123,15 +115,11 @@ Rectangle
         if (root.showTaskHistory)
         {
             visibleItems = items
-            //var historyCount = 0; for (var vi = 0; vi < visibleItems.length; vi++)
-            //{ if (visibleItems[vi].type === "history") historyCount++; }
-            //console.log("visibleItems count:", visibleItems.length, "history items:", historyCount)
             updateCounter++
             totalRows = visibleItems.length
             contentHeight = totalRows * rowHeight
 
             root.width = gridWidth
-        console.log("GridArea updateData: gridWidth=", gridWidth, "totalDays=", totalDays)
             root.height = contentHeight
 
             groupsRepeater.model = visibleItems
@@ -148,8 +136,6 @@ Rectangle
         }
     }
 
-
-
     Connections
     {
         target: projectController?.projectData?.taskModel
@@ -163,6 +149,9 @@ Rectangle
         target: projectController?.projectData?.groupModel
         function onDataChanged() { updateData() }
         function onRowsInserted() { updateData() }
+        function onRowsRemoved() { updateData() }
+        function onCountChanged() { updateData() }
+        function onModelReset() { updateData() }
         function onGroupExpandedChanged() { updateData() }
     }
 
@@ -195,7 +184,6 @@ Rectangle
             var ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)
 
-            // Розовая заливка выходных дней (Сб и Вс)
             for (var d = 0; d < totalDays; d++)
             {
                 var checkDate = new Date(displayStart)
@@ -208,7 +196,6 @@ Rectangle
                 }
             }
 
-            // Вертикальные линии дней
             ctx.beginPath()
             ctx.setLineDash([2, 4])
             ctx.strokeStyle = "#cccccc"
@@ -224,7 +211,6 @@ Rectangle
             }
             ctx.stroke()
 
-            // Вертикальные линии недель
             ctx.beginPath()
             ctx.setLineDash([])
             ctx.strokeStyle = "#aaaaaa"
@@ -239,7 +225,6 @@ Rectangle
             }
             ctx.stroke()
 
-            // Вертикальные линии месяцев (толстые)
             ctx.beginPath()
             ctx.lineWidth = 2
             ctx.strokeStyle = "#888888"
@@ -259,7 +244,6 @@ Rectangle
             }
             ctx.stroke()
 
-            // Горизонтальные линии строк
             ctx.beginPath()
             ctx.lineWidth = 1
             ctx.strokeStyle = "#dddddd"
@@ -274,7 +258,6 @@ Rectangle
             }
             ctx.stroke()
 
-            // Отрисовка зависимостей
             if (showDependencies)
             {
                 if (projectController && projectController.projectData && projectController.projectData.dependencyModel)
@@ -326,7 +309,6 @@ Rectangle
                 }
             }
 
-            // Толстые горизонтальные линии для границ групп
             ctx.beginPath()
             ctx.lineWidth = 2
             ctx.strokeStyle = "#888888"
@@ -349,7 +331,6 @@ Rectangle
             }
             ctx.stroke()
 
-            // Последняя линия
             ctx.beginPath()
             ctx.lineWidth = 3
             ctx.strokeStyle = "#666666"
@@ -462,14 +443,13 @@ Rectangle
                     text:
                     {
                         var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
-                        var forceUpdate = root.updateCounter
-                        var forceUpdate = root.updateCounter
                         if (!task) return ""
                         var duration = Math.floor((task.endDate - task.startDate) / (24 * 60 * 60 * 1000)) + 1
-                        var commentText = task.comment ? task.comment : "-"
-                        return "Название: " + task.title + "\nДлительность: " + duration +
-                               " дней\nОтветственный: " + task.responsible + "\nКомментарий: " + commentText
-                               " дней\nОтветственный: " + task.responsible
+                        var commentText = (modelData.taskComment && modelData.taskComment !== "") ? modelData.taskComment : "-"
+                        return "Название: " + task.title +
+                               "\nДлительность: " + duration + " дней" +
+                               "\nОтветственный: " + task.responsible +
+                               "\nКомментарий: " + commentText
                     }
                     delay: 500
                 }

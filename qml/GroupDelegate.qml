@@ -9,14 +9,13 @@ Item
     property string groupId: model.groupId
     property string groupName: model.groupName
     property bool expanded: model.expanded
-    property var taskIds: model.taskIds
+    property var flickableRight: null
 
     property var tasksList: []
 
     function refreshTasks()
     {
         if (projectController && projectController.projectData && groupId)
-        //console.log("refreshTasks called, groupId:", groupId, "tasks:", tasksList.length)
         {
             tasksRepeater.model = []
             tasksList = projectController.projectData.taskModel.getTasksForGroup(groupId)
@@ -28,7 +27,7 @@ Item
 
     Connections
     {
-        target: projectController.projectData.taskModel
+        target: projectController && projectController.projectData ? projectController.projectData.taskModel : null
         function onCountChanged() { refreshTasks() }
         function onRowsInserted() { refreshTasks() }
         function onRowsRemoved() { refreshTasks() }
@@ -37,12 +36,25 @@ Item
 
     Connections
     {
-        target: projectController.projectData.groupModel
+        target: projectController && projectController.projectData ? projectController.projectData.groupModel : null
         function onDataChanged() { refreshTasks() }
+
         function onGroupExpandedChanged(changedGroupId)
         {
-            if (changedGroupId === groupId) refreshTasks()
+            if (changedGroupId === groupId)
+            {
+                var savedY = root.flickableRight ? root.flickableRight.contentY : 0
+                refreshTasks()
+                if (root.flickableRight)
+                {
+                    var maxY = Math.max(0, root.flickableRight.contentHeight - root.flickableRight.height)
+                    root.flickableRight.contentY = Math.min(savedY, maxY)
+                }
+            }
         }
+
+        function onRowsInserted() { refreshTasks() }
+        function onRowsRemoved() { refreshTasks() }
     }
 
     Rectangle
@@ -112,9 +124,6 @@ Item
                 {
                     if (projectController && projectController.projectData)
                     {
-                        var startDate = new Date()
-                        var endDate = new Date()
-                        endDate.setDate(endDate.getDate() + 7)
                         mainWindow.newTaskDialog.openForGroup(groupId)
                         refreshTasks()
                         if (typeof mainWindow !== "undefined" && mainWindow && mainWindow.gridArea)
@@ -231,7 +240,7 @@ Item
                                 {
                                     text: taskData ? taskData.responsible : ""
                                     anchors.left: parent.left
-                                    anchors.leftMargin: 5
+                                    anchors.leftMargin: 20
                                     anchors.verticalCenter: parent.verticalCenter
                                     elide: Text.ElideRight
                                     width: parent.width - 10
@@ -250,7 +259,7 @@ Item
                         {
                             text: taskData && taskData.startDate ? Qt.formatDateTime(taskData.startDate, "dd.MM.yyyy") : ""
                             anchors.left: parent.left
-                            anchors.leftMargin: 5
+                            anchors.leftMargin: 30
                             anchors.verticalCenter: parent.verticalCenter
                             font.pixelSize: 12
                         }
@@ -265,7 +274,7 @@ Item
                         {
                             text: taskData && taskData.endDate ? Qt.formatDateTime(taskData.endDate, "dd.MM.yyyy") : ""
                             anchors.left: parent.left
-                            anchors.leftMargin: 5
+                            anchors.leftMargin: 30
                             anchors.verticalCenter: parent.verticalCenter
                             font.pixelSize: 12
                         }
@@ -293,8 +302,6 @@ Item
                     id: taskContextMenu
                     onAddTaskAboveCallback: function(tId) { addTaskAbove(tId) }
                     onAddTaskBelowCallback: function(tId) { addTaskBelow(tId) }
-                    onRenameCallback: function(tId) { renameTaskDialog.openWithTask(tId, projectController.projectData.taskModel.getTask(tId).title) }
-                    //onAssignResponsibleCallback: function(tId) { assignResponsibleDialog.openWithTask(tId, projectController.projectData.taskModel.getTask(tId).responsible) }
                 }
             }
         }
@@ -380,97 +387,6 @@ Item
             if (newNameField.text !== "" && projectController && projectController.projectData && groupId)
             {
                 projectController.projectData.groupModel.renameGroup(groupId, newNameField.text)
-            }
-        }
-    }
-
-    Dialog
-    {
-        id: renameTaskDialog
-        title: "Переименовать задачу"
-        width: 400
-        height: 230
-        modal: true
-        standardButtons: Dialog.NoButton
-        anchors.centerIn: Overlay.overlay
-
-        property string taskId: ""
-
-        function openWithTask(tId, tTitle)
-        {
-            taskId = tId
-            taskNewNameField.text = tTitle
-            open()
-        }
-
-        ColumnLayout
-        {
-            anchors.fill: parent
-            anchors.margins: 15
-            spacing: 15
-
-            Label
-            {
-                text: "Новое название задачи:"
-                Layout.fillWidth: true
-                font.pixelSize: 13
-            }
-
-            TextField
-            {
-                id: taskNewNameField
-                Layout.fillWidth: true
-                Layout.preferredHeight: 35
-                placeholderText: "Введите название задачи"
-                font.pixelSize: 13
-                focus: true
-                onAccepted:
-                {
-                    if (taskNewNameField.text !== "")
-                    {
-                        renameTaskDialog.accept()
-                    }
-                }
-            }
-
-            Item { Layout.fillHeight: true }
-
-            RowLayout
-            {
-                Layout.fillWidth: true
-                spacing: 10
-
-                Button
-                {
-                    text: "Отмена"
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 35
-                    onClicked: renameTaskDialog.close()
-                }
-
-                Button
-                {
-                    text: "ОК"
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 35
-                    enabled: taskNewNameField.text !== ""
-                    onClicked: renameTaskDialog.accept()
-                }
-            }
-        }
-
-        onAccepted:
-        {
-            if (taskNewNameField.text !== "" && projectController && projectController.projectData && taskId)
-            {
-                var task = projectController.projectData.taskModel.getTask(taskId)
-                if (task)
-                {
-                    projectController.projectData.taskModel.updateTask(
-                        taskId, taskNewNameField.text, task.responsible,
-                        task.startDate, task.endDate, task.status
-                    )
-                }
             }
         }
     }

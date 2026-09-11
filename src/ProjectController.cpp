@@ -43,7 +43,6 @@ void ProjectController::createNewProject(const QString& projectName, const QStri
     m_projectData->set_StartDate(startDate);
     m_projectData->set_FilePath(filePath);
     
-
     m_projectData->set_CreationDateTime(QDateTime::currentDateTime());
     m_projectData->set_LastModifiedDateTime(QDateTime::currentDateTime());
 
@@ -96,7 +95,6 @@ void ProjectController::openProject(const QString& filePath)
     if (!m_projectData->fromJson(projectData))
     {
         emit errorOccurred("Ошибка загрузки данных проекта");
-    qDebug() << "Project loaded successfully. Groups:" << m_projectData->get_groupModel()->rowCount() << "Tasks:" << m_projectData->get_taskModel()->rowCount() << "Milestones:" << m_projectData->get_milestoneModel()->rowCount();
         return;
     }
     
@@ -158,8 +156,6 @@ void ProjectController::addTask(const QString& groupId, const QString& title,
         return;
     }
     m_projectData->get_taskModel()->addTask(groupId, title, responsible, startDate, endDate);
-    QString newTaskId = m_projectData->get_taskModel()->data(m_projectData->get_taskModel()->index(m_projectData->get_taskModel()->rowCount() - 1), GanttDefines::IdRole).toString();
-    m_projectData->get_groupModel()->addTaskToGroup(groupId, newTaskId);
     m_projectData->recalculateEndDate();
     m_projectData->set_Modified(true);
     qDebug() << "Task added:" << title << "to group:" << groupId;

@@ -174,7 +174,7 @@ QVariantMap ProjectData::toJson() const
         task["endDate"] = idx.data(GanttDefines::EndDateRole).toDate().toString("dd.MM.yyyy");
         task["status"] = idx.data(GanttDefines::StatusRole).toInt();
         task["groupId"] = idx.data(GanttDefines::GroupIdRole).toString();
-        task["comment"] = m_taskModel->getTask(task["id"].toString())["comment"].toString();
+        task["comment"] = idx.data(GanttDefines::CommentRole).toString();
         task["dateHistory"] = m_taskModel->getTask(task["id"].toString())["dateHistory"].toList();
         tasks.append(task);
     }
@@ -240,9 +240,6 @@ bool ProjectData::fromJson(const QVariantMap& json)
         QString taskId = taskMap["id"].toString();
         QString groupId = taskMap["groupId"].toString();
         m_taskModel->addTaskWithId(taskId, groupId, taskMap["title"].toString(), taskMap["responsible"].toString(), startDate, endDate, status);
-        m_groupModel->addTaskToGroup(groupId, taskId);
-        if (!taskMap["comment"].toString().isEmpty())
-            m_taskModel->setTaskComment(taskId, taskMap["comment"].toString());
         if (!taskMap["comment"].toString().isEmpty())
             m_taskModel->setTaskComment(taskId, taskMap["comment"].toString());
         QVariantList dateHistory = taskMap["dateHistory"].toList();

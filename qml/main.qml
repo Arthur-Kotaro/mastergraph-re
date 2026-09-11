@@ -37,6 +37,7 @@ ApplicationWindow
     property alias newTaskDialog: newTaskDialog
     property alias commentDialog: commentDialog
     property alias responsibleDialog: responsibleDialog
+    property alias renameTaskDialog: renameTaskDialog
     property alias leftPanel: leftPanel
     property alias calendarHeader: calendarHeader
 
@@ -191,6 +192,7 @@ ApplicationWindow
     NewTaskDialog { id: newTaskDialog }
     CommentDialog { id: commentDialog }
     ResponsibleDialog { id: responsibleDialog }
+    RenameTaskDialog { id: renameTaskDialog }
 
     Labs.FileDialog
     {

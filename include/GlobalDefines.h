@@ -40,7 +40,8 @@ enum ModelRoles {
     GroupIdRole,
     ColorRole,
     DurationRole,
-    HistoryRole
+    HistoryRole,
+    CommentRole
 };
 
 inline QColor getTaskStatusColor(TaskStatus status) {

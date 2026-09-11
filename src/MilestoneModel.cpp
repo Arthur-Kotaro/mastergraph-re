@@ -33,15 +33,15 @@ QVariant MilestoneModel::data(const QModelIndex &index, int role) const
     const Milestone &ms = m_milestones[index.row()];
     switch (role)
     {
-    case Qt::DisplayRole: return ms.abbreviation;
-    case Qt::UserRole + 1: return ms.id;
-    case Qt::UserRole + 2: return ms.fullName;
-    case Qt::UserRole + 3: return ms.plannedDate;
-    case Qt::UserRole + 4: return ms.actualDate;
-    case Qt::UserRole + 5: return static_cast<int>(ms.status);
-    case Qt::UserRole + 7: { QVariantList history; for (const QDate& d : ms.rescheduleHistory) history.append(d.toString("dd.MM.yyyy")); return history; }
-    case Qt::UserRole + 6: return GanttDefines::getMilestoneStatusColor(ms.status);
-    default: return QVariant();
+        case Qt::DisplayRole: return ms.abbreviation;
+        case Qt::UserRole + 1: return ms.id;
+        case Qt::UserRole + 2: return ms.fullName;
+        case Qt::UserRole + 3: return ms.plannedDate;
+        case Qt::UserRole + 4: return ms.actualDate;
+        case Qt::UserRole + 5: return static_cast<int>(ms.status);
+        case Qt::UserRole + 7: { QVariantList history; for (const QDate& d : ms.rescheduleHistory) history.append(d.toString("dd.MM.yyyy")); return history; }
+        case Qt::UserRole + 6: return GanttDefines::getMilestoneStatusColor(ms.status);
+        default: return QVariant();
     }
 }
 
@@ -72,7 +72,7 @@ void MilestoneModel::addMilestone(const QString& abbreviation, const QString& fu
     m_milestones.append(ms);
     endInsertRows();
     emit milestonesChanged();
-    qDebug() << "rescheduleMilestone: milestonesChanged emitted for" << ms.id;
+    qDebug() << "MilestoneModel::addMilestone:" << ms.id << ms.abbreviation << ms.plannedDate.toString("dd.MM.yyyy");
 }
 
 void MilestoneModel::removeMilestone(const QString& milestoneId)
@@ -84,7 +84,7 @@ void MilestoneModel::removeMilestone(const QString& milestoneId)
         m_milestones.removeAt(index);
         endRemoveRows();
         emit milestonesChanged();
-    qDebug() << "rescheduleMilestone: milestonesChanged emitted for" << milestoneId;
+        qDebug() << "MilestoneModel::removeMilestone:" << milestoneId;
     }
 }
 
@@ -97,7 +97,8 @@ void MilestoneModel::setMilestoneCompleted(const QString& milestoneId)
         {
             if (m_milestones[i].status != GanttDefines::MilestoneStatus::Completed)
             {
-                qDebug() << "Cannot complete milestone - previous milestone not completed";
+                qDebug() << "MilestoneModel::setMilestoneCompleted: cannot complete"
+                << milestoneId << "- previous milestone" << m_milestones[i].id << "not completed";
                 return;
             }
         }
@@ -107,7 +108,8 @@ void MilestoneModel::setMilestoneCompleted(const QString& milestoneId)
         emit dataChanged(modelIndex, modelIndex);
         emit milestoneStatusChanged(milestoneId);
         emit milestonesChanged();
-    qDebug() << "rescheduleMilestone: milestonesChanged emitted for" << milestoneId;
+        qDebug() << "MilestoneModel::setMilestoneCompleted:" << milestoneId
+        << "actualDate:" << m_milestones[index].actualDate.toString("dd.MM.yyyy");
     }
 }
 
@@ -123,7 +125,8 @@ void MilestoneModel::rescheduleMilestone(const QString& milestoneId, const QDate
         emit dataChanged(modelIndex, modelIndex);
         emit milestoneDateChanged(milestoneId);
         emit milestonesChanged();
-    qDebug() << "rescheduleMilestone: milestonesChanged emitted for" << milestoneId;
+        qDebug() << "MilestoneModel::rescheduleMilestone:" << milestoneId
+        << "new planned date:" << newDate.toString("dd.MM.yyyy");
     }
 }
 
@@ -136,7 +139,8 @@ void MilestoneModel::addRescheduleHistory(const QString& milestoneId, const QDat
         QModelIndex modelIndex = createIndex(index, 0);
         emit dataChanged(modelIndex, modelIndex);
         emit milestonesChanged();
-    qDebug() << "rescheduleMilestone: milestonesChanged emitted for" << milestoneId;
+        qDebug() << "MilestoneModel::addRescheduleHistory:" << milestoneId
+        << "date:" << date.toString("dd.MM.yyyy");
     }
 }
 
@@ -154,7 +158,8 @@ void MilestoneModel::setRescheduleHistory(const QString& milestoneId, const QVar
         QModelIndex modelIndex = createIndex(index, 0);
         emit dataChanged(modelIndex, modelIndex);
         emit milestonesChanged();
-    qDebug() << "rescheduleMilestone: milestonesChanged emitted for" << milestoneId;
+        qDebug() << "MilestoneModel::setRescheduleHistory:" << milestoneId
+        << "count:" << m_milestones[index].rescheduleHistory.size();
     }
 }
 
@@ -196,7 +201,18 @@ void MilestoneModel::loadFromTemplate(const QVariantList& templates, const QDate
 
     endResetModel();
     emit milestonesChanged();
-    qDebug() << "MilestoneModel::loadFromTemplate called. Last milestone: id = " << m_milestones.last().id << ", name: " << m_milestones.last().fullName << ", planned date: " << m_milestones.last().plannedDate;
+
+    if (!m_milestones.isEmpty())
+    {
+        qDebug() << "MilestoneModel::loadFromTemplate: count =" << m_milestones.size()
+        << "last id =" << m_milestones.last().id
+        << "name =" << m_milestones.last().fullName
+        << "planned date =" << m_milestones.last().plannedDate.toString("dd.MM.yyyy");
+    }
+    else
+    {
+        qDebug() << "MilestoneModel::loadFromTemplate: no milestones loaded";
+    }
 }
 
 QVariantMap MilestoneModel::getMilestone(const QString& milestoneId) const
@@ -277,5 +293,5 @@ void MilestoneModel::clear()
     m_originalFirstDate = QDate();
     endResetModel();
     emit milestonesChanged();
-    qDebug() << "MilestoneModel::clear called. rescheduleMilestone: milestonesChanged emitted.";
+    qDebug() << "MilestoneModel::clear";
 }

@@ -14,7 +14,6 @@ public:
         QString id;
         QString name;
         bool expanded;
-        QList<QString> taskIds;
     };
 
     explicit GroupModel(QObject *parent = nullptr);
@@ -32,11 +31,7 @@ public:
     Q_INVOKABLE void moveGroup(const QString& groupId, int newPosition);
     Q_INVOKABLE QVariantMap getGroup(const QString& groupId) const;
     Q_INVOKABLE QStringList getGroupIds() const;
-    Q_INVOKABLE void setTaskOrder(const QString& groupId, const QStringList& taskIds);
-    Q_INVOKABLE void addTaskToGroup(const QString& groupId, const QString& taskId);
-    Q_INVOKABLE void removeTaskFromGroup(const QString& groupId, const QString& taskId);
-    Q_INVOKABLE void moveTaskInGroup(const QString& groupId, const QString& taskId, int newPosition);
-    
+
     // Новые методы для доступа из QML
     Q_INVOKABLE QString getGroupId(int index) const;
     Q_INVOKABLE QString getGroupName(int index) const;

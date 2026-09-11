@@ -13,7 +13,6 @@ QHash<int, QByteArray> GroupModel::roleNames() const {
     roles[Qt::DisplayRole] = "groupName";
     roles[Qt::UserRole + 1] = "groupId";
     roles[Qt::UserRole + 2] = "expanded";
-    roles[Qt::UserRole + 3] = "taskIds";
     return roles;
 }
 
@@ -26,7 +25,6 @@ QVariant GroupModel::data(const QModelIndex &index, int role) const {
         case Qt::DisplayRole: return group.name;
         case Qt::UserRole + 1: return group.id;
         case Qt::UserRole + 2: return group.expanded;
-        case Qt::UserRole + 3: return QVariant::fromValue(group.taskIds);
         default: return QVariant();
     }
 }
@@ -126,7 +124,6 @@ QVariantMap GroupModel::getGroup(const QString& groupId) const {
         map["id"] = group.id;
         map["name"] = group.name;
         map["expanded"] = group.expanded;
-        map["taskIds"] = QVariant::fromValue(group.taskIds);
         return map;
     }
     return QVariantMap();
@@ -138,38 +135,6 @@ QStringList GroupModel::getGroupIds() const {
         ids.append(group.id);
     }
     return ids;
-}
-
-void GroupModel::setTaskOrder(const QString& groupId, const QStringList& taskIds) {
-    int index = findGroupIndex(groupId);
-    if (index >= 0) {
-        m_groups[index].taskIds = taskIds;
-    }
-}
-
-void GroupModel::addTaskToGroup(const QString& groupId, const QString& taskId) {
-    int index = findGroupIndex(groupId);
-    if (index >= 0 && !m_groups[index].taskIds.contains(taskId)) {
-        m_groups[index].taskIds.append(taskId);
-    }
-}
-
-void GroupModel::removeTaskFromGroup(const QString& groupId, const QString& taskId) {
-    int index = findGroupIndex(groupId);
-    if (index >= 0) {
-        m_groups[index].taskIds.removeAll(taskId);
-    }
-}
-
-void GroupModel::moveTaskInGroup(const QString& groupId, const QString& taskId, int newPosition) {
-    int groupIndex = findGroupIndex(groupId);
-    if (groupIndex >= 0) {
-        QStringList& taskIds = m_groups[groupIndex].taskIds;
-        int oldPos = taskIds.indexOf(taskId);
-        if (oldPos >= 0 && oldPos != newPosition && newPosition >= 0 && newPosition < taskIds.size()) {
-            taskIds.move(oldPos, newPosition);
-        }
-    }
 }
 
 void GroupModel::clear() {
