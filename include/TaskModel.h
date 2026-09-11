@@ -20,6 +20,8 @@ public:
         QString responsible;
         QDate startDate;
         QDate endDate;
+        QDate forecastStart;
+        QDate forecastEnd;
         GanttDefines::TaskStatus status;
         QList<QPair<QDate, QDate>> dateHistory;
         QString comment;
@@ -36,11 +38,13 @@ public:
     Q_INVOKABLE void addTask(const QString& groupId, const QString& title, const QString& responsible,
                              const QDate& startDate, const QDate& endDate);
     Q_INVOKABLE void addTaskWithId(const QString& taskId, const QString& groupId, const QString& title,
-                                   const QString& responsible, const QDate& startDate, const QDate& endDate, int status);
+                                   const QString& responsible, const QDate& startDate, const QDate& endDate,
+                                   const QDate& forecastStart, const QDate& forecastEnd, int status);
     Q_INVOKABLE void removeTask(const QString& taskId);
     Q_INVOKABLE void updateTask(const QString& taskId, const QString& title, const QString& responsible,
                                 const QDate& startDate, const QDate& endDate, int status);
     Q_INVOKABLE void updateTaskDates(const QString& taskId, const QDate& newStart, const QDate& newEnd, bool addToHistory = true);
+    Q_INVOKABLE void updateForecastDates(const QString& taskId, const QDate& newForecastStart, const QDate& newForecastEnd);
     Q_INVOKABLE void setTaskStatus(const QString& taskId, GanttDefines::TaskStatus status);
     Q_INVOKABLE void setTaskComment(const QString& taskId, const QString& comment);
     void addDateHistory(const QString& taskId, const QDate& oldStart, const QDate& oldEnd);

@@ -21,6 +21,8 @@ QHash<int, QByteArray> TaskModel::roleNames() const
     roles[GanttDefines::StatusRole] = "status";
     roles[GanttDefines::GroupIdRole] = "groupId";
     roles[GanttDefines::CommentRole] = "comment";
+    roles[GanttDefines::ForecastStartRole] = "forecastStart";
+    roles[GanttDefines::ForecastEndRole] = "forecastEnd";
     return roles;
 }
 
@@ -39,6 +41,8 @@ QVariant TaskModel::data(const QModelIndex &index, int role) const
         case GanttDefines::StatusRole: return static_cast<int>(task.status);
         case GanttDefines::GroupIdRole: return task.groupId;
         case GanttDefines::CommentRole: return task.comment;
+        case GanttDefines::ForecastStartRole: return task.forecastStart;
+        case GanttDefines::ForecastEndRole: return task.forecastEnd;
         default: return QVariant();
     }
 }
@@ -67,6 +71,8 @@ void TaskModel::addTask(const QString& groupId, const QString& title, const QStr
     task.responsible = responsible;
     task.startDate = startDate;
     task.endDate = endDate;
+    task.forecastStart = startDate;
+    task.forecastEnd = endDate;
     task.status = GanttDefines::TaskStatus::Planned;
     task.groupId = groupId;
     m_tasks.append(task);
@@ -74,8 +80,9 @@ void TaskModel::addTask(const QString& groupId, const QString& title, const QStr
     emit countChanged();
 }
 
-void TaskModel::addTaskWithId(const QString& taskId, const QString& groupId, const QString& title, const QString& responsible,
-                        const QDate& startDate, const QDate& endDate, int status)
+void TaskModel::addTaskWithId(const QString& taskId, const QString& groupId, const QString& title,
+                              const QString& responsible, const QDate& startDate, const QDate& endDate,
+                              const QDate& forecastStart, const QDate& forecastEnd, int status)
 {
     beginInsertRows(QModelIndex(), m_tasks.size(), m_tasks.size());
     Task task;
@@ -85,6 +92,19 @@ void TaskModel::addTaskWithId(const QString& taskId, const QString& groupId, con
     task.startDate = startDate;
     task.endDate = endDate;
     task.status = static_cast<GanttDefines::TaskStatus>(status);
+
+    // Для завершённых задач прогноз равен актуальным датам
+    if (task.status == GanttDefines::TaskStatus::Completed)
+    {
+        task.forecastStart = startDate;
+        task.forecastEnd = endDate;
+    }
+    else
+    {
+        task.forecastStart = forecastStart.isValid() ? forecastStart : startDate;
+        task.forecastEnd = forecastEnd.isValid() ? forecastEnd : endDate;
+    }
+
     task.groupId = groupId;
     m_tasks.append(task);
     endInsertRows();
@@ -116,7 +136,13 @@ void TaskModel::updateTask(const QString& taskId, const QString& title, const QS
         task.startDate = startDate;
         task.endDate = endDate;
         task.status = static_cast<GanttDefines::TaskStatus>(status);
-        
+
+        if (task.status == GanttDefines::TaskStatus::Completed)
+        {
+            task.forecastStart = startDate;
+            task.forecastEnd = endDate;
+        }
+
         QModelIndex modelIndex = createIndex(index, 0);
         emit dataChanged(modelIndex, modelIndex);
     }
@@ -128,20 +154,41 @@ void TaskModel::updateTaskDates(const QString& taskId, const QDate& newStart, co
     if (index >= 0 && newStart <= newEnd)
     {
         Task& task = m_tasks[index];
-        
+
         if (addToHistory)
         {
             QPair<QDate, QDate> oldDates(task.startDate, task.endDate);
             task.dateHistory.append(oldDates);
-    qDebug() << "dateHistory appended, new size:" << task.dateHistory.size();
         }
-        
+
         task.startDate = newStart;
         task.endDate = newEnd;
-        
+
+        if (task.status == GanttDefines::TaskStatus::Completed)
+        {
+            task.forecastStart = newStart;
+            task.forecastEnd = newEnd;
+        }
+
         QModelIndex modelIndex = createIndex(index, 0);
         emit dataChanged(modelIndex, modelIndex);
         emit taskDatesChanged(taskId);
+    }
+}
+
+void TaskModel::updateForecastDates(const QString& taskId, const QDate& newForecastStart, const QDate& newForecastEnd)
+{
+    int index = findTaskIndex(taskId);
+    if (index >= 0 && newForecastStart.isValid() && newForecastEnd.isValid() && newForecastStart <= newForecastEnd)
+    {
+        Task& task = m_tasks[index];
+        if (task.status == GanttDefines::TaskStatus::Completed) return;
+
+        task.forecastStart = newForecastStart;
+        task.forecastEnd = newForecastEnd;
+
+        QModelIndex modelIndex = createIndex(index, 0);
+        emit dataChanged(modelIndex, modelIndex, {GanttDefines::ForecastStartRole, GanttDefines::ForecastEndRole});
     }
 }
 
@@ -150,7 +197,15 @@ void TaskModel::setTaskStatus(const QString& taskId, GanttDefines::TaskStatus st
     int index = findTaskIndex(taskId);
     if (index >= 0)
     {
-        m_tasks[index].status = status;
+        Task& task = m_tasks[index];
+        task.status = status;
+
+        if (task.status == GanttDefines::TaskStatus::Completed)
+        {
+            task.forecastStart = task.startDate;
+            task.forecastEnd = task.endDate;
+        }
+
         QModelIndex modelIndex = createIndex(index, 0);
         emit dataChanged(modelIndex, modelIndex);
     }
@@ -201,6 +256,8 @@ QVariantMap TaskModel::getTask(const QString& taskId) const
         map["responsible"] = task.responsible;
         map["startDate"] = task.startDate;
         map["endDate"] = task.endDate;
+        map["forecastStart"] = task.forecastStart;
+        map["forecastEnd"] = task.forecastEnd;
         map["status"] = static_cast<int>(task.status);
         map["groupId"] = task.groupId;
         map["comment"] = task.comment;
@@ -222,7 +279,7 @@ void TaskModel::moveTask(const QString& taskId, int newPosition)
 {
     int oldIndex = findTaskIndex(taskId);
     if (oldIndex < 0 || oldIndex == newPosition || newPosition < 0 || newPosition >= m_tasks.size()) return;
-    
+
     beginMoveRows(QModelIndex(), oldIndex, oldIndex, QModelIndex(), newPosition > oldIndex ? newPosition + 1 : newPosition);
     m_tasks.move(oldIndex, newPosition);
     endMoveRows();
@@ -258,6 +315,8 @@ QVariantList TaskModel::getAllTasks() const
         map["responsible"] = task.responsible;
         map["startDate"] = task.startDate;
         map["endDate"] = task.endDate;
+        map["forecastStart"] = task.forecastStart;
+        map["forecastEnd"] = task.forecastEnd;
         map["status"] = static_cast<int>(task.status);
         map["groupId"] = task.groupId;
         map["comment"] = task.comment;

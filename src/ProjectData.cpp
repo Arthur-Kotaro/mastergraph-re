@@ -79,7 +79,6 @@ void ProjectData::set_Modified(bool mod)
     }
 }
 
-
 QDateTime ProjectData::get_creationDateTime() const { return m_creationDateTime; }
 void ProjectData::set_CreationDateTime(const QDateTime& dt)
 {
@@ -133,10 +132,10 @@ void ProjectData::clear()
     m_startDate = QDate();
     m_endDate = QDate();
     m_filePath.clear();
-    
+
     m_creationDateTime = QDateTime();
     m_lastModifiedDateTime = QDateTime();
-    
+
     set_Modified(false);
     emit dataCleared();
 }
@@ -149,7 +148,7 @@ QVariantMap ProjectData::toJson() const
     result["startDate"] = m_startDate.toString("dd.MM.yyyy");
     result["creationDateTime"] = m_creationDateTime.toString("dd.MM.yyyy hh:mm:ss");
     result["lastModifiedDateTime"] = m_lastModifiedDateTime.toString("dd.MM.yyyy hh:mm:ss");
-    
+
     QVariantList groups;
     for (int i = 0; i < m_groupModel->rowCount(); ++i)
     {
@@ -161,7 +160,7 @@ QVariantMap ProjectData::toJson() const
         groups.append(group);
     }
     result["groups"] = groups;
-    
+
     QVariantList tasks;
     for (int i = 0; i < m_taskModel->rowCount(); ++i)
     {
@@ -170,16 +169,33 @@ QVariantMap ProjectData::toJson() const
         task["id"] = idx.data(GanttDefines::IdRole).toString();
         task["title"] = idx.data(GanttDefines::TitleRole).toString();
         task["responsible"] = idx.data(GanttDefines::ResponsibleRole).toString();
-        task["startDate"] = idx.data(GanttDefines::StartDateRole).toDate().toString("dd.MM.yyyy");
-        task["endDate"] = idx.data(GanttDefines::EndDateRole).toDate().toString("dd.MM.yyyy");
-        task["status"] = idx.data(GanttDefines::StatusRole).toInt();
+
+        QDate startDate = idx.data(GanttDefines::StartDateRole).toDate();
+        QDate endDate = idx.data(GanttDefines::EndDateRole).toDate();
+        QDate forecastStart = idx.data(GanttDefines::ForecastStartRole).toDate();
+        QDate forecastEnd = idx.data(GanttDefines::ForecastEndRole).toDate();
+        int status = idx.data(GanttDefines::StatusRole).toInt();
+
+        task["startDate"] = startDate.toString("dd.MM.yyyy");
+        task["endDate"] = endDate.toString("dd.MM.yyyy");
+        task["status"] = status;
         task["groupId"] = idx.data(GanttDefines::GroupIdRole).toString();
         task["comment"] = idx.data(GanttDefines::CommentRole).toString();
         task["dateHistory"] = m_taskModel->getTask(task["id"].toString())["dateHistory"].toList();
+
+        // Прогноз сохраняем только для незавершённых и только если он отличается от актуальных дат
+        bool isCompleted = (status == static_cast<int>(GanttDefines::TaskStatus::Completed));
+        bool differs = (forecastStart != startDate) || (forecastEnd != endDate);
+        if (!isCompleted && differs)
+        {
+            task["forecastStart"] = forecastStart.toString("dd.MM.yyyy");
+            task["forecastEnd"] = forecastEnd.toString("dd.MM.yyyy");
+        }
+
         tasks.append(task);
     }
     result["tasks"] = tasks;
-    
+
     QVariantList milestones;
     for (int i = 0; i < m_milestoneModel->rowCount(); ++i)
     {
@@ -195,7 +211,7 @@ QVariantMap ProjectData::toJson() const
         milestones.append(ms);
     }
     result["milestones"] = milestones;
-    
+
     QVariantList dependencies;
     for (int i = 0; i < m_dependencyModel->rowCount(); ++i)
     {
@@ -208,18 +224,18 @@ QVariantMap ProjectData::toJson() const
         dependencies.append(dep);
     }
     result["dependencies"] = dependencies;
-    
+
     return result;
 }
 
 bool ProjectData::fromJson(const QVariantMap& json)
 {
     clear();
-    
+
     set_ProjectName(json["projectName"].toString());
     set_ProjectType(json["projectType"].toString());
     m_startDate = QDate::fromString(json["startDate"].toString(), "dd.MM.yyyy");
-   
+
     m_creationDateTime = QDateTime::fromString(json["creationDateTime"].toString(), "dd.MM.yyyy hh:mm:ss");
     m_lastModifiedDateTime = QDateTime::fromString(json["lastModifiedDateTime"].toString(), "dd.MM.yyyy hh:mm:ss");
 
@@ -236,10 +252,13 @@ bool ProjectData::fromJson(const QVariantMap& json)
         QVariantMap taskMap = t.toMap();
         QDate startDate = QDate::fromString(taskMap["startDate"].toString(), "dd.MM.yyyy");
         QDate endDate = QDate::fromString(taskMap["endDate"].toString(), "dd.MM.yyyy");
+        QDate forecastStart = QDate::fromString(taskMap["forecastStart"].toString(), "dd.MM.yyyy");
+        QDate forecastEnd = QDate::fromString(taskMap["forecastEnd"].toString(), "dd.MM.yyyy");
         int status = taskMap["status"].toInt();
         QString taskId = taskMap["id"].toString();
         QString groupId = taskMap["groupId"].toString();
-        m_taskModel->addTaskWithId(taskId, groupId, taskMap["title"].toString(), taskMap["responsible"].toString(), startDate, endDate, status);
+        m_taskModel->addTaskWithId(taskId, groupId, taskMap["title"].toString(), taskMap["responsible"].toString(),
+                                   startDate, endDate, forecastStart, forecastEnd, status);
         if (!taskMap["comment"].toString().isEmpty())
             m_taskModel->setTaskComment(taskId, taskMap["comment"].toString());
         QVariantList dateHistory = taskMap["dateHistory"].toList();
@@ -276,7 +295,7 @@ bool ProjectData::fromJson(const QVariantMap& json)
             m_milestoneModel->setRescheduleHistory(msId, history);
         }
     }
-    
+
     QVariantList dependencies = json["dependencies"].toList();
     for (const auto& d : dependencies)
     {
@@ -292,7 +311,6 @@ QDate ProjectData::getEarliestDate() const
 {
     QDate earliest = QDate::currentDate();
 
-    // Вехи и их история переносов
     for (int i = 0; i < m_milestoneModel->rowCount(); ++i)
     {
         QModelIndex idx = m_milestoneModel->index(i);
@@ -309,7 +327,6 @@ QDate ProjectData::getEarliestDate() const
         }
     }
 
-    // Задачи и их история переносов
     for (int i = 0; i < m_taskModel->rowCount(); ++i)
     {
         QDate startDate = m_taskModel->data(m_taskModel->index(i), GanttDefines::StartDateRole).toDate();
@@ -328,7 +345,6 @@ QDate ProjectData::getEarliestDate() const
         }
     }
 
-    qDebug() << "getEarliestDate: returning" << earliest.toString("dd.MM.yyyy");
     return earliest;
 }
 
@@ -336,7 +352,6 @@ QDate ProjectData::getLatestDate() const
 {
     QDate latest = QDate(1900, 1, 1);
 
-    // Вехи и их история переносов
     for (int i = 0; i < m_milestoneModel->rowCount(); ++i)
     {
         QModelIndex idx = m_milestoneModel->index(i);
@@ -353,7 +368,6 @@ QDate ProjectData::getLatestDate() const
         }
     }
 
-    // Задачи и их история переносов
     for (int i = 0; i < m_taskModel->rowCount(); ++i)
     {
         QDate endDate = m_taskModel->data(m_taskModel->index(i), GanttDefines::EndDateRole).toDate();
@@ -372,6 +386,5 @@ QDate ProjectData::getLatestDate() const
         }
     }
 
-    qDebug() << "getLatestDate: returning" << latest.toString("dd.MM.yyyy");
     return latest;
 }
