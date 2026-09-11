@@ -30,6 +30,12 @@ enum class ZoomLevel {
     Yearly
 };
 
+enum class ViewMode {
+    Target = 0,
+    Forecast,
+    Combined
+};
+
 enum ModelRoles {
     IdRole = Qt::UserRole + 1,
     TitleRole,

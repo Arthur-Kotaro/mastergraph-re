@@ -103,6 +103,20 @@ Rectangle
             font.pixelSize: 12
         }
 
+        ComboBox
+        {
+            id: viewModeCombo
+            Layout.preferredWidth: 200
+            font.pixelSize: 12
+            model: ["Целевой", "Прогнозный", "Комбинированный"]
+            currentIndex: projectController ? projectController.settingsManager.viewMode : 0
+            onActivated:
+            {
+                if (projectController)
+                    projectController.settingsManager.setViewMode(currentIndex)
+            }
+        }
+
         Button
         {
             text: "Зависимости"
