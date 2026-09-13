@@ -49,8 +49,11 @@ void ProjectData::recalculateEndDate()
     QDate maxEnd = m_startDate;
     for (int i = 0; i < m_taskModel->rowCount(); ++i)
     {
-        QDate taskEnd = m_taskModel->data(m_taskModel->index(i), GanttDefines::EndDateRole).toDate();
-        if (taskEnd > maxEnd) maxEnd = taskEnd;
+        QModelIndex idx = m_taskModel->index(i);
+        QDate taskEnd = idx.data(GanttDefines::EndDateRole).toDate();
+        QDate forecastEnd = idx.data(GanttDefines::ForecastEndRole).toDate();
+        if (taskEnd.isValid() && taskEnd > maxEnd) maxEnd = taskEnd;
+        if (forecastEnd.isValid() && forecastEnd > maxEnd) maxEnd = forecastEnd;
     }
     if (m_endDate != maxEnd)
     {
@@ -183,7 +186,6 @@ QVariantMap ProjectData::toJson() const
         task["comment"] = idx.data(GanttDefines::CommentRole).toString();
         task["dateHistory"] = m_taskModel->getTask(task["id"].toString())["dateHistory"].toList();
 
-        // Прогноз сохраняем только для незавершённых и только если он отличается от актуальных дат
         bool isCompleted = (status == static_cast<int>(GanttDefines::TaskStatus::Completed));
         bool differs = (forecastStart != startDate) || (forecastEnd != endDate);
         if (!isCompleted && differs)
@@ -311,6 +313,7 @@ QDate ProjectData::getEarliestDate() const
 {
     QDate earliest = QDate::currentDate();
 
+    // Вехи и их история переносов
     for (int i = 0; i < m_milestoneModel->rowCount(); ++i)
     {
         QModelIndex idx = m_milestoneModel->index(i);
@@ -327,13 +330,20 @@ QDate ProjectData::getEarliestDate() const
         }
     }
 
+    // Задачи: целевые, прогнозные даты и история переносов
     for (int i = 0; i < m_taskModel->rowCount(); ++i)
     {
-        QDate startDate = m_taskModel->data(m_taskModel->index(i), GanttDefines::StartDateRole).toDate();
+        QModelIndex idx = m_taskModel->index(i);
+
+        QDate startDate = idx.data(GanttDefines::StartDateRole).toDate();
         if (startDate.isValid() && startDate < earliest)
             earliest = startDate;
 
-        QString taskId = m_taskModel->data(m_taskModel->index(i), GanttDefines::IdRole).toString();
+        QDate forecastStart = idx.data(GanttDefines::ForecastStartRole).toDate();
+        if (forecastStart.isValid() && forecastStart < earliest)
+            earliest = forecastStart;
+
+        QString taskId = idx.data(GanttDefines::IdRole).toString();
         QVariantMap task = m_taskModel->getTask(taskId);
         QVariantList dateHistory = task["dateHistory"].toList();
         for (const auto& dh : dateHistory)
@@ -352,6 +362,7 @@ QDate ProjectData::getLatestDate() const
 {
     QDate latest = QDate(1900, 1, 1);
 
+    // Вехи и их история переносов
     for (int i = 0; i < m_milestoneModel->rowCount(); ++i)
     {
         QModelIndex idx = m_milestoneModel->index(i);
@@ -368,13 +379,20 @@ QDate ProjectData::getLatestDate() const
         }
     }
 
+    // Задачи: целевые, прогнозные даты и история переносов
     for (int i = 0; i < m_taskModel->rowCount(); ++i)
     {
-        QDate endDate = m_taskModel->data(m_taskModel->index(i), GanttDefines::EndDateRole).toDate();
+        QModelIndex idx = m_taskModel->index(i);
+
+        QDate endDate = idx.data(GanttDefines::EndDateRole).toDate();
         if (endDate.isValid() && endDate > latest)
             latest = endDate;
 
-        QString taskId = m_taskModel->data(m_taskModel->index(i), GanttDefines::IdRole).toString();
+        QDate forecastEnd = idx.data(GanttDefines::ForecastEndRole).toDate();
+        if (forecastEnd.isValid() && forecastEnd > latest)
+            latest = forecastEnd;
+
+        QString taskId = idx.data(GanttDefines::IdRole).toString();
         QVariantMap task = m_taskModel->getTask(taskId);
         QVariantList dateHistory = task["dateHistory"].toList();
         for (const auto& dh : dateHistory)
