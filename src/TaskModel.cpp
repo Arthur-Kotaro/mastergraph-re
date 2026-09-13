@@ -93,7 +93,6 @@ void TaskModel::addTaskWithId(const QString& taskId, const QString& groupId, con
     task.endDate = endDate;
     task.status = static_cast<GanttDefines::TaskStatus>(status);
 
-    // Для завершённых задач прогноз равен актуальным датам
     if (task.status == GanttDefines::TaskStatus::Completed)
     {
         task.forecastStart = startDate;
@@ -189,6 +188,7 @@ void TaskModel::updateForecastDates(const QString& taskId, const QDate& newForec
 
         QModelIndex modelIndex = createIndex(index, 0);
         emit dataChanged(modelIndex, modelIndex, {GanttDefines::ForecastStartRole, GanttDefines::ForecastEndRole});
+        emit taskForecastDatesChanged(taskId);
     }
 }
 

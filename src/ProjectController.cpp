@@ -14,6 +14,8 @@ ProjectController::ProjectController(QObject *parent): QObject(parent), m_inEdit
 
     connect(m_projectData->get_taskModel(), &TaskModel::taskDatesChanged,
             this, &ProjectController::onTaskDatesChanged);
+    connect(m_projectData->get_taskModel(), &TaskModel::taskForecastDatesChanged,
+            this, &ProjectController::onTaskForecastDatesChanged);
 }
 
 ProjectData* ProjectController::get_projectData() const { return m_projectData; }
@@ -279,4 +281,75 @@ void ProjectController::updateDependentTasks(const QString& taskId, const QDate&
         }
     }
     m_updatingTasks.remove(taskId);
+}
+
+QDate ProjectController::endOfPredecessor(const QVariantMap& predTask) const
+{
+    // Для завершённых задач источник — целевые (фактические) даты.
+    // Для незавершённых — прогнозные.
+    int status = predTask["status"].toInt();
+    if (status == static_cast<int>(GanttDefines::TaskStatus::Completed))
+        return predTask["endDate"].toDate();
+    return predTask["forecastEnd"].toDate();
+}
+
+void ProjectController::onTaskForecastDatesChanged(const QString& taskId)
+{
+    QSet<QString> visited;
+    updateDependentForecasts(taskId, visited);
+}
+
+void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QString>& visited)
+{
+    if (visited.contains(taskId)) return;
+    visited.insert(taskId);
+
+    QStringList successors = m_projectData->get_dependencyModel()->getSuccessors(taskId);
+    for (const QString& successorId : successors)
+    {
+        QVariantMap successor = m_projectData->get_taskModel()->getTask(successorId);
+        if (successor.isEmpty()) continue;
+
+        // Завершённых последователей не трогаем — их прогноз = факт
+        int succStatus = successor["status"].toInt();
+        if (succStatus == static_cast<int>(GanttDefines::TaskStatus::Completed))
+        {
+            continue;
+        }
+
+        // Считаем требуемое начало последователя: max по всем его предшественникам
+        QStringList predecessors = m_projectData->get_dependencyModel()->getPredecessors(successorId);
+        QDate requiredStart;
+        for (const QString& predId : predecessors)
+        {
+            QVariantMap predTask = m_projectData->get_taskModel()->getTask(predId);
+            if (predTask.isEmpty()) continue;
+
+            QDate predEnd = endOfPredecessor(predTask);
+            if (!predEnd.isValid()) continue;
+
+            QDate candidate = predEnd.addDays(1);
+            if (!requiredStart.isValid() || candidate > requiredStart)
+                requiredStart = candidate;
+        }
+
+        if (!requiredStart.isValid()) continue;
+
+        QDate succStart = successor["forecastStart"].toDate();
+        QDate succEnd = successor["forecastEnd"].toDate();
+        if (!succStart.isValid() || !succEnd.isValid()) continue;
+
+        if (succStart >= requiredStart)
+        {
+            // Сдвиг не нужен — не двигаем влево
+            continue;
+        }
+
+        int duration = succStart.daysTo(succEnd);
+        QDate newStart = requiredStart;
+        QDate newEnd = newStart.addDays(duration);
+
+        m_projectData->get_taskModel()->updateForecastDates(successorId, newStart, newEnd);
+        updateDependentForecasts(successorId, visited);
+    }
 }

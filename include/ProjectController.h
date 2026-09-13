@@ -2,6 +2,7 @@
 #define PROJECTCONTROLLER_H
 
 #include <QObject>
+#include <QSet>
 #include "ProjectData.h"
 #include "ResourceManager.h"
 #include "SettingsManager.h"
@@ -54,6 +55,8 @@ signals:
 private slots:
     void onTaskDatesChanged(const QString& taskId);
     void updateDependentTasks(const QString& taskId, const QDate& newEndDate);
+    void onTaskForecastDatesChanged(const QString& taskId);
+    void updateDependentForecasts(const QString& taskId, QSet<QString>& visited);
 
 private:
     ProjectData* m_projectData;
@@ -62,6 +65,8 @@ private:
     ExportManager* m_exportManager;
     bool m_inEditMode;
     QSet<QString> m_updatingTasks;
+
+    QDate endOfPredecessor(const QVariantMap& predTask) const;
 };
 
 #endif

@@ -60,6 +60,7 @@ public:
 signals:
     void countChanged();
     void taskDatesChanged(const QString& taskId);
+    void taskForecastDatesChanged(const QString& taskId);
 
 private:
     QList<Task> m_tasks;
