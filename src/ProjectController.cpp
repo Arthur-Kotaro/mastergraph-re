@@ -223,6 +223,39 @@ void ProjectController::updateForecastDates(const QString& taskId, const QDate& 
     m_projectData->set_Modified(true);
 }
 
+void ProjectController::acceptForecastAsTarget(const QString& taskId)
+{
+    if (m_settingsManager->editingLocked())
+    {
+        emit errorOccurred("Редактирование заблокировано");
+        return;
+    }
+
+    QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
+    if (task.isEmpty()) return;
+
+    if (task["status"].toInt() == static_cast<int>(GanttDefines::TaskStatus::Completed))
+    {
+        emit errorOccurred("Нельзя утвердить прогноз завершённой задачи");
+        return;
+    }
+
+    QDate forecastStart = task["forecastStart"].toDate();
+    QDate forecastEnd = task["forecastEnd"].toDate();
+    QDate targetStart = task["startDate"].toDate();
+    QDate targetEnd = task["endDate"].toDate();
+
+    if (!forecastStart.isValid() || !forecastEnd.isValid()) return;
+    if (forecastStart == targetStart && forecastEnd == targetEnd) return;
+
+    m_projectData->get_taskModel()->updateTaskDates(taskId, forecastStart, forecastEnd, true);
+    m_projectData->recalculateEndDate();
+    m_projectData->set_Modified(true);
+    qDebug() << "acceptForecastAsTarget:" << taskId
+             << "from" << targetStart.toString("dd.MM.yyyy") << "-" << targetEnd.toString("dd.MM.yyyy")
+             << "to"   << forecastStart.toString("dd.MM.yyyy") << "-" << forecastEnd.toString("dd.MM.yyyy");
+}
+
 void ProjectController::addDependency(const QString& predecessorId, const QString& successorId)
 {
     if (m_settingsManager->editingLocked())
@@ -285,8 +318,6 @@ void ProjectController::updateDependentTasks(const QString& taskId, const QDate&
 
 QDate ProjectController::endOfPredecessor(const QVariantMap& predTask) const
 {
-    // Для завершённых задач источник — целевые (фактические) даты.
-    // Для незавершённых — прогнозные.
     int status = predTask["status"].toInt();
     if (status == static_cast<int>(GanttDefines::TaskStatus::Completed))
         return predTask["endDate"].toDate();
@@ -310,14 +341,12 @@ void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QSt
         QVariantMap successor = m_projectData->get_taskModel()->getTask(successorId);
         if (successor.isEmpty()) continue;
 
-        // Завершённых последователей не трогаем — их прогноз = факт
         int succStatus = successor["status"].toInt();
         if (succStatus == static_cast<int>(GanttDefines::TaskStatus::Completed))
         {
             continue;
         }
 
-        // Считаем требуемое начало последователя: max по всем его предшественникам
         QStringList predecessors = m_projectData->get_dependencyModel()->getPredecessors(successorId);
         QDate requiredStart;
         for (const QString& predId : predecessors)
@@ -341,7 +370,6 @@ void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QSt
 
         if (succStart >= requiredStart)
         {
-            // Сдвиг не нужен — не двигаем влево
             continue;
         }
 

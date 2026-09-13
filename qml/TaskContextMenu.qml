@@ -9,6 +9,31 @@ Menu
     property var onAddTaskAboveCallback: null
     property var onAddTaskBelowCallback: null
 
+    property bool canAcceptForecast: false
+
+    onOpened: updateCanAcceptForecast()
+
+    function updateCanAcceptForecast()
+    {
+        canAcceptForecast = false
+        if (!taskId || !projectController || !projectController.projectData) return
+        if (projectController.settingsManager.editingLocked) return
+
+        var task = projectController.projectData.taskModel.getTask(taskId)
+        if (!task) return
+        if (task.status === 1) return  // Completed
+
+        var fs = task.forecastStart
+        var fe = task.forecastEnd
+        var ss = task.startDate
+        var se = task.endDate
+
+        if (!fs || !fe || !ss || !se) return
+        if (fs.toString() === ss.toString() && fe.toString() === se.toString()) return
+
+        canAcceptForecast = true
+    }
+
     MenuItem
     {
         text: "Переименовать"
@@ -65,6 +90,17 @@ Menu
         {
             if (root.taskId && typeof mainWindow !== "undefined" && mainWindow.editForecastDatesDialog)
                 mainWindow.editForecastDatesDialog.openForTask(root.taskId)
+        }
+    }
+
+    MenuItem
+    {
+        text: "Утвердить прогноз"
+        enabled: root.canAcceptForecast
+        onTriggered:
+        {
+            if (root.taskId && projectController)
+                projectController.acceptForecastAsTarget(root.taskId)
         }
     }
 
