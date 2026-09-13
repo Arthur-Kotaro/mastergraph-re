@@ -248,6 +248,13 @@ Item
                     return d ? Qt.formatDateTime(d, "dd.MM.yyyy") : ""
                 }
 
+                function viewLabelText()
+                {
+                    if (rowKind === "forecast") return "Прогноз"
+                    if (modelData && modelData.isCompleted) return "Факт"
+                    return "Цель"
+                }
+
                 Row
                 {
                     anchors.fill: parent
@@ -257,7 +264,7 @@ Item
 
                     Rectangle
                     {
-                        width: parent.width - 200
+                        width: parent.width - 265
                         height: parent.height
                         color: "transparent"
 
@@ -271,15 +278,14 @@ Item
                                 color: "transparent"
                                 Text
                                 {
-                                    text: (rowKind === "forecast") ? "Прогноз" :
-                                          (taskData ? taskData.title : "")
+                                    text: taskData ? taskData.title : ""
                                     anchors.left: parent.left
                                     anchors.leftMargin: 10
                                     anchors.verticalCenter: parent.verticalCenter
                                     elide: Text.ElideRight
                                     width: parent.width - 20
                                     font.pixelSize: 12
-                                    color: (rowKind === "forecast") ? "#666666" : "#222222"
+                                    color: "#222222"
                                 }
                             }
                             Rectangle
@@ -298,6 +304,22 @@ Item
                                     font.pixelSize: 12
                                 }
                             }
+                        }
+                    }
+
+                    Rectangle
+                    {
+                        width: 65
+                        height: parent.height
+                        color: "transparent"
+                        Text
+                        {
+                            text: viewLabelText()
+                            anchors.left: parent.left
+                            anchors.leftMargin: 4
+                            anchors.verticalCenter: parent.verticalCenter
+                            font.pixelSize: 12
+                            color: "#444444"
                         }
                     }
 

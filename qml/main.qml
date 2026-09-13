@@ -21,7 +21,7 @@ ApplicationWindow
     }
 
     property bool inEditMode: (projectController && projectController.inEditMode) || false
-    property int leftPanelWidth: 460
+    property int leftPanelWidth: 525
     property alias gridArea: gridArea
     property alias editTaskDialog: editTaskDialog
     property alias editForecastDatesDialog: editForecastDatesDialog
@@ -107,7 +107,7 @@ ApplicationWindow
                     cursorShape: Qt.SizeHorCursor
                     drag.target: splitter
                     drag.axis: Drag.XAxis
-                    drag.minimumX: 460
+                    drag.minimumX: 525
                     drag.maximumX: 800
 
                     onPositionChanged:
@@ -156,28 +156,45 @@ ApplicationWindow
                         width: calendarHeader.contentWidth
                     }
                 }
-
-                MouseArea
-                {
-                    anchors.fill: parent
-                    acceptedButtons: Qt.NoButton
-                    onWheel: function(wheel)
-                    {
-                        if (wheel.modifiers & Qt.ControlModifier)
-                        {
-                            if (wheel.angleDelta.y > 0)
-                                projectController.settingsManager.setZoomLevel(0)
-                            else
-                                projectController.settingsManager.setZoomLevel(1)
-                            wheel.accepted = true
-                        }
-                    }
-                }
             }
         }
     }
 
     InfoPanel { id: infoPanel; anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right }
+
+    MouseArea
+    {
+        anchors.fill: parent
+        acceptedButtons: Qt.NoButton
+        z: 100
+        onWheel: function(wheel)
+        {
+            var flick = flickableRight
+            if (!flick) return
+
+            if (wheel.modifiers & Qt.ControlModifier)
+            {
+                if (wheel.angleDelta.y > 0) projectController.settingsManager.setZoomLevel(0)
+                else projectController.settingsManager.setZoomLevel(1)
+                wheel.accepted = true
+                return
+            }
+
+            if (wheel.modifiers & Qt.ShiftModifier)
+            {
+                flick.contentX = Math.max(0,
+                    Math.min(flick.contentX - wheel.angleDelta.y,
+                             flick.contentWidth - flick.width))
+            }
+            else
+            {
+                flick.contentY = Math.max(0,
+                    Math.min(flick.contentY - wheel.angleDelta.y,
+                             flick.contentHeight - flick.height))
+            }
+            wheel.accepted = true
+        }
+    }
 
     NewProjectDialog { id: newProjectDialog }
     SaveAsDialog { id: saveAsDialog }

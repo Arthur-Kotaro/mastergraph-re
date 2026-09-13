@@ -4,20 +4,7 @@ import QtQuick.Controls 6.0
 Rectangle
 {
     id: root
-    MouseArea
-    {
-        anchors.fill: parent
-        acceptedButtons: Qt.NoButton
-        onWheel: function(wheel)
-        {
-            if (wheel.modifiers & Qt.ControlModifier)
-            {
-                if (wheel.angleDelta.y > 0) projectController.settingsManager.setZoomLevel(0)
-                else projectController.settingsManager.setZoomLevel(1)
-                wheel.accepted = true
-            }
-        }
-    }
+
     color: "white"
 
     property int rowHeight: 40
@@ -25,11 +12,11 @@ Rectangle
     property bool showDependencies: true
     property bool showComments: true
     property bool showTaskHistory: true
-    onShowDependenciesChanged: gridCanvas.requestPaint()
+    onShowDependenciesChanged: overlayCanvas.requestPaint()
     property date displayStart: new Date()
     property date displayEnd: new Date()
     property int dayWidth: projectController && projectController.settingsManager.zoomLevel === 1 ? 10 : 30
-    onDayWidthChanged: { updateData(); gridCanvas.requestPaint() }
+    onDayWidthChanged: { updateData(); backgroundCanvas.requestPaint(); overlayCanvas.requestPaint() }
     property int totalDays: 1
     property real gridWidth: totalDays * dayWidth
     property int totalRows: 1
@@ -160,7 +147,8 @@ Rectangle
             root.height = contentHeight
 
             groupsRepeater.model = visibleItems
-            gridCanvas.requestPaint()
+            backgroundCanvas.requestPaint()
+            overlayCanvas.requestPaint()
             if (currentTimeLine) currentTimeLine.updateLinePosition()
         }
     }
@@ -216,7 +204,6 @@ Rectangle
     width: gridWidth
     height: contentHeight
 
-    // Возвращает { targetRow, forecastRow } — индексы строк в visibleItems
     function getRowIndicesForTask(taskId)
     {
         var result = { targetRow: -1, forecastRow: -1 }
@@ -258,7 +245,7 @@ Rectangle
 
     Canvas
     {
-        id: gridCanvas
+        id: backgroundCanvas
         anchors.fill: parent
         z: 0
 
@@ -343,61 +330,6 @@ Rectangle
             }
             ctx.stroke()
 
-            if (showDependencies)
-            {
-                if (projectController && projectController.projectData && projectController.projectData.dependencyModel)
-                {
-                    var mode = root.currentViewMode()
-                    var depModel = projectController.projectData.dependencyModel
-
-                    for (var di = 0; di < depModel.rowCount(); di++)
-                    {
-                        var idx = depModel.index(di, 0)
-                        var predId = depModel.data(idx, Qt.UserRole + 2)
-                        var succId = depModel.data(idx, Qt.UserRole + 3)
-                        if (!predId || !succId) continue
-
-                        var predTask = projectController.projectData.taskModel.getTask(predId)
-                        var succTask = projectController.projectData.taskModel.getTask(succId)
-                        if (!predTask || !succTask) continue
-
-                        var predCompleted = (predTask.status === 1)
-                        var succCompleted = (succTask.status === 1)
-
-                        var predRows = root.getRowIndicesForTask(predId)
-                        var succRows = root.getRowIndicesForTask(succId)
-
-                        if (mode === 0)
-                        {
-                            // Только целевые
-                            root.drawDependencyLine(ctx, predRows.targetRow, succRows.targetRow)
-                        }
-                        else if (mode === 1)
-                        {
-                            // Одна строка на задачу: завершённые — target, незавершённые — forecast
-                            var predSrc = predCompleted ? predRows.targetRow : predRows.forecastRow
-                            var succDst = succCompleted ? succRows.targetRow : succRows.forecastRow
-                            if (predSrc < 0) predSrc = predRows.targetRow
-                            if (succDst < 0) succDst = succRows.targetRow
-                            root.drawDependencyLine(ctx, predSrc, succDst)
-                        }
-                        else // mode === 2, Combined
-                        {
-                            // target-линия — всегда
-                            root.drawDependencyLine(ctx, predRows.targetRow, succRows.targetRow)
-
-                            // forecast-линия — только если у последователя есть forecast-строка
-                            if (succRows.forecastRow >= 0)
-                            {
-                                var predForecastSrc = predCompleted ? predRows.targetRow : predRows.forecastRow
-                                if (predForecastSrc >= 0)
-                                    root.drawDependencyLine(ctx, predForecastSrc, succRows.forecastRow)
-                            }
-                        }
-                    }
-                }
-            }
-
             ctx.beginPath()
             ctx.lineWidth = 2
             ctx.strokeStyle = "#888888"
@@ -430,6 +362,71 @@ Rectangle
                 ctx.lineTo(width, lastY)
             }
             ctx.stroke()
+        }
+    }
+
+    Canvas
+    {
+        id: overlayCanvas
+        anchors.fill: parent
+        z: 5
+
+        onPaint:
+        {
+            if (totalDays <= 0 || width <= 0 || height <= 0) return
+
+            var ctx = getContext("2d")
+            ctx.clearRect(0, 0, width, height)
+
+            if (!showDependencies) return
+
+            if (!projectController || !projectController.projectData || !projectController.projectData.dependencyModel)
+                return
+
+            var mode = root.currentViewMode()
+            var depModel = projectController.projectData.dependencyModel
+
+            for (var di = 0; di < depModel.rowCount(); di++)
+            {
+                var idx = depModel.index(di, 0)
+                var predId = depModel.data(idx, Qt.UserRole + 2)
+                var succId = depModel.data(idx, Qt.UserRole + 3)
+                if (!predId || !succId) continue
+
+                var predTask = projectController.projectData.taskModel.getTask(predId)
+                var succTask = projectController.projectData.taskModel.getTask(succId)
+                if (!predTask || !succTask) continue
+
+                var predCompleted = (predTask.status === 1)
+                var succCompleted = (succTask.status === 1)
+
+                var predRows = root.getRowIndicesForTask(predId)
+                var succRows = root.getRowIndicesForTask(succId)
+
+                if (mode === 0)
+                {
+                    root.drawDependencyLine(ctx, predRows.targetRow, succRows.targetRow)
+                }
+                else if (mode === 1)
+                {
+                    var predSrc = predCompleted ? predRows.targetRow : predRows.forecastRow
+                    var succDst = succCompleted ? succRows.targetRow : succRows.forecastRow
+                    if (predSrc < 0) predSrc = predRows.targetRow
+                    if (succDst < 0) succDst = succRows.targetRow
+                    root.drawDependencyLine(ctx, predSrc, succDst)
+                }
+                else
+                {
+                    root.drawDependencyLine(ctx, predRows.targetRow, succRows.targetRow)
+
+                    if (succRows.forecastRow >= 0)
+                    {
+                        var predForecastSrc = predCompleted ? predRows.targetRow : predRows.forecastRow
+                        if (predForecastSrc >= 0)
+                            root.drawDependencyLine(ctx, predForecastSrc, succRows.forecastRow)
+                    }
+                }
+            }
         }
     }
 
@@ -672,7 +669,7 @@ Rectangle
 
                 Text
                 {
-                    visible: root.showComments && (modelData && modelData.type === "task" && modelData.rowKind === "target")
+                    visible: root.showComments && (modelData && modelData.type === "task")
                     text:
                     {
                         if (!modelData) return ""
@@ -728,7 +725,7 @@ Rectangle
                     color: "#cccccc"
                     opacity: 0.7
                     radius: 4
-                    z: ganttBar.z - 1
+                    z: -1
                 }
             }
         }

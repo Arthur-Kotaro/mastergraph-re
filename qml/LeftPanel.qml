@@ -124,7 +124,7 @@ Rectangle
 
                 Rectangle
                 {
-                    width: parent.width - 200
+                    width: parent.width - 265
                     height: parent.height
                     border.color: "#cccccc"
                     border.width: 1
@@ -149,6 +149,15 @@ Rectangle
                             Text { text: "Ответственный"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 10 }
                         }
                     }
+                }
+
+                Rectangle
+                {
+                    width: 65
+                    height: parent.height
+                    border.color: "#cccccc"
+                    border.width: 1
+                    Text { text: "Вид"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 11 }
                 }
 
                 Rectangle
