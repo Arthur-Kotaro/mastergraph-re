@@ -1,26 +1,33 @@
 import QtQuick 6.0
 import QtQuick.Controls 6.0
-import QtQuick.Layouts 6.0
+import QtQuick.Window 6.0
 
-Dialog
+Window
 {
     id: root
     title: "Справка"
     width: 1100
     height: 950
-    modal: true
-    standardButtons: Dialog.Ok
-    anchors.centerIn: Overlay.overlay
+    minimumWidth: 800
+    minimumHeight: 600
+    visible: false
+    modality: Qt.NonModal
 
-    ScrollView
+    Flickable
     {
+        id: helpFlickable
         anchors.fill: parent
         anchors.margins: 10
         clip: true
+        contentWidth: helpColumn.width
+        contentHeight: helpColumn.height + 60
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOn }
 
         Column
         {
-            width: parent.width - 5
+            id: helpColumn
+            width: helpFlickable.width - 20
             spacing: 25
 
             Text
@@ -31,15 +38,10 @@ Dialog
                 width: parent.width
             }
 
-            Rectangle { height: 2; Layout.fillWidth: true; color: "#cccccc"; width: parent.width }
+            Rectangle { height: 2; color: "#cccccc"; width: parent.width }
 
             // ── 1. Начало работы ──
-            Text
-            {
-                text: "1. Начало работы"
-                font.pixelSize: 32
-                font.bold: true
-            }
+            Text { text: "1. Начало работы"; font.pixelSize: 32; font.bold: true }
 
             Text
             {
@@ -57,15 +59,10 @@ Dialog
                 width: parent.width
             }
 
-            Rectangle { height: 2; Layout.fillWidth: true; color: "#cccccc"; width: parent.width }
+            Rectangle { height: 2; color: "#cccccc"; width: parent.width }
 
             // ── 2. Интерфейс редактора ──
-            Text
-            {
-                text: "2. Интерфейс редактора"
-                font.pixelSize: 32
-                font.bold: true
-            }
+            Text { text: "2. Интерфейс редактора"; font.pixelSize: 32; font.bold: true }
 
             Text
             {
@@ -73,65 +70,120 @@ Dialog
                       "Левая панель:\n" +
                       "• Сверху – название проекта и подписи календарных строк.\n" +
                       "• Далее – список групп задач. Каждую группу можно развернуть/свернуть.\n" +
-                      "• Внутри группы отображаются задачи с названием, ответственным, датами начала и завершения.\n\n" +
+                      "• Внутри группы отображаются задачи с названием, ответственным, видом строки (Цель/Факт/Прогноз) и датами.\n\n" +
                       "Правая панель:\n" +
                       "• Календарная полоса – годы, месяцы, недели, дни, вехи.\n" +
                       "• Сетка Ганта – полосы задач, цвет которых зависит от статуса:\n" +
                       "  жёлтый – запланирована, зелёный – выполнена, оранжевый – риски, красный – заблокирована.\n" +
-                      "• Красная вертикальная линия – текущая дата."
+                      "• Красная вертикальная линия – текущая дата.\n\n" +
+                      "Режимы отображения (ComboBox «Прогнозы» на панели инструментов):\n" +
+                      "• Целевой – отображаются целевые сроки.\n" +
+                      "• Прогнозный – отображаются прогнозные сроки (у завершённых задач – фактические).\n" +
+                      "• Комбинированный – каждая задача занимает две строки: сверху целевая, снизу прогнозная. У завершённых задач прогнозная строка отсутствует."
                 wrapMode: Text.WordWrap
                 font.pixelSize: 24
                 width: parent.width
             }
 
-            Rectangle { height: 2; Layout.fillWidth: true; color: "#cccccc"; width: parent.width }
+            Rectangle { height: 2; color: "#cccccc"; width: parent.width }
 
             // ── 3. Горячие клавиши ──
-            Text
+            Text { text: "3. Горячие клавиши"; font.pixelSize: 32; font.bold: true }
+
+            Item { width: 1; height: 8 }
+
+            Text { text: "Файл"; font.pixelSize: 22; font.bold: true }
+            Grid
             {
-                text: "3. Горячие клавиши"
-                font.pixelSize: 32
-                font.bold: true
+                columns: 2
+                columnSpacing: 60
+                rowSpacing: 8
+                Text { text: "Ctrl+N";       font.bold: true; font.pixelSize: 22 }
+                Text { text: "Создать новый график";      font.pixelSize: 22 }
+                Text { text: "Ctrl+O";       font.bold: true; font.pixelSize: 22 }
+                Text { text: "Открыть график";             font.pixelSize: 22 }
+                Text { text: "Ctrl+S";       font.bold: true; font.pixelSize: 22 }
+                Text { text: "Сохранить график";           font.pixelSize: 22 }
+                Text { text: "Ctrl+Shift+S"; font.bold: true; font.pixelSize: 22 }
+                Text { text: "Сохранить как";              font.pixelSize: 22 }
             }
 
-            Column
+            Item { width: 1; height: 12 }
+
+            Text { text: "Режимы отображения"; font.pixelSize: 22; font.bold: true }
+            Grid
             {
-                spacing: 12
-                Row
-                {
-                    spacing: 80
-                    Column
-                    {
-                        spacing: 12
-                        Text { text: "Ctrl+N"; font.bold: true; font.pixelSize: 24 }
-                        Text { text: "Ctrl+O"; font.bold: true; font.pixelSize: 24 }
-                        Text { text: "Ctrl+S"; font.bold: true; font.pixelSize: 24 }
-                        Text { text: "Ctrl+Shift+S"; font.bold: true; font.pixelSize: 24 }
-                        Text { text: "F11"; font.bold: true; font.pixelSize: 24 }
-                        Text { text: "Ctrl+колесо"; font.bold: true; font.pixelSize: 24 }
-                    }
-                    Column
-                    {
-                        spacing: 12
-                        Text { text: "Создать новый график"; font.pixelSize: 24; wrapMode: Text.WordWrap; width: 500 }
-                        Text { text: "Открыть график"; font.pixelSize: 24 }
-                        Text { text: "Сохранить график"; font.pixelSize: 24 }
-                        Text { text: "Сохранить как"; font.pixelSize: 24 }
-                        Text { text: "Полноэкранный режим"; font.pixelSize: 24 }
-                        Text { text: "Масштаб день/неделя"; font.pixelSize: 24 }
-                    }
-                }
+                columns: 2
+                columnSpacing: 60
+                rowSpacing: 8
+                Text { text: "Ctrl+1"; font.bold: true; font.pixelSize: 22 }
+                Text { text: "Режим отображения: Целевой";         font.pixelSize: 22 }
+                Text { text: "Ctrl+2"; font.bold: true; font.pixelSize: 22 }
+                Text { text: "Режим отображения: Прогнозный";      font.pixelSize: 22 }
+                Text { text: "Ctrl+3"; font.bold: true; font.pixelSize: 22 }
+                Text { text: "Режим отображения: Комбинированный"; font.pixelSize: 22 }
             }
 
-            Rectangle { height: 2; Layout.fillWidth: true; color: "#cccccc"; width: parent.width }
+            Item { width: 1; height: 12 }
+
+            Text { text: "Переключатели"; font.pixelSize: 22; font.bold: true }
+            Grid
+            {
+                columns: 2
+                columnSpacing: 60
+                rowSpacing: 8
+                Text { text: "Ctrl+L"; font.bold: true; font.pixelSize: 22 }
+                Text { text: "Блокировка редактирования (вкл/выкл)"; font.pixelSize: 22 }
+                Text { text: "Ctrl+D"; font.bold: true; font.pixelSize: 22 }
+                Text { text: "Показать/скрыть зависимости";          font.pixelSize: 22 }
+                Text { text: "Ctrl+H"; font.bold: true; font.pixelSize: 22 }
+                Text { text: "Показать/скрыть переносы";             font.pixelSize: 22 }
+                Text { text: "Ctrl+/"; font.bold: true; font.pixelSize: 22 }
+                Text { text: "Показать/скрыть комментарии";          font.pixelSize: 22 }
+            }
+
+            Item { width: 1; height: 12 }
+
+            Text { text: "Навигация"; font.pixelSize: 22; font.bold: true }
+            Grid
+            {
+                columns: 2
+                columnSpacing: 60
+                rowSpacing: 8
+                Text { text: "Home";      font.bold: true; font.pixelSize: 22 }
+                Text { text: "Перейти в начало графика";              font.pixelSize: 22 }
+                Text { text: "End";       font.bold: true; font.pixelSize: 22 }
+                Text { text: "Перейти в конец графика";               font.pixelSize: 22 }
+                Text { text: "Page Up";   font.bold: true; font.pixelSize: 22 }
+                Text { text: "Прокрутить вверх на страницу";          font.pixelSize: 22 }
+                Text { text: "Page Down"; font.bold: true; font.pixelSize: 22 }
+                Text { text: "Прокрутить вниз на страницу";           font.pixelSize: 22 }
+                Text { text: "Alt+Up";    font.bold: true; font.pixelSize: 22 }
+                Text { text: "Прокрутить вверх на страницу (альтернатива для ноутбуков)"; font.pixelSize: 22; wrapMode: Text.WordWrap; width: 600 }
+                Text { text: "Alt+Down";  font.bold: true; font.pixelSize: 22 }
+                Text { text: "Прокрутить вниз на страницу (альтернатива для ноутбуков)";  font.pixelSize: 22; wrapMode: Text.WordWrap; width: 600 }
+            }
+
+            Item { width: 1; height: 12 }
+
+            Text { text: "Вид"; font.pixelSize: 22; font.bold: true }
+            Grid
+            {
+                columns: 2
+                columnSpacing: 60
+                rowSpacing: 8
+                Text { text: "F1";          font.bold: true; font.pixelSize: 22 }
+                Text { text: "Полноэкранный режим";  font.pixelSize: 22 }
+                Text { text: "Ctrl+колесо"; font.bold: true; font.pixelSize: 22 }
+                Text { text: "Масштаб день/неделя";  font.pixelSize: 22 }
+            }
+
+            Item { width: 1; height: 8 }
+
+            Rectangle { height: 2; color: "#cccccc"; width: parent.width }
 
             // ── 4. Работа с задачами ──
-            Text
-            {
-                text: "4. Работа с задачами"
-                font.pixelSize: 32
-                font.bold: true
-            }
+            Text { text: "4. Работа с задачами"; font.pixelSize: 32; font.bold: true }
 
             Text
             {
@@ -150,8 +202,9 @@ Dialog
                       "• Для каждой задачи настройте группу, название, ответственного, дату начала, длительность и комментарий.\n" +
                       "• Задачи создаются независимо (без зависимостей).\n\n" +
                       "Редактирование задачи:\n" +
-                      "• Правый клик по задаче → «Изменить сроки» – диалог с календарём.\n" +
-                      "• Перетаскивание полосы Ганта влево/вправо – изменение дат.\n" +
+                      "• Правый клик по задаче → «Изменить сроки» – диалог изменения целевых дат.\n" +
+                      "• Правый клик по задаче → «Изменить прогнозные сроки» – диалог изменения прогнозных дат.\n" +
+                      "• Перетаскивание полосы Ганта влево/вправо – изменение дат (целевых в целевой строке, прогнозных в прогнозной).\n" +
                       "• Перетаскивание правого края полосы – изменение длительности.\n" +
                       "• Правый клик → «Изменить статус» – выбор статуса задачи.\n" +
                       "• При смене статуса на «Выполнено» открывается диалог с датой завершения.\n\n" +
@@ -162,15 +215,10 @@ Dialog
                 width: parent.width
             }
 
-            Rectangle { height: 2; Layout.fillWidth: true; color: "#cccccc"; width: parent.width }
+            Rectangle { height: 2; color: "#cccccc"; width: parent.width }
 
             // ── 5. Работа с вехами ──
-            Text
-            {
-                text: "5. Работа с вехами"
-                font.pixelSize: 32
-                font.bold: true
-            }
+            Text { text: "5. Работа с вехами"; font.pixelSize: 32; font.bold: true }
 
             Text
             {
@@ -187,15 +235,10 @@ Dialog
                 width: parent.width
             }
 
-            Rectangle { height: 2; Layout.fillWidth: true; color: "#cccccc"; width: parent.width }
+            Rectangle { height: 2; color: "#cccccc"; width: parent.width }
 
             // ── 6. Зависимости ──
-            Text
-            {
-                text: "6. Зависимости между задачами"
-                font.pixelSize: 32
-                font.bold: true
-            }
+            Text { text: "6. Зависимости между задачами"; font.pixelSize: 32; font.bold: true }
 
             Text
             {
@@ -210,15 +253,10 @@ Dialog
                 width: parent.width
             }
 
-            Rectangle { height: 2; Layout.fillWidth: true; color: "#cccccc"; width: parent.width }
+            Rectangle { height: 2; color: "#cccccc"; width: parent.width }
 
             // ── 7. Комментарии ──
-            Text
-            {
-                text: "7. Комментарии к задачам"
-                font.pixelSize: 32
-                font.bold: true
-            }
+            Text { text: "7. Комментарии к задачам"; font.pixelSize: 32; font.bold: true }
 
             Text
             {
@@ -230,20 +268,16 @@ Dialog
                 width: parent.width
             }
 
-            Rectangle { height: 2; Layout.fillWidth: true; color: "#cccccc"; width: parent.width }
+            Rectangle { height: 2; color: "#cccccc"; width: parent.width }
 
             // ── 8. Панель инструментов ──
-            Text
-            {
-                text: "8. Кнопки панели инструментов"
-                font.pixelSize: 32
-                font.bold: true
-            }
+            Text { text: "8. Кнопки панели инструментов"; font.pixelSize: 32; font.bold: true }
 
             Text
             {
                 text: "• Блокировка – включение/выключение режима запрета редактирования.\n" +
                       "  В режиме блокировки нельзя перетаскивать полосы, менять сроки, добавлять/удалять задачи.\n\n" +
+                      "• Прогнозы – выпадающий список выбора режима отображения (Целевой / Прогнозный / Комбинированный).\n\n" +
                       "• Зависимости – отображение/скрытие стрелок зависимостей.\n\n" +
                       "• Переносы – отображение/скрытие истории переносов задач и вех (серые полосы и ромбы).\n\n" +
                       "• Комментарии – отображение/скрытие текста комментариев рядом с полосами Ганта.\n\n" +
@@ -254,36 +288,31 @@ Dialog
                 width: parent.width
             }
 
-            Rectangle { height: 2; Layout.fillWidth: true; color: "#cccccc"; width: parent.width }
+            Rectangle { height: 2; color: "#cccccc"; width: parent.width }
 
             // ── 9. Масштабирование ──
-            Text
-            {
-                text: "9. Масштабирование"
-                font.pixelSize: 32
-                font.bold: true
-            }
+            Text { text: "9. Масштабирование и прокрутка"; font.pixelSize: 32; font.bold: true }
 
             Text
             {
                 text: "• Меню Вид → «Масштаб: День» / «Масштаб: Неделя» – переключение режима.\n" +
                       "• Ctrl + колесо мыши – быстрое переключение масштаба.\n" +
                       "• В режиме «Неделя» подписи дней скрываются для экономии места.\n" +
+                      "• Обычное колесо мыши – вертикальная прокрутка графика и левой панели.\n" +
+                      "• Shift + колесо мыши – горизонтальная прокрутка графика.\n" +
+                      "• Home / End – быстрый переход в начало/конец графика.\n" +
+                      "• Page Up / Page Down – прокрутка вверх/вниз на страницу.\n" +
+                      "• Alt + Down / Alt + Up – альтернатива Page Up/Down для ноутбуков.\n" +
                       "• При смене масштаба нажмите кнопку 🔄 для полной перерисовки графика."
                 wrapMode: Text.WordWrap
                 font.pixelSize: 24
                 width: parent.width
             }
 
-            Rectangle { height: 2; Layout.fillWidth: true; color: "#cccccc"; width: parent.width }
+            Rectangle { height: 2; color: "#cccccc"; width: parent.width }
 
             // ── 10. Группы задач ──
-            Text
-            {
-                text: "10. Управление группами задач"
-                font.pixelSize: 32
-                font.bold: true
-            }
+            Text { text: "10. Управление группами задач"; font.pixelSize: 32; font.bold: true }
 
             Text
             {
@@ -297,15 +326,10 @@ Dialog
                 width: parent.width
             }
 
-            Rectangle { height: 2; Layout.fillWidth: true; color: "#cccccc"; width: parent.width }
+            Rectangle { height: 2; color: "#cccccc"; width: parent.width }
 
             // ── 11. Сохранение и открытие ──
-            Text
-            {
-                text: "11. Сохранение и открытие проектов"
-                font.pixelSize: 32
-                font.bold: true
-            }
+            Text { text: "11. Сохранение и открытие проектов"; font.pixelSize: 32; font.bold: true }
 
             Text
             {
@@ -319,15 +343,10 @@ Dialog
                 width: parent.width
             }
 
-            Rectangle { height: 2; Layout.fillWidth: true; color: "#cccccc"; width: parent.width }
+            Rectangle { height: 2; color: "#cccccc"; width: parent.width }
 
             // ── 12. Ресурсные файлы ──
-            Text
-            {
-                text: "12. Ресурсные файлы"
-                font.pixelSize: 32
-                font.bold: true
-            }
+            Text { text: "12. Ресурсные файлы"; font.pixelSize: 32; font.bold: true }
 
             Text
             {
@@ -337,6 +356,32 @@ Dialog
                 font.pixelSize: 24
                 width: parent.width
             }
+
+            Item { width: 1; height: 20 }
+
+            Item
+            {
+                width: parent.width
+                height: 50
+
+                Row
+                {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 10
+
+                    Button
+                    {
+                        text: "Закрыть"
+                        width: 110
+                        height: 34
+                        font.pixelSize: 14
+                        onClicked: root.close()
+                    }
+                }
+            }
+
+            Item { width: 1; height: 10 }
         }
     }
 }

@@ -22,6 +22,16 @@ ApplicationWindow
 
     property bool inEditMode: (projectController && projectController.inEditMode) || false
     property int leftPanelWidth: 525
+
+    readonly property bool editingText: {
+        var item = activeFocusItem
+        if (!item) return false
+        return (item instanceof TextInput
+                || item instanceof TextField
+                || item instanceof TextArea
+                || item instanceof TextEdit)
+    }
+
     property alias gridArea: gridArea
     property alias editTaskDialog: editTaskDialog
     property alias editForecastDatesDialog: editForecastDatesDialog
@@ -42,10 +52,113 @@ ApplicationWindow
     property alias leftPanel: leftPanel
     property alias calendarHeader: calendarHeader
 
+    // --- Файл ---
     Shortcut { sequence: "Ctrl+N"; onActivated: if (projectController) { newProjectDialog.refreshData(); newProjectDialog.open() } }
     Shortcut { sequence: "Ctrl+O"; onActivated: if (projectController) openFileDialog.open() }
-    Shortcut { sequence: "Ctrl+S"; onActivated: if (projectController && inEditMode) projectController.saveProject() }
-    Shortcut { sequence: "Ctrl+Shift+S"; onActivated: if (projectController && inEditMode) saveAsDialog.open() }
+    Shortcut { sequence: "Ctrl+S"; enabled: inEditMode && !editingText; onActivated: if (projectController && inEditMode) projectController.saveProject() }
+    Shortcut { sequence: "Ctrl+Shift+S"; enabled: inEditMode && !editingText; onActivated: if (projectController && inEditMode) saveAsDialog.open() }
+
+    // --- Режимы отображения ---
+    Shortcut {
+        sequence: "Ctrl+1"
+        enabled: inEditMode
+        onActivated: if (projectController) projectController.settingsManager.setViewMode(0)
+    }
+    Shortcut {
+        sequence: "Ctrl+2"
+        enabled: inEditMode
+        onActivated: if (projectController) projectController.settingsManager.setViewMode(1)
+    }
+    Shortcut {
+        sequence: "Ctrl+3"
+        enabled: inEditMode
+        onActivated: if (projectController) projectController.settingsManager.setViewMode(2)
+    }
+
+    // --- Переключатели ---
+    Shortcut {
+        sequence: "Ctrl+L"
+        enabled: inEditMode && !editingText
+        onActivated: if (projectController) projectController.settingsManager.editingLocked = !projectController.settingsManager.editingLocked
+    }
+    Shortcut {
+        sequence: "Ctrl+D"
+        enabled: inEditMode && !editingText
+        onActivated: if (mainWindow.gridArea) mainWindow.gridArea.showDependencies = !mainWindow.gridArea.showDependencies
+    }
+    Shortcut {
+        sequence: "Ctrl+H"
+        enabled: inEditMode && !editingText
+        onActivated: {
+            if (mainWindow.gridArea)
+                mainWindow.gridArea.showTaskHistory = !mainWindow.gridArea.showTaskHistory
+            if (mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar)
+                mainWindow.calendarHeader.milestoneBar.showRescheduled = mainWindow.gridArea.showTaskHistory
+        }
+    }
+    Shortcut {
+        sequence: "Ctrl+/"
+        enabled: inEditMode && !editingText
+        onActivated: if (mainWindow.gridArea) mainWindow.gridArea.showComments = !mainWindow.gridArea.showComments
+    }
+
+    // --- Навигация ---
+    Shortcut {
+        sequence: "Home"
+        enabled: inEditMode && !editingText
+        onActivated: {
+            if (!flickableRight) return
+            flickableRight.contentX = 0
+            flickableRight.contentY = 0
+        }
+    }
+    Shortcut {
+        sequence: "End"
+        enabled: inEditMode && !editingText
+        onActivated: {
+            if (!flickableRight) return
+            flickableRight.contentX = Math.max(0, flickableRight.contentWidth - flickableRight.width)
+            flickableRight.contentY = Math.max(0, flickableRight.contentHeight - flickableRight.height)
+        }
+    }
+    Shortcut {
+        sequence: "PageDown"
+        enabled: inEditMode && !editingText
+        onActivated: scrollPageDown()
+    }
+    Shortcut {
+        sequence: "PageUp"
+        enabled: inEditMode && !editingText
+        onActivated: scrollPageUp()
+    }
+    Shortcut {
+        sequence: "Alt+Down"
+        enabled: inEditMode && !editingText
+        onActivated: scrollPageDown()
+    }
+    Shortcut {
+        sequence: "Alt+Up"
+        enabled: inEditMode && !editingText
+        onActivated: scrollPageUp()
+    }
+
+    function scrollPageDown()
+    {
+        if (!flickableRight) return
+        var step = Math.max(40, flickableRight.height - 40)
+        flickableRight.contentY = Math.min(
+            flickableRight.contentY + step,
+            Math.max(0, flickableRight.contentHeight - flickableRight.height))
+    }
+
+    function scrollPageUp()
+    {
+        if (!flickableRight) return
+        var step = Math.max(40, flickableRight.height - 40)
+        flickableRight.contentY = Math.max(0, flickableRight.contentY - step)
+    }
+
+    // --- Прочее ---
     Shortcut { sequence: "F1"; onActivated:
     {
         if (mainWindow.visibility === Window.FullScreen) mainWindow.showNormal()

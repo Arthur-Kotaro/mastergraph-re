@@ -120,7 +120,7 @@ Rectangle
         Button
         {
             text: "Зависимости"
-            checked: true
+            checked: mainWindow.gridArea ? mainWindow.gridArea.showDependencies : true
             checkable: true
             Layout.preferredWidth: 110
             onCheckedChanged: { if(mainWindow && mainWindow.gridArea) mainWindow.gridArea.showDependencies = checked }
@@ -130,7 +130,7 @@ Rectangle
         Button
         {
             text: "Переносы"
-            checked: true
+            checked: mainWindow.gridArea ? mainWindow.gridArea.showTaskHistory : true
             checkable: true
             Layout.preferredWidth: 95
             onCheckedChanged:
@@ -146,7 +146,7 @@ Rectangle
         Button
         {
             text: "Комментарии"
-            checked: true
+            checked: mainWindow.gridArea ? mainWindow.gridArea.showComments : true
             checkable: true
             Layout.preferredWidth: 115
             onCheckedChanged: { if(mainWindow && mainWindow.gridArea) mainWindow.gridArea.showComments = checked }
@@ -173,7 +173,7 @@ Rectangle
         {
             text: "Помощь"
             Layout.preferredWidth: 80
-            onClicked: mainWindow.helpDialog.open()
+            onClicked: mainWindow.helpDialog.show()
         }
 
         Button
