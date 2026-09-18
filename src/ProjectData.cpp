@@ -1,4 +1,5 @@
 #include "ProjectData.h"
+#include <QDebug>
 
 ProjectData::ProjectData(QObject *parent): QObject(parent), m_modified(false), m_creationDateTime(QDateTime::currentDateTime()), m_lastModifiedDateTime(QDateTime::currentDateTime())
 {
@@ -333,7 +334,27 @@ bool ProjectData::fromJson(const QVariantMap& json)
     for (const auto& d : dependencies)
     {
         QVariantMap depMap = d.toMap();
-        m_dependencyModel->addDependency(depMap["predecessorId"].toString(), depMap["successorId"].toString());
+        QString predId = depMap["predecessorId"].toString();
+        QString succId = depMap["successorId"].toString();
+
+        QVariantMap predTask = m_taskModel->getTask(predId);
+        QVariantMap succTask = m_taskModel->getTask(succId);
+        if (predTask.isEmpty() || succTask.isEmpty())
+        {
+            qWarning() << "Dependency refers to missing task:" << predId << succId;
+            continue;
+        }
+
+        bool predHasDates = predTask["startDate"].toDate().isValid() && predTask["endDate"].toDate().isValid();
+        bool succHasDates = succTask["startDate"].toDate().isValid() && succTask["endDate"].toDate().isValid();
+
+        if (!predHasDates && succHasDates)
+        {
+            qWarning() << "Skipping invalid dependency (node -> bar):" << predId << succId;
+            continue;
+        }
+
+        m_dependencyModel->addDependency(predId, succId);
     }
     recalculateEndDate();
     set_Modified(false);
@@ -432,4 +453,39 @@ QDate ProjectData::getLatestDate() const
     }
 
     return latest;
+}
+
+QVariantMap ProjectData::getTaskStatistics() const
+{
+    int withDates = 0;
+    int withoutDates = 0;
+    int unapprovedForecasts = 0;
+    int total = 0;
+
+    for (int i = 0; i < m_taskModel->rowCount(); ++i)
+    {
+        QModelIndex idx = m_taskModel->index(i);
+        QDate startDate = idx.data(GanttDefines::StartDateRole).toDate();
+        QDate endDate = idx.data(GanttDefines::EndDateRole).toDate();
+        QDate forecastStart = idx.data(GanttDefines::ForecastStartRole).toDate();
+        QDate forecastEnd = idx.data(GanttDefines::ForecastEndRole).toDate();
+
+        bool hasStart = startDate.isValid();
+        bool hasEnd = endDate.isValid();
+        bool hasDates = hasStart && hasEnd;
+        bool hasForecast = forecastStart.isValid() && forecastEnd.isValid();
+
+        total++;
+
+        if (hasDates) withDates++;
+        if (!hasDates) withoutDates++;
+        if (!hasDates && hasForecast) unapprovedForecasts++;
+    }
+
+    QVariantMap result;
+    result["withDates"] = withDates;
+    result["withoutDates"] = withoutDates;
+    result["unapprovedForecasts"] = unapprovedForecasts;
+    result["total"] = total;
+    return result;
 }

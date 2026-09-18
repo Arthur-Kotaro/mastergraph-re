@@ -172,6 +172,11 @@ ApplicationWindow
         {
             if (gridArea) gridArea.updateData()
         }
+        function onErrorOccurred(message)
+        {
+            if (typeof toast !== "undefined" && toast)
+                toast.show(message)
+        }
     }
     AppToolBar { id: appToolBar; anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right }
 
@@ -306,6 +311,65 @@ ApplicationWindow
                              flick.contentHeight - flick.height))
             }
             wheel.accepted = true
+        }
+    }
+
+    // Toast для сообщений об ошибках
+    Rectangle
+    {
+        id: toast
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 60
+        width: Math.min(parent.width - 40, toastText.implicitWidth + 40)
+        height: toastText.implicitHeight + 24
+        color: "#d32f2f"
+        radius: 6
+        opacity: 0
+        visible: opacity > 0
+        z: 200
+
+        Text
+        {
+            id: toastText
+            anchors.centerIn: parent
+            color: "white"
+            font.pixelSize: 14
+            wrapMode: Text.WordWrap
+            width: parent.width - 32
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        Timer
+        {
+            id: toastTimer
+            interval: 3000
+            onTriggered: toastHide.start()
+        }
+
+        NumberAnimation
+        {
+            id: toastShow
+            target: toast
+            property: "opacity"
+            to: 1.0
+            duration: 200
+        }
+
+        NumberAnimation
+        {
+            id: toastHide
+            target: toast
+            property: "opacity"
+            to: 0.0
+            duration: 300
+        }
+
+        function show(message)
+        {
+            toastText.text = message
+            toastShow.start()
+            toastTimer.restart()
         }
     }
 

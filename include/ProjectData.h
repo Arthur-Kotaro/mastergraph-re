@@ -68,6 +68,9 @@ public:
     Q_INVOKABLE QDate getEarliestDate() const;
     Q_INVOKABLE QDate getLatestDate() const;
 
+    // Статистика по задачам для InfoPanel
+    Q_INVOKABLE QVariantMap getTaskStatistics() const;
+
 signals:
     void projectNameChanged();
     void projectTypeChanged();

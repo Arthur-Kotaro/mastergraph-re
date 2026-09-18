@@ -276,6 +276,23 @@ void ProjectController::addDependency(const QString& predecessorId, const QStrin
         return;
     }
 
+    QVariantMap predTask = m_projectData->get_taskModel()->getTask(predecessorId);
+    QVariantMap succTask = m_projectData->get_taskModel()->getTask(successorId);
+    if (predTask.isEmpty() || succTask.isEmpty())
+    {
+        emit errorOccurred("Задача не найдена");
+        return;
+    }
+
+    bool predHasDates = predTask["startDate"].toDate().isValid() && predTask["endDate"].toDate().isValid();
+    bool succHasDates = succTask["startDate"].toDate().isValid() && succTask["endDate"].toDate().isValid();
+
+    if (!predHasDates && succHasDates)
+    {
+        emit errorOccurred("Задача без сроков не может быть предшественником задачи со сроками");
+        return;
+    }
+
     if (!m_projectData->get_dependencyModel()->addDependency(predecessorId, successorId))
     {
         emit errorOccurred("Невозможно создать зависимость (циклическая или уже существует)");
@@ -315,6 +332,10 @@ void ProjectController::updateDependentTasks(const QString& taskId, const QDate&
         QVariantMap successor = m_projectData->get_taskModel()->getTask(successorId);
         QDate successorStart = successor["startDate"].toDate();
         QDate successorEnd = successor["endDate"].toDate();
+
+        if (!successorStart.isValid() || !successorEnd.isValid())
+            continue;
+
         int duration = successorStart.daysTo(successorEnd);
 
         if (successorStart < newEndDate)
