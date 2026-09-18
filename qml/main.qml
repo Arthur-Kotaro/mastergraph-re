@@ -49,6 +49,7 @@ ApplicationWindow
     property alias commentDialog: commentDialog
     property alias responsibleDialog: responsibleDialog
     property alias renameTaskDialog: renameTaskDialog
+    property alias localGraphExistsDialog: localGraphExistsDialog
     property alias leftPanel: leftPanel
     property alias calendarHeader: calendarHeader
 
@@ -314,7 +315,6 @@ ApplicationWindow
         }
     }
 
-    // Toast для сообщений об ошибках
     Rectangle
     {
         id: toast
@@ -389,6 +389,7 @@ ApplicationWindow
     CommentDialog { id: commentDialog }
     ResponsibleDialog { id: responsibleDialog }
     RenameTaskDialog { id: renameTaskDialog }
+    LocalGraphExistsDialog { id: localGraphExistsDialog }
 
     Labs.FileDialog
     {

@@ -1,7 +1,10 @@
 #include "ProjectData.h"
 #include <QDebug>
 
-ProjectData::ProjectData(QObject *parent): QObject(parent), m_modified(false), m_creationDateTime(QDateTime::currentDateTime()), m_lastModifiedDateTime(QDateTime::currentDateTime())
+ProjectData::ProjectData(QObject *parent): QObject(parent), m_modified(false)
+    , m_creationDateTime(QDateTime::currentDateTime())
+    , m_lastModifiedDateTime(QDateTime::currentDateTime())
+    , m_graphKind(GanttDefines::GraphKind::Master)
 {
     m_taskModel = new TaskModel(this);
     m_groupModel = new GroupModel(this);
@@ -103,6 +106,17 @@ void ProjectData::set_LastModifiedDateTime(const QDateTime& dt)
     }
 }
 
+GanttDefines::GraphKind ProjectData::get_graphKind() const { return m_graphKind; }
+void ProjectData::set_GraphKind(GanttDefines::GraphKind kind)
+{
+    if (m_graphKind != kind)
+    {
+        m_graphKind = kind;
+        emit graphKindChanged();
+        set_Modified(true);
+    }
+}
+
 void ProjectData::updateLastModified()
 {
     set_LastModifiedDateTime(QDateTime::currentDateTime());
@@ -140,6 +154,8 @@ void ProjectData::clear()
     m_creationDateTime = QDateTime();
     m_lastModifiedDateTime = QDateTime();
 
+    m_graphKind = GanttDefines::GraphKind::Master;
+
     set_Modified(false);
     emit dataCleared();
 }
@@ -152,6 +168,10 @@ QVariantMap ProjectData::toJson() const
     result["startDate"] = m_startDate.toString("dd.MM.yyyy");
     result["creationDateTime"] = m_creationDateTime.toString("dd.MM.yyyy hh:mm:ss");
     result["lastModifiedDateTime"] = m_lastModifiedDateTime.toString("dd.MM.yyyy hh:mm:ss");
+
+    // graphKind: пишем только если local (master — по умолчанию, поле отсутствует)
+    if (m_graphKind == GanttDefines::GraphKind::Local)
+        result["graphKind"] = "local";
 
     QVariantList groups;
     for (int i = 0; i < m_groupModel->rowCount(); ++i)
@@ -258,11 +278,24 @@ bool ProjectData::fromJson(const QVariantMap& json)
     m_creationDateTime = QDateTime::fromString(json["creationDateTime"].toString(), "dd.MM.yyyy hh:mm:ss");
     m_lastModifiedDateTime = QDateTime::fromString(json["lastModifiedDateTime"].toString(), "dd.MM.yyyy hh:mm:ss");
 
-    QVariantList groups = json["groups"].toList();
-    for (const auto& g : groups)
+    m_graphKind = GanttDefines::stringToGraphKind(json["graphKind"].toString());
+
+    if (m_graphKind == GanttDefines::GraphKind::Local)
     {
-        QVariantMap groupMap = g.toMap();
-        m_groupModel->addGroupWithId(groupMap["id"].toString(), groupMap["name"].toString());
+        if (json.contains("milestones") && !json["milestones"].toList().isEmpty())
+            qWarning() << "Local graph file contains milestones — ignoring";
+        if (json.contains("groups") && !json["groups"].toList().isEmpty())
+            qWarning() << "Local graph file contains groups — ignoring";
+    }
+
+    QVariantList groups = json["groups"].toList();
+    if (m_graphKind == GanttDefines::GraphKind::Master)
+    {
+        for (const auto& g : groups)
+        {
+            QVariantMap groupMap = g.toMap();
+            m_groupModel->addGroupWithId(groupMap["id"].toString(), groupMap["name"].toString());
+        }
     }
 
     QVariantList tasks = json["tasks"].toList();
@@ -307,26 +340,29 @@ bool ProjectData::fromJson(const QVariantMap& json)
     emit m_taskModel->countChanged();
     emit m_groupModel->countChanged();
 
-    QVariantList milestones = json["milestones"].toList();
-    for (const auto& m : milestones)
+    if (m_graphKind == GanttDefines::GraphKind::Master)
     {
-        QVariantMap msMap = m.toMap();
-        QDate plannedDate = QDate::fromString(msMap["plannedDate"].toString(), "dd.MM.yyyy");
-        m_milestoneModel->addMilestone(msMap["abbreviation"].toString(), msMap["fullName"].toString(), plannedDate);
-
-        int lastIdx = m_milestoneModel->rowCount() - 1;
-        QString msId = m_milestoneModel->data(m_milestoneModel->index(lastIdx), Qt::UserRole + 1).toString();
-
-        int status = msMap["status"].toInt();
-        if (status == 1)
+        QVariantList milestones = json["milestones"].toList();
+        for (const auto& m : milestones)
         {
-            m_milestoneModel->setMilestoneCompleted(msId);
-        }
+            QVariantMap msMap = m.toMap();
+            QDate plannedDate = QDate::fromString(msMap["plannedDate"].toString(), "dd.MM.yyyy");
+            m_milestoneModel->addMilestone(msMap["abbreviation"].toString(), msMap["fullName"].toString(), plannedDate);
 
-        QVariantList history = msMap["rescheduleHistory"].toList();
-        if (!history.isEmpty())
-        {
-            m_milestoneModel->setRescheduleHistory(msId, history);
+            int lastIdx = m_milestoneModel->rowCount() - 1;
+            QString msId = m_milestoneModel->data(m_milestoneModel->index(lastIdx), Qt::UserRole + 1).toString();
+
+            int status = msMap["status"].toInt();
+            if (status == 1)
+            {
+                m_milestoneModel->setMilestoneCompleted(msId);
+            }
+
+            QVariantList history = msMap["rescheduleHistory"].toList();
+            if (!history.isEmpty())
+            {
+                m_milestoneModel->setRescheduleHistory(msId, history);
+            }
         }
     }
 

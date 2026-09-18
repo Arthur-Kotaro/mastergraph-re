@@ -26,7 +26,7 @@ class ProjectData : public QObject
 
     Q_PROPERTY(QDateTime creationDateTime READ get_creationDateTime WRITE set_CreationDateTime NOTIFY creationDateTimeChanged)
     Q_PROPERTY(QDateTime lastModifiedDateTime READ get_lastModifiedDateTime WRITE set_LastModifiedDateTime NOTIFY lastModifiedDateTimeChanged)
-
+    Q_PROPERTY(GanttDefines::GraphKind graphKind READ get_graphKind WRITE set_GraphKind NOTIFY graphKindChanged)
 
 public:
     explicit ProjectData(QObject *parent = nullptr);
@@ -55,6 +55,9 @@ public:
     bool get_modified() const;
     void set_Modified(bool mod);
 
+    GanttDefines::GraphKind get_graphKind() const;
+    void set_GraphKind(GanttDefines::GraphKind kind);
+
     TaskModel* get_taskModel() const;
     GroupModel* get_groupModel() const;
     MilestoneModel* get_milestoneModel() const;
@@ -68,7 +71,6 @@ public:
     Q_INVOKABLE QDate getEarliestDate() const;
     Q_INVOKABLE QDate getLatestDate() const;
 
-    // Статистика по задачам для InfoPanel
     Q_INVOKABLE QVariantMap getTaskStatistics() const;
 
 signals:
@@ -81,6 +83,7 @@ signals:
     void dataCleared();
     void creationDateTimeChanged();
     void lastModifiedDateTimeChanged();
+    void graphKindChanged();
 
 private:
     QString m_projectName;
@@ -91,6 +94,7 @@ private:
     bool m_modified;
     QDateTime m_creationDateTime;
     QDateTime m_lastModifiedDateTime;
+    GanttDefines::GraphKind m_graphKind;
 
     TaskModel* m_taskModel;
     GroupModel* m_groupModel;

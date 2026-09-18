@@ -5,6 +5,7 @@
         <file>qml/InfoPanel.qml</file>
         <file>qml/AppToolBar.qml</file>
         <file>qml/LeftPanel.qml</file>
+        <file>qml/LocalTaskList.qml</file>
         <file>qml/GridArea.qml</file>
         <file>qml/CalendarHeader.qml</file>
         <file>qml/WelcomeScreen.qml</file>
@@ -29,6 +30,7 @@
         <file>qml/CommentDialog.qml</file>
         <file>qml/ResponsibleDialog.qml</file>
         <file>qml/RenameTaskDialog.qml</file>
+        <file>qml/LocalGraphExistsDialog.qml</file>
         <file>qml/TaskContextMenu.qml</file>
         <file>qml/CurrentTimeLine.qml</file>
         <file alias="default_typologies.json">resources/default_typologies.json</file>

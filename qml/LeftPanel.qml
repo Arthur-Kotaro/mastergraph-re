@@ -11,6 +11,11 @@ Rectangle
     property int rowHeight: 40
     property var flickableRight: null
 
+    readonly property bool isLocalMode: {
+        return projectController && projectController.projectData
+               && projectController.projectData.graphKind === 1
+    }
+
     Column
     {
         anchors.fill: parent
@@ -104,6 +109,7 @@ Rectangle
                         height: rowHeight
                         border.color: "#cccccc"
                         border.width: 1
+                        visible: !root.isLocalMode
                         Text { text: "Веха"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 12 }
                     }
                 }
@@ -180,9 +186,20 @@ Rectangle
             }
         }
 
+        // Локальный режим: плоский список задач
+        LocalTaskList
+        {
+            visible: root.isLocalMode
+            width: parent.width
+            height: parent.height - 240
+            flickableRight: root.flickableRight
+        }
+
+        // Мастерграфик: список групп
         Flickable
         {
             id: groupsFlickable
+            visible: !root.isLocalMode
             width: parent.width
             height: parent.height - 240
             clip: true

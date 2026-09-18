@@ -15,6 +15,11 @@ Rectangle
     property date displayStart: new Date()
     property date displayEnd: new Date()
 
+    readonly property bool isLocalMode: {
+        return projectController && projectController.projectData
+               && projectController.projectData.graphKind === 1
+    }
+
     function getSecondSundayAfter(date)
     {
         var d = new Date(date)
@@ -149,6 +154,12 @@ Rectangle
         function onDataChanged() { refresh() }
     }
 
+    Connections
+    {
+        target: projectController?.projectData
+        function onGraphKindChanged() { refresh() }
+    }
+
     onDisplayStartChanged: rebuildData()
     onDisplayEndChanged: rebuildData()
 
@@ -196,15 +207,17 @@ Rectangle
                         Text { text: root.dayNumbers[index] || ""; anchors.horizontalCenter: parent.horizontalCenter; font.pixelSize: 11 } } } } }
         }
 
-        // 5. Вехи
+        // 5. Вехи (только для мастерграфика)
         MilestoneBar
         {
             id: milestoneBar
-            width: contentWidth; height: rowHeight; milestonesModel: projectController?.projectData?.milestoneModel
+            visible: !root.isLocalMode
+            width: contentWidth; height: rowHeight
+            milestonesModel: projectController?.projectData?.milestoneModel
             startDate: displayStart; dayWidth: dayWidth
         }
 
-        // 6. Актуальность (даты создания/изменения)
+        // 6. Актуальность
         Rectangle
         {
             width: contentWidth

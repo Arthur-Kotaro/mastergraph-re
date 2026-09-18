@@ -43,6 +43,11 @@ enum class LocalGraphState {
     Missing
 };
 
+enum class GraphKind {
+    Master = 0,
+    Local
+};
+
 enum ModelRoles {
     IdRole = Qt::UserRole + 1,
     TitleRole,
@@ -114,6 +119,19 @@ inline LocalGraphState stringToLocalGraphState(const QString& str) {
     if (str == "attached") return LocalGraphState::Attached;
     if (str == "missing")  return LocalGraphState::Missing;
     return LocalGraphState::NotRequired;
+}
+
+inline QString graphKindToString(GraphKind kind) {
+    switch (kind) {
+        case GraphKind::Master: return "master";
+        case GraphKind::Local:  return "local";
+    }
+    return "master";
+}
+
+inline GraphKind stringToGraphKind(const QString& str) {
+    if (str == "local") return GraphKind::Local;
+    return GraphKind::Master;
 }
 
 } // namespace GanttDefines

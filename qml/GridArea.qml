@@ -25,8 +25,13 @@ Rectangle
     property var visibleItems: []
     property int updateCounter: 0
 
-    // Кэш координат узлов (центр круга по X): taskId -> X в пикселях
     property var nodeXByTask: ({})
+
+    // Локальный режим: граф — локальный (без групп, вех, режимов)
+    readonly property bool isLocalMode: {
+        return projectController && projectController.projectData
+               && projectController.projectData.graphKind === 1
+    }
 
     Component.onCompleted: updateData()
 
@@ -43,8 +48,15 @@ Rectangle
         function onViewModeChanged() { updateData() }
     }
 
+    Connections
+    {
+        target: projectController?.projectData
+        function onGraphKindChanged() { updateData() }
+    }
+
     function currentViewMode()
     {
+        if (isLocalMode) return 0  // В локальном режиме всегда Target
         return projectController && projectController.settingsManager
                ? projectController.settingsManager.viewMode : 0
     }
@@ -111,20 +123,11 @@ Rectangle
 
         var result
         if (maxPredEnd !== null)
-        {
-            // Клетка сразу после конца предшественника, центр клетки
             result = (daysFromStart(maxPredEnd) + 1) * dayWidth + dayWidth / 2
-        }
         else if (maxPredNodeX >= 0)
-        {
-            // Цепочка узлов: шаг 3 дня
             result = maxPredNodeX + 3 * dayWidth
-        }
         else
-        {
-            // Нет предшественников — центр первой клетки
             result = dayWidth / 2
-        }
 
         if (result < dayWidth / 2) result = dayWidth / 2
         nodes[taskId] = result
@@ -171,13 +174,52 @@ Rectangle
                 }
             }
         }
+
+        // Локальный режим: если групп нет, собираем задачи напрямую
+        if (allTasks.length === 0 && isLocalMode)
+        {
+            var all = projectController.projectData.taskModel.getAllTasks()
+            for (var ai = 0; ai < all.length; ai++)
+                allTasks.push(all[ai])
+        }
+
         computeNodePositions(allTasks)
 
         var mode = currentViewMode()
         var items = []
         var taskCounter = 0
 
-        if (groups)
+        // Локальный режим: плоский список без групп
+        if (isLocalMode)
+        {
+            var localTasks = allTasks
+            for (var li = 0; li < localTasks.length; li++)
+            {
+                var tdL = localTasks[li]
+                var isCompletedL = (tdL.status === 1)
+                var hasDatesL = hasTaskDates(tdL)
+                var nodeXL = hasDatesL ? 0 : (root.nodeXByTask[tdL.id] !== undefined ? root.nodeXByTask[tdL.id] : dayWidth / 2)
+
+                items.push({
+                    type: "task",
+                    rowKind: "target",
+                    taskId: tdL.id,
+                    rowIndex: taskCounter,
+                    taskTitle: tdL.title,
+                    taskResponsible: tdL.responsible,
+                    taskStart: tdL.startDate,
+                    taskEnd: tdL.endDate,
+                    taskStatus: tdL.status,
+                    taskComment: tdL.comment,
+                    isCompleted: isCompletedL,
+                    hasDates: hasDatesL,
+                    nodeX: nodeXL,
+                    localGraphState: tdL.localGraphState
+                })
+                taskCounter++
+            }
+        }
+        else if (groups)
         {
             for (var i = 0; i < groups.rowCount(); i++)
             {
@@ -346,7 +388,6 @@ Rectangle
         }
         else
         {
-            // Узел: item.nodeX — центр круга
             var nodeCenter = item.nodeX
             return isOutgoing ? nodeCenter + 15 : nodeCenter - 15
         }
@@ -586,7 +627,6 @@ Rectangle
                 z: 3
             }
 
-            // Узел (для задачи без сроков)
             Rectangle
             {
                 id: nodeCircle

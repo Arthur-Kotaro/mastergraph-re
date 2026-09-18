@@ -10,18 +10,27 @@ Menu
     property var onAddTaskBelowCallback: null
 
     property bool canAcceptForecast: false
+    property int localGraphState: 0
+    property bool isTaskCompleted: false
 
-    onOpened: updateCanAcceptForecast()
+    onOpened: updateState()
 
-    function updateCanAcceptForecast()
+    function updateState()
     {
         canAcceptForecast = false
+        localGraphState = 0
+        isTaskCompleted = false
+
         if (!taskId || !projectController || !projectController.projectData) return
-        if (projectController.settingsManager.editingLocked) return
 
         var task = projectController.projectData.taskModel.getTask(taskId)
         if (!task) return
-        if (task.status === 1) return  // Completed
+
+        isTaskCompleted = (task.status === 1)
+        localGraphState = task.localGraphState !== undefined ? task.localGraphState : 0
+
+        if (projectController.settingsManager.editingLocked) return
+        if (isTaskCompleted) return
 
         var fs = task.forecastStart
         var fe = task.forecastEnd
@@ -134,6 +143,66 @@ Menu
         {
             text: "Удалить восходящую зависимость"
             onTriggered: if(projectController) projectController.projectData.dependencyModel.removeUpstreamDependency(root.taskId)
+        }
+    }
+
+    MenuSeparator {}
+
+    Menu
+    {
+        title: "Локальный график"
+
+        MenuItem
+        {
+            text: "Пометить как требующую ЛГ"
+            enabled: !root.isTaskCompleted && root.localGraphState === 0
+            onTriggered:
+            {
+                if (root.taskId && projectController)
+                    projectController.markTaskRequiresLocalGraph(root.taskId)
+            }
+        }
+
+        MenuItem
+        {
+            text: "Создать локальный график"
+            enabled: !root.isTaskCompleted
+                     && (root.localGraphState === 1 || root.localGraphState === 3)
+            onTriggered:
+            {
+                if (!root.taskId || !projectController) return
+                if (projectController.localGraphFileExists(root.taskId))
+                {
+                    if (mainWindow && mainWindow.localGraphExistsDialog)
+                        mainWindow.localGraphExistsDialog.openForTask(root.taskId)
+                }
+                else
+                {
+                    projectController.createLocalGraph(root.taskId)
+                }
+            }
+        }
+
+        MenuItem
+        {
+            text: "Открыть локальный график"
+            enabled: root.localGraphState === 2
+            onTriggered:
+            {
+                // TODO: C4
+            }
+        }
+
+        MenuItem
+        {
+            text: "Отвязать локальный график"
+            enabled: root.localGraphState === 1
+                     || root.localGraphState === 2
+                     || root.localGraphState === 3
+            onTriggered:
+            {
+                // TODO: C4
+            }
         }
     }
 

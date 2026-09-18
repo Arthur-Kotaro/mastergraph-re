@@ -48,6 +48,13 @@ public:
     Q_INVOKABLE void addDependency(const QString& predecessorId, const QString& successorId);
     Q_INVOKABLE void removeDependency(const QString& dependencyId);
 
+    Q_INVOKABLE void markTaskRequiresLocalGraph(const QString& taskId);
+    Q_INVOKABLE bool createLocalGraph(const QString& taskId);
+    Q_INVOKABLE bool createLocalGraphOverwrite(const QString& taskId);
+    Q_INVOKABLE bool attachExistingLocalGraph(const QString& taskId);
+    Q_INVOKABLE QString getLocalGraphPath(const QString& taskId) const;
+    Q_INVOKABLE bool localGraphFileExists(const QString& taskId) const;
+
 signals:
     void inEditModeChanged();
     void projectLoaded();
@@ -70,6 +77,7 @@ private:
     QSet<QString> m_updatingTasks;
 
     QDate endOfPredecessor(const QVariantMap& predTask) const;
+    QString localGraphDirectory() const;
 };
 
 #endif

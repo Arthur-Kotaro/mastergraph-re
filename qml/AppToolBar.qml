@@ -9,6 +9,11 @@ Rectangle
     color: "#e0e0e0"
     z: 10
 
+    readonly property bool isLocalMode: {
+        return projectController && projectController.projectData
+               && projectController.projectData.graphKind === 1
+    }
+
     RowLayout
     {
         anchors.fill: parent
@@ -106,6 +111,7 @@ Rectangle
         ComboBox
         {
             id: viewModeCombo
+            visible: !appToolBar.isLocalMode
             Layout.preferredWidth: 200
             font.pixelSize: 12
             model: ["Целевой", "Прогнозный", "Комбинированный"]

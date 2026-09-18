@@ -2,6 +2,9 @@
 #include <QDebug>
 #include <QFile>
 #include <QDir>
+#include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 ProjectController::ProjectController(QObject *parent): QObject(parent), m_inEditMode(false)
 {
@@ -171,12 +174,10 @@ void ProjectController::addTaskWithoutDates(const QString& groupId, const QStrin
     m_projectData->get_taskModel()->addTaskWithoutDates(groupId, title, responsible);
     m_projectData->recalculateEndDate();
     m_projectData->set_Modified(true);
-    qDebug() << "Task added without dates:" << title << "to group:" << groupId;
 }
 
 void ProjectController::removeTask(const QString& taskId)
 {
-    qDebug() << "Removing task:" << taskId;
     if (m_settingsManager->editingLocked())
     {
         emit errorOccurred("Редактирование заблокировано");
@@ -265,7 +266,6 @@ void ProjectController::acceptForecastAsTarget(const QString& taskId)
     m_projectData->get_taskModel()->updateTaskDates(taskId, forecastStart, forecastEnd, true);
     m_projectData->recalculateEndDate();
     m_projectData->set_Modified(true);
-    qDebug() << "acceptForecastAsTarget:" << taskId;
 }
 
 void ProjectController::addDependency(const QString& predecessorId, const QString& successorId)
@@ -408,4 +408,272 @@ void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QSt
         m_projectData->get_taskModel()->updateForecastDates(successorId, newStart, newEnd);
         updateDependentForecasts(successorId, visited);
     }
+}
+
+// ---------------- Локальные графики ----------------
+
+QString ProjectController::localGraphDirectory() const
+{
+    QString masterPath = m_projectData->get_filePath();
+    if (masterPath.isEmpty()) return QString();
+
+    QFileInfo fi(masterPath);
+    QString baseName = fi.completeBaseName();
+    QString dirPath = fi.absolutePath() + "/subGraph_" + baseName;
+    return dirPath;
+}
+
+QString ProjectController::getLocalGraphPath(const QString& taskId) const
+{
+    QString dirPath = localGraphDirectory();
+    if (dirPath.isEmpty()) return QString();
+
+    QString masterPath = m_projectData->get_filePath();
+    QFileInfo fi(masterPath);
+    QString baseName = fi.completeBaseName();
+
+    return dirPath + "/" + taskId + "-" + baseName + ".gantt";
+}
+
+bool ProjectController::localGraphFileExists(const QString& taskId) const
+{
+    QString path = getLocalGraphPath(taskId);
+    if (path.isEmpty()) return false;
+    return QFile::exists(path);
+}
+
+void ProjectController::markTaskRequiresLocalGraph(const QString& taskId)
+{
+    if (m_settingsManager->editingLocked())
+    {
+        emit errorOccurred("Редактирование заблокировано");
+        return;
+    }
+
+    QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
+    if (task.isEmpty()) return;
+
+    if (task["status"].toInt() == static_cast<int>(GanttDefines::TaskStatus::Completed))
+    {
+        emit errorOccurred("Нельзя пометить завершённую задачу");
+        return;
+    }
+
+    int currentState = task["localGraphState"].toInt();
+    if (currentState != static_cast<int>(GanttDefines::LocalGraphState::NotRequired))
+        return;
+
+    m_projectData->get_taskModel()->setLocalGraphState(taskId,
+        static_cast<int>(GanttDefines::LocalGraphState::Required));
+    m_projectData->set_Modified(true);
+}
+
+bool ProjectController::createLocalGraph(const QString& taskId)
+{
+    if (m_settingsManager->editingLocked())
+    {
+        emit errorOccurred("Редактирование заблокировано");
+        return false;
+    }
+
+    if (m_projectData->get_filePath().isEmpty())
+    {
+        emit errorOccurred("Сначала сохраните мастерграфик");
+        return false;
+    }
+
+    QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
+    if (task.isEmpty())
+    {
+        emit errorOccurred("Задача не найдена");
+        return false;
+    }
+
+    if (task["status"].toInt() == static_cast<int>(GanttDefines::TaskStatus::Completed))
+    {
+        emit errorOccurred("Нельзя создать ЛГ для завершённой задачи");
+        return false;
+    }
+
+    int currentState = task["localGraphState"].toInt();
+    if (currentState != static_cast<int>(GanttDefines::LocalGraphState::Required)
+        && currentState != static_cast<int>(GanttDefines::LocalGraphState::Missing))
+    {
+        emit errorOccurred("Сначала пометьте задачу как требующую локальный график");
+        return false;
+    }
+
+    QString path = getLocalGraphPath(taskId);
+    if (path.isEmpty())
+    {
+        emit errorOccurred("Не удалось вычислить путь локального графика");
+        return false;
+    }
+
+    if (QFile::exists(path))
+    {
+        emit errorOccurred("Файл локального графика уже существует");
+        return false;
+    }
+
+    QString dirPath = localGraphDirectory();
+    QDir dir;
+    if (!dir.exists(dirPath))
+    {
+        if (!dir.mkpath(dirPath))
+        {
+            emit errorOccurred("Не удалось создать каталог: " + dirPath);
+            return false;
+        }
+    }
+
+    QVariantMap localDoc;
+    localDoc["projectName"] = task["title"].toString();
+    localDoc["projectType"] = "local";
+    localDoc["graphKind"] = "local";
+    localDoc["linkedMasterTaskId"] = taskId;
+
+    QDate targetStart = task["startDate"].toDate();
+    QDate targetEnd = task["endDate"].toDate();
+    if (targetStart.isValid() && targetEnd.isValid())
+    {
+        localDoc["linkedTargetStart"] = targetStart.toString("dd.MM.yyyy");
+        localDoc["linkedTargetEnd"] = targetEnd.toString("dd.MM.yyyy");
+    }
+
+    QDateTime now = QDateTime::currentDateTime();
+    localDoc["creationDateTime"] = now.toString("dd.MM.yyyy hh:mm:ss");
+    localDoc["lastModifiedDateTime"] = now.toString("dd.MM.yyyy hh:mm:ss");
+    localDoc["tasks"] = QVariantList();
+    localDoc["dependencies"] = QVariantList();
+
+    if (!m_resourceManager->saveProjectToFile(localDoc, path))
+    {
+        emit errorOccurred("Не удалось сохранить локальный график");
+        return false;
+    }
+
+    m_projectData->get_taskModel()->setLocalGraphState(taskId,
+        static_cast<int>(GanttDefines::LocalGraphState::Attached));
+    m_projectData->set_Modified(true);
+
+    qDebug() << "Local graph created:" << path;
+    return true;
+}
+
+bool ProjectController::createLocalGraphOverwrite(const QString& taskId)
+{
+    if (m_settingsManager->editingLocked())
+    {
+        emit errorOccurred("Редактирование заблокировано");
+        return false;
+    }
+
+    if (m_projectData->get_filePath().isEmpty())
+    {
+        emit errorOccurred("Сначала сохраните мастерграфик");
+        return false;
+    }
+
+    QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
+    if (task.isEmpty())
+    {
+        emit errorOccurred("Задача не найдена");
+        return false;
+    }
+
+    if (task["status"].toInt() == static_cast<int>(GanttDefines::TaskStatus::Completed))
+    {
+        emit errorOccurred("Нельзя создать ЛГ для завершённой задачи");
+        return false;
+    }
+
+    QString path = getLocalGraphPath(taskId);
+    if (path.isEmpty())
+    {
+        emit errorOccurred("Не удалось вычислить путь локального графика");
+        return false;
+    }
+
+    QString dirPath = localGraphDirectory();
+    QDir dir;
+    if (!dir.exists(dirPath))
+    {
+        if (!dir.mkpath(dirPath))
+        {
+            emit errorOccurred("Не удалось создать каталог: " + dirPath);
+            return false;
+        }
+    }
+
+    QVariantMap localDoc;
+    localDoc["projectName"] = task["title"].toString();
+    localDoc["projectType"] = "local";
+    localDoc["graphKind"] = "local";
+    localDoc["linkedMasterTaskId"] = taskId;
+
+    QDate targetStart = task["startDate"].toDate();
+    QDate targetEnd = task["endDate"].toDate();
+    if (targetStart.isValid() && targetEnd.isValid())
+    {
+        localDoc["linkedTargetStart"] = targetStart.toString("dd.MM.yyyy");
+        localDoc["linkedTargetEnd"] = targetEnd.toString("dd.MM.yyyy");
+    }
+
+    QDateTime now = QDateTime::currentDateTime();
+    localDoc["creationDateTime"] = now.toString("dd.MM.yyyy hh:mm:ss");
+    localDoc["lastModifiedDateTime"] = now.toString("dd.MM.yyyy hh:mm:ss");
+    localDoc["tasks"] = QVariantList();
+    localDoc["dependencies"] = QVariantList();
+
+    if (!m_resourceManager->saveProjectToFile(localDoc, path))
+    {
+        emit errorOccurred("Не удалось сохранить локальный график");
+        return false;
+    }
+
+    m_projectData->get_taskModel()->setLocalGraphState(taskId,
+        static_cast<int>(GanttDefines::LocalGraphState::Attached));
+    m_projectData->set_Modified(true);
+
+    qDebug() << "Local graph overwritten:" << path;
+    return true;
+}
+
+bool ProjectController::attachExistingLocalGraph(const QString& taskId)
+{
+    if (m_settingsManager->editingLocked())
+    {
+        emit errorOccurred("Редактирование заблокировано");
+        return false;
+    }
+
+    QString path = getLocalGraphPath(taskId);
+    if (path.isEmpty() || !QFile::exists(path))
+    {
+        emit errorOccurred("Файл локального графика не найден");
+        return false;
+    }
+
+    QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
+    if (task.isEmpty())
+    {
+        emit errorOccurred("Задача не найдена");
+        return false;
+    }
+
+    if (task["status"].toInt() == static_cast<int>(GanttDefines::TaskStatus::Completed))
+    {
+        emit errorOccurred("Нельзя привязать ЛГ к завершённой задаче");
+        return false;
+    }
+
+    // TODO (C6): прочитать ЛГ и обновить прогноз/прогресс задачи МГ
+
+    m_projectData->get_taskModel()->setLocalGraphState(taskId,
+        static_cast<int>(GanttDefines::LocalGraphState::Attached));
+    m_projectData->set_Modified(true);
+
+    qDebug() << "Local graph attached:" << path;
+    return true;
 }
