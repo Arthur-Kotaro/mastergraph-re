@@ -15,6 +15,7 @@ Dialog
     property int taskCount: 0
     property date startDate: new Date()
     property var cascadeModel: []
+    property bool createWithoutDates: false
 
     function buildCascade()
     {
@@ -39,6 +40,8 @@ Dialog
         countField.text = "3"
         startDate = new Date()
         startDateField.text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
+        createWithoutDates = false
+        withoutDatesCheck.checked = false
         cascadeRepeater.model = []
     }
 
@@ -73,22 +76,32 @@ Dialog
                 }
             }
 
-            Label { text: "Дата начала:" }
+            Label
+            {
+                text: "Дата начала:"
+                visible: !root.createWithoutDates
+            }
             TextField
             {
                 id: startDateField
                 Layout.preferredWidth: 100
-                text: Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
+                visible: !root.createWithoutDates
                 onEditingFinished:
                 {
                     var parts = text.split(".")
                     if (parts.length === 3)
                     {
                         var d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
-                        if (!isNaN(d.getTime()))
-                            root.startDate = d
+                        if (!isNaN(d.getTime())) root.startDate = d
                     }
                 }
+            }
+
+            CheckBox
+            {
+                id: withoutDatesCheck
+                text: "Создать без сроков"
+                onCheckedChanged: root.createWithoutDates = checked
             }
 
             Button
@@ -167,6 +180,7 @@ Dialog
                         TextField
                         {
                             Layout.preferredWidth: 50
+                            visible: !root.createWithoutDates
                             text: modelData ? modelData.duration : "7"
                             validator: IntValidator { bottom: 1; top: 365 }
                             onTextChanged:
@@ -175,7 +189,12 @@ Dialog
                             }
                         }
 
-                        Label { text: "дн."; Layout.preferredWidth: 30 }
+                        Label
+                        {
+                            text: "дн."
+                            visible: !root.createWithoutDates
+                            Layout.preferredWidth: 30
+                        }
 
                         TextField
                         {
@@ -199,33 +218,38 @@ Dialog
 
         var currentDate = new Date(root.startDate)
         var prevTaskId = ""
+        var groupIds = projectController.projectData.groupModel.getGroupIds()
 
         for (var i = 0; i < cascadeModel.length; i++)
         {
             var item = cascadeModel[i]
-            var groupIds = projectController.projectData.groupModel.getGroupIds()
             var groupId = groupIds[item.groupIndex] || groupIds[0]
-            var endDate = new Date(currentDate)
-            endDate.setDate(endDate.getDate() + item.duration - 1)
+            var newTaskId = ""
 
-            projectController.addTask(groupId, item.title, item.responsible, currentDate, endDate)
-
-            var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
-            var newTaskId = tasks[tasks.length - 1]
+            if (root.createWithoutDates)
+            {
+                projectController.addTaskWithoutDates(groupId, item.title, item.responsible)
+                var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
+                newTaskId = tasks[tasks.length - 1]
+            }
+            else
+            {
+                var endDate = new Date(currentDate)
+                endDate.setDate(endDate.getDate() + item.duration - 1)
+                projectController.addTask(groupId, item.title, item.responsible, currentDate, endDate)
+                var tasks2 = projectController.projectData.taskModel.getTasksForGroup(groupId)
+                newTaskId = tasks2[tasks2.length - 1]
+                currentDate = new Date(endDate)
+                currentDate.setDate(currentDate.getDate() + 1)
+            }
 
             if (item.comment)
-            {
                 projectController.projectData.taskModel.setTaskComment(newTaskId, item.comment)
-            }
 
             if (prevTaskId)
-            {
                 projectController.addDependency(prevTaskId, newTaskId)
-            }
 
             prevTaskId = newTaskId
-            currentDate = new Date(endDate)
-            currentDate.setDate(currentDate.getDate() + 1)
         }
 
         if (mainWindow && mainWindow.gridArea) mainWindow.gridArea.updateData()

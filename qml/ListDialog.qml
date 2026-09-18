@@ -14,6 +14,7 @@ Dialog
 
     property int taskCount: 0
     property var listModel: []
+    property bool createWithoutDates: false
 
     function buildList()
     {
@@ -37,6 +38,8 @@ Dialog
         taskCount = 0
         listModel = []
         countField.text = "3"
+        createWithoutDates = false
+        withoutDatesCheck.checked = false
         listRepeater.model = []
     }
 
@@ -69,6 +72,13 @@ Dialog
                     root.taskCount = parseInt(text) || 3
                     root.buildList()
                 }
+            }
+
+            CheckBox
+            {
+                id: withoutDatesCheck
+                text: "Создать без сроков"
+                onCheckedChanged: root.createWithoutDates = checked
             }
 
             Button
@@ -147,6 +157,7 @@ Dialog
                         TextField
                         {
                             Layout.preferredWidth: 100
+                            visible: !root.createWithoutDates
                             placeholderText: "ДД.ММ.ГГГГ"
                             text: modelData ? Qt.formatDateTime(modelData.startDate, "dd.MM.yyyy") : ""
                             onEditingFinished:
@@ -164,6 +175,7 @@ Dialog
                         TextField
                         {
                             Layout.preferredWidth: 50
+                            visible: !root.createWithoutDates
                             text: modelData ? modelData.duration : "7"
                             validator: IntValidator { bottom: 1; top: 365 }
                             onTextChanged:
@@ -172,7 +184,12 @@ Dialog
                             }
                         }
 
-                        Label { text: "дн."; Layout.preferredWidth: 30 }
+                        Label
+                        {
+                            text: "дн."
+                            visible: !root.createWithoutDates
+                            Layout.preferredWidth: 30
+                        }
 
                         TextField
                         {
@@ -194,23 +211,31 @@ Dialog
     {
         if (listModel.length === 0) return
 
+        var groupIds = projectController.projectData.groupModel.getGroupIds()
+
         for (var i = 0; i < listModel.length; i++)
         {
             var item = listModel[i]
-            var groupIds = projectController.projectData.groupModel.getGroupIds()
             var groupId = groupIds[item.groupIndex] || groupIds[0]
-            var endDate = new Date(item.startDate)
-            endDate.setDate(endDate.getDate() + item.duration - 1)
+            var newTaskId = ""
 
-            projectController.addTask(groupId, item.title, item.responsible, item.startDate, endDate)
-
-            var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
-            var newTaskId = tasks[tasks.length - 1]
+            if (root.createWithoutDates)
+            {
+                projectController.addTaskWithoutDates(groupId, item.title, item.responsible)
+                var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
+                newTaskId = tasks[tasks.length - 1]
+            }
+            else
+            {
+                var endDate = new Date(item.startDate)
+                endDate.setDate(endDate.getDate() + item.duration - 1)
+                projectController.addTask(groupId, item.title, item.responsible, item.startDate, endDate)
+                var tasks2 = projectController.projectData.taskModel.getTasksForGroup(groupId)
+                newTaskId = tasks2[tasks2.length - 1]
+            }
 
             if (item.comment)
-            {
                 projectController.projectData.taskModel.setTaskComment(newTaskId, item.comment)
-            }
         }
 
         if (mainWindow && mainWindow.gridArea) mainWindow.gridArea.updateData()

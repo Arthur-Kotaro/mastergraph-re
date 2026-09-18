@@ -23,6 +23,9 @@ QHash<int, QByteArray> TaskModel::roleNames() const
     roles[GanttDefines::CommentRole] = "comment";
     roles[GanttDefines::ForecastStartRole] = "forecastStart";
     roles[GanttDefines::ForecastEndRole] = "forecastEnd";
+    roles[GanttDefines::ProgressCurrentRole] = "progressCurrent";
+    roles[GanttDefines::ProgressTotalRole] = "progressTotal";
+    roles[GanttDefines::LocalGraphStateRole] = "localGraphState";
     return roles;
 }
 
@@ -43,6 +46,9 @@ QVariant TaskModel::data(const QModelIndex &index, int role) const
         case GanttDefines::CommentRole: return task.comment;
         case GanttDefines::ForecastStartRole: return task.forecastStart;
         case GanttDefines::ForecastEndRole: return task.forecastEnd;
+        case GanttDefines::ProgressCurrentRole: return task.progressCurrent;
+        case GanttDefines::ProgressTotalRole: return task.progressTotal;
+        case GanttDefines::LocalGraphStateRole: return static_cast<int>(task.localGraphState);
         default: return QVariant();
     }
 }
@@ -80,9 +86,28 @@ void TaskModel::addTask(const QString& groupId, const QString& title, const QStr
     emit countChanged();
 }
 
+void TaskModel::addTaskWithoutDates(const QString& groupId, const QString& title, const QString& responsible)
+{
+    beginInsertRows(QModelIndex(), m_tasks.size(), m_tasks.size());
+    Task task;
+    task.id = generateId();
+    task.title = title;
+    task.responsible = responsible;
+    task.startDate = QDate();
+    task.endDate = QDate();
+    task.forecastStart = QDate();
+    task.forecastEnd = QDate();
+    task.status = GanttDefines::TaskStatus::Planned;
+    task.groupId = groupId;
+    m_tasks.append(task);
+    endInsertRows();
+    emit countChanged();
+}
+
 void TaskModel::addTaskWithId(const QString& taskId, const QString& groupId, const QString& title,
                               const QString& responsible, const QDate& startDate, const QDate& endDate,
-                              const QDate& forecastStart, const QDate& forecastEnd, int status)
+                              const QDate& forecastStart, const QDate& forecastEnd, int status,
+                              int progressCurrent, int progressTotal, int localGraphState)
 {
     beginInsertRows(QModelIndex(), m_tasks.size(), m_tasks.size());
     Task task;
@@ -105,6 +130,16 @@ void TaskModel::addTaskWithId(const QString& taskId, const QString& groupId, con
     }
 
     task.groupId = groupId;
+
+    if (progressCurrent >= 0 && progressTotal > 0)
+    {
+        task.progressCurrent = progressCurrent;
+        task.progressTotal = progressTotal;
+    }
+
+    if (localGraphState >= 0 && localGraphState <= 3)
+        task.localGraphState = static_cast<GanttDefines::LocalGraphState>(localGraphState);
+
     m_tasks.append(task);
     endInsertRows();
     emit countChanged();
@@ -222,6 +257,41 @@ void TaskModel::setTaskComment(const QString& taskId, const QString& comment)
     }
 }
 
+void TaskModel::setTaskProgress(const QString& taskId, int current, int total)
+{
+    int index = findTaskIndex(taskId);
+    if (index < 0) return;
+
+    Task& task = m_tasks[index];
+
+    if (current < 0 || total <= 0 || current > total)
+    {
+        task.progressCurrent = -1;
+        task.progressTotal = -1;
+    }
+    else
+    {
+        task.progressCurrent = current;
+        task.progressTotal = total;
+    }
+
+    QModelIndex modelIndex = createIndex(index, 0);
+    emit dataChanged(modelIndex, modelIndex, {GanttDefines::ProgressCurrentRole, GanttDefines::ProgressTotalRole});
+    emit taskProgressChanged(taskId);
+}
+
+void TaskModel::setLocalGraphState(const QString& taskId, int state)
+{
+    int index = findTaskIndex(taskId);
+    if (index < 0) return;
+    if (state < 0 || state > 3) return;
+
+    m_tasks[index].localGraphState = static_cast<GanttDefines::LocalGraphState>(state);
+    QModelIndex modelIndex = createIndex(index, 0);
+    emit dataChanged(modelIndex, modelIndex, {GanttDefines::LocalGraphStateRole});
+    emit taskLocalGraphStateChanged(taskId);
+}
+
 void TaskModel::addDateHistory(const QString& taskId, const QDate& oldStart, const QDate& oldEnd)
 {
     int index = findTaskIndex(taskId);
@@ -261,6 +331,9 @@ QVariantMap TaskModel::getTask(const QString& taskId) const
         map["status"] = static_cast<int>(task.status);
         map["groupId"] = task.groupId;
         map["comment"] = task.comment;
+        map["progressCurrent"] = task.progressCurrent;
+        map["progressTotal"] = task.progressTotal;
+        map["localGraphState"] = static_cast<int>(task.localGraphState);
         QVariantList history;
         for (const auto& pair : task.dateHistory)
         {
@@ -320,6 +393,9 @@ QVariantList TaskModel::getAllTasks() const
         map["status"] = static_cast<int>(task.status);
         map["groupId"] = task.groupId;
         map["comment"] = task.comment;
+        map["progressCurrent"] = task.progressCurrent;
+        map["progressTotal"] = task.progressTotal;
+        map["localGraphState"] = static_cast<int>(task.localGraphState);
         QVariantList history;
         for (const auto& pair : task.dateHistory)
         {

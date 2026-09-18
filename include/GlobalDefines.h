@@ -36,6 +36,13 @@ enum class ViewMode {
     Combined
 };
 
+enum class LocalGraphState {
+    NotRequired = 0,
+    Required,
+    Attached,
+    Missing
+};
+
 enum ModelRoles {
     IdRole = Qt::UserRole + 1,
     TitleRole,
@@ -49,7 +56,10 @@ enum ModelRoles {
     HistoryRole,
     CommentRole,
     ForecastStartRole,
-    ForecastEndRole
+    ForecastEndRole,
+    ProgressCurrentRole,
+    ProgressTotalRole,
+    LocalGraphStateRole
 };
 
 inline QColor getTaskStatusColor(TaskStatus status) {
@@ -87,6 +97,23 @@ inline TaskStatus stringToTaskStatus(const QString& str) {
     if (str == "Имеются риски") return TaskStatus::HasRisks;
     if (str == "Блокировано") return TaskStatus::Blocked;
     return TaskStatus::Planned;
+}
+
+inline QString localGraphStateToString(LocalGraphState state) {
+    switch (state) {
+        case LocalGraphState::NotRequired: return "notRequired";
+        case LocalGraphState::Required:    return "required";
+        case LocalGraphState::Attached:    return "attached";
+        case LocalGraphState::Missing:     return "missing";
+    }
+    return "notRequired";
+}
+
+inline LocalGraphState stringToLocalGraphState(const QString& str) {
+    if (str == "required") return LocalGraphState::Required;
+    if (str == "attached") return LocalGraphState::Attached;
+    if (str == "missing")  return LocalGraphState::Missing;
+    return LocalGraphState::NotRequired;
 }
 
 } // namespace GanttDefines

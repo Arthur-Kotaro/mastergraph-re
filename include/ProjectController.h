@@ -39,6 +39,8 @@ public:
 
     Q_INVOKABLE void addTask(const QString& groupId, const QString& title,
                              const QString& responsible, const QDate& startDate, const QDate& endDate);
+    Q_INVOKABLE void addTaskWithoutDates(const QString& groupId, const QString& title,
+                                         const QString& responsible);
     Q_INVOKABLE void removeTask(const QString& taskId);
     Q_INVOKABLE void updateTaskDates(const QString& taskId, const QDate& newStart, const QDate& newEnd);
     Q_INVOKABLE void updateForecastDates(const QString& taskId, const QDate& newForecastStart, const QDate& newForecastEnd);

@@ -19,6 +19,7 @@ Dialog
     property date endDate: new Date()
     property string comment: ""
     property string insertAboveTaskId: ""
+    property bool createWithoutDates: false
 
     function openForGroup(gId, insertAboveId)
     {
@@ -30,6 +31,8 @@ Dialog
         endDate = new Date()
         endDate.setDate(endDate.getDate() + 7)
         comment = ""
+        createWithoutDates = false
+        withoutDatesCheck.checked = false
         titleField.text = taskTitle
         responsibleField.text = ""
         startDateField.text = Qt.formatDateTime(startDate, "dd.MM.yyyy")
@@ -50,41 +53,53 @@ Dialog
         Label { text: "Ответственный:"; font.bold: true }
         TextField { id: responsibleField; Layout.fillWidth: true; text: root.responsible; onTextChanged: root.responsible = text }
 
-        Label { text: "Дата начала:"; font.bold: true }
-        TextField
+        CheckBox
         {
-            id: startDateField
-            Layout.fillWidth: true
-            text: Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
-            onEditingFinished:
-            {
-                var parts = text.split(".")
-                if (parts.length === 3)
-                {
-                    var d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
-                    if (!isNaN(d.getTime())) root.startDate = d
-                    else text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
-                }
-                else text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
-            }
+            id: withoutDatesCheck
+            text: "Создать без сроков"
+            onCheckedChanged: root.createWithoutDates = checked
         }
 
-        Label { text: "Дата завершения:"; font.bold: true }
-        TextField
+        ColumnLayout
         {
-            id: endDateField
             Layout.fillWidth: true
-            text: Qt.formatDateTime(root.endDate, "dd.MM.yyyy")
-            onEditingFinished:
+            spacing: 12
+            visible: !root.createWithoutDates
+
+            Label { text: "Дата начала:"; font.bold: true }
+            TextField
             {
-                var parts = text.split(".")
-                if (parts.length === 3)
+                id: startDateField
+                Layout.fillWidth: true
+                onEditingFinished:
                 {
-                    var d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
-                    if (!isNaN(d.getTime())) root.endDate = d
+                    var parts = text.split(".")
+                    if (parts.length === 3)
+                    {
+                        var d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+                        if (!isNaN(d.getTime())) root.startDate = d
+                        else text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
+                    }
+                    else text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
+                }
+            }
+
+            Label { text: "Дата завершения:"; font.bold: true }
+            TextField
+            {
+                id: endDateField
+                Layout.fillWidth: true
+                onEditingFinished:
+                {
+                    var parts = text.split(".")
+                    if (parts.length === 3)
+                    {
+                        var d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+                        if (!isNaN(d.getTime())) root.endDate = d
+                        else text = Qt.formatDateTime(root.endDate, "dd.MM.yyyy")
+                    }
                     else text = Qt.formatDateTime(root.endDate, "dd.MM.yyyy")
                 }
-                else text = Qt.formatDateTime(root.endDate, "dd.MM.yyyy")
             }
         }
 
@@ -97,13 +112,19 @@ Dialog
             text: root.comment
             onTextChanged: root.comment = text
         }
+
+        Item { Layout.fillHeight: true }
     }
 
     onAccepted:
     {
         if (groupId && projectController)
         {
-            projectController.addTask(groupId, taskTitle, responsible, startDate, endDate)
+            if (root.createWithoutDates)
+                projectController.addTaskWithoutDates(groupId, taskTitle, responsible)
+            else
+                projectController.addTask(groupId, taskTitle, responsible, startDate, endDate)
+
             if (comment)
             {
                 var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
@@ -112,11 +133,11 @@ Dialog
             }
             if (insertAboveTaskId)
             {
-                var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
-                var newId = tasks[tasks.length - 1]
-                var existingIndex = tasks.indexOf(insertAboveTaskId)
+                var tasks2 = projectController.projectData.taskModel.getTasksForGroup(groupId)
+                var newId2 = tasks2[tasks2.length - 1]
+                var existingIndex = tasks2.indexOf(insertAboveTaskId)
                 if (existingIndex >= 0)
-                    projectController.projectData.taskModel.moveTaskToGroup(newId, groupId, existingIndex)
+                    projectController.projectData.taskModel.moveTaskToGroup(newId2, groupId, existingIndex)
             }
             if (mainWindow && mainWindow.gridArea) mainWindow.gridArea.updateData()
         }

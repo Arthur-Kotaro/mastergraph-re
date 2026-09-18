@@ -160,6 +160,20 @@ void ProjectController::addTask(const QString& groupId, const QString& title,
     qDebug() << "Task added:" << title << "to group:" << groupId;
 }
 
+void ProjectController::addTaskWithoutDates(const QString& groupId, const QString& title,
+                                            const QString& responsible)
+{
+    if (m_settingsManager->editingLocked())
+    {
+        emit errorOccurred("Редактирование заблокировано");
+        return;
+    }
+    m_projectData->get_taskModel()->addTaskWithoutDates(groupId, title, responsible);
+    m_projectData->recalculateEndDate();
+    m_projectData->set_Modified(true);
+    qDebug() << "Task added without dates:" << title << "to group:" << groupId;
+}
+
 void ProjectController::removeTask(const QString& taskId)
 {
     qDebug() << "Removing task:" << taskId;
@@ -251,9 +265,7 @@ void ProjectController::acceptForecastAsTarget(const QString& taskId)
     m_projectData->get_taskModel()->updateTaskDates(taskId, forecastStart, forecastEnd, true);
     m_projectData->recalculateEndDate();
     m_projectData->set_Modified(true);
-    qDebug() << "acceptForecastAsTarget:" << taskId
-             << "from" << targetStart.toString("dd.MM.yyyy") << "-" << targetEnd.toString("dd.MM.yyyy")
-             << "to"   << forecastStart.toString("dd.MM.yyyy") << "-" << forecastEnd.toString("dd.MM.yyyy");
+    qDebug() << "acceptForecastAsTarget:" << taskId;
 }
 
 void ProjectController::addDependency(const QString& predecessorId, const QString& successorId)
@@ -343,9 +355,7 @@ void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QSt
 
         int succStatus = successor["status"].toInt();
         if (succStatus == static_cast<int>(GanttDefines::TaskStatus::Completed))
-        {
             continue;
-        }
 
         QStringList predecessors = m_projectData->get_dependencyModel()->getPredecessors(successorId);
         QDate requiredStart;
@@ -368,10 +378,7 @@ void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QSt
         QDate succEnd = successor["forecastEnd"].toDate();
         if (!succStart.isValid() || !succEnd.isValid()) continue;
 
-        if (succStart >= requiredStart)
-        {
-            continue;
-        }
+        if (succStart >= requiredStart) continue;
 
         int duration = succStart.daysTo(succEnd);
         QDate newStart = requiredStart;

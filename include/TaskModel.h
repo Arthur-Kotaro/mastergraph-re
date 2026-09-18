@@ -27,6 +27,11 @@ public:
         QString comment;
         QString groupId;
         QList<HistoryEntry*> history;
+
+        int progressCurrent = -1;
+        int progressTotal = -1;
+
+        GanttDefines::LocalGraphState localGraphState = GanttDefines::LocalGraphState::NotRequired;
     };
 
     explicit TaskModel(QObject *parent = nullptr);
@@ -37,9 +42,12 @@ public:
 
     Q_INVOKABLE void addTask(const QString& groupId, const QString& title, const QString& responsible,
                              const QDate& startDate, const QDate& endDate);
+    Q_INVOKABLE void addTaskWithoutDates(const QString& groupId, const QString& title,
+                                         const QString& responsible);
     Q_INVOKABLE void addTaskWithId(const QString& taskId, const QString& groupId, const QString& title,
                                    const QString& responsible, const QDate& startDate, const QDate& endDate,
-                                   const QDate& forecastStart, const QDate& forecastEnd, int status);
+                                   const QDate& forecastStart, const QDate& forecastEnd, int status,
+                                   int progressCurrent, int progressTotal, int localGraphState);
     Q_INVOKABLE void removeTask(const QString& taskId);
     Q_INVOKABLE void updateTask(const QString& taskId, const QString& title, const QString& responsible,
                                 const QDate& startDate, const QDate& endDate, int status);
@@ -47,6 +55,8 @@ public:
     Q_INVOKABLE void updateForecastDates(const QString& taskId, const QDate& newForecastStart, const QDate& newForecastEnd);
     Q_INVOKABLE void setTaskStatus(const QString& taskId, GanttDefines::TaskStatus status);
     Q_INVOKABLE void setTaskComment(const QString& taskId, const QString& comment);
+    Q_INVOKABLE void setTaskProgress(const QString& taskId, int current, int total);
+    Q_INVOKABLE void setLocalGraphState(const QString& taskId, int state);
     void addDateHistory(const QString& taskId, const QDate& oldStart, const QDate& oldEnd);
     Q_INVOKABLE QStringList getTasksForGroup(const QString& groupId) const;
     Q_INVOKABLE QVariantMap getTask(const QString& taskId) const;
@@ -61,6 +71,8 @@ signals:
     void countChanged();
     void taskDatesChanged(const QString& taskId);
     void taskForecastDatesChanged(const QString& taskId);
+    void taskProgressChanged(const QString& taskId);
+    void taskLocalGraphStateChanged(const QString& taskId);
 
 private:
     QList<Task> m_tasks;

@@ -25,6 +25,9 @@ Rectangle
     property var visibleItems: []
     property int updateCounter: 0
 
+    // Кэш координат узлов (центр круга по X): taskId -> X в пикселях
+    property var nodeXByTask: ({})
+
     Component.onCompleted: updateData()
 
     CurrentTimeLine
@@ -46,12 +49,94 @@ Rectangle
                ? projectController.settingsManager.viewMode : 0
     }
 
+    function isValidDate(d)
+    {
+        return d !== undefined && d !== null && !isNaN(new Date(d).getTime())
+    }
+
+    function hasTaskDates(taskData)
+    {
+        return taskData && isValidDate(taskData.startDate) && isValidDate(taskData.endDate)
+    }
+
+    function daysFromStart(dateValue)
+    {
+        return Math.floor((new Date(dateValue) - root.displayStart) / 86400000)
+    }
+
+    function computeNodePositions(allTasks)
+    {
+        var nodes = {}
+        var taskById = {}
+
+        for (var i = 0; i < allTasks.length; i++)
+            taskById[allTasks[i].id] = allTasks[i]
+
+        for (var k = 0; k < allTasks.length; k++)
+        {
+            var task = allTasks[k]
+            if (hasTaskDates(task)) continue
+            nodes[task.id] = computeNodeX(task.id, taskById, nodes)
+        }
+
+        root.nodeXByTask = nodes
+    }
+
+    function computeNodeX(taskId, taskById, nodes)
+    {
+        if (nodes[taskId] !== undefined) return nodes[taskId]
+
+        var preds = projectController.projectData.dependencyModel.getPredecessors(taskId)
+        var maxPredEnd = null
+        var maxPredNodeX = -1
+
+        for (var i = 0; i < preds.length; i++)
+        {
+            var pid = preds[i]
+            var predTask = taskById[pid]
+            if (!predTask) continue
+
+            if (hasTaskDates(predTask))
+            {
+                var pEnd = new Date(predTask.endDate)
+                if (maxPredEnd === null || pEnd > maxPredEnd)
+                    maxPredEnd = pEnd
+            }
+            else
+            {
+                var pNodeX = computeNodeX(pid, taskById, nodes)
+                if (pNodeX > maxPredNodeX) maxPredNodeX = pNodeX
+            }
+        }
+
+        var result
+        if (maxPredEnd !== null)
+        {
+            // Клетка сразу после конца предшественника, центр клетки
+            result = (daysFromStart(maxPredEnd) + 1) * dayWidth + dayWidth / 2
+        }
+        else if (maxPredNodeX >= 0)
+        {
+            // Цепочка узлов: шаг 3 дня
+            result = maxPredNodeX + 3 * dayWidth
+        }
+        else
+        {
+            // Нет предшественников — центр первой клетки
+            result = dayWidth / 2
+        }
+
+        if (result < dayWidth / 2) result = dayWidth / 2
+        nodes[taskId] = result
+        return result
+    }
+
     function updateData()
     {
         if (!projectController || !projectController.projectData) return
 
-        var earliest = projectController && projectController.projectData ? projectController.projectData.getEarliestDate() : new Date()
-        var latest = projectController && projectController.projectData ? projectController.projectData.getLatestDate() : new Date()
+        var earliest = projectController.projectData.getEarliestDate()
+        var latest = projectController.projectData.getLatestDate()
 
         if (earliest && latest)
         {
@@ -71,9 +156,25 @@ Rectangle
             gridWidth = totalDays * dayWidth
         }
 
+        var allTasks = []
+        var groups = projectController.projectData.groupModel
+        if (groups)
+        {
+            for (var g = 0; g < groups.rowCount(); g++)
+            {
+                var gid = groups.getGroupId(g)
+                var taskIds = projectController.projectData.taskModel.getTasksForGroup(gid)
+                for (var ti = 0; ti < taskIds.length; ti++)
+                {
+                    var td = projectController.projectData.taskModel.getTask(taskIds[ti])
+                    if (td) allTasks.push(td)
+                }
+            }
+        }
+        computeNodePositions(allTasks)
+
         var mode = currentViewMode()
         var items = []
-        var groups = projectController.projectData.groupModel
         var taskCounter = 0
 
         if (groups)
@@ -95,8 +196,10 @@ Rectangle
                         if (!taskData) continue
 
                         var isCompleted = (taskData.status === 1)
+                        var hasDates = hasTaskDates(taskData)
+                        var nodeX = hasDates ? 0 : (root.nodeXByTask[tasks[j]] !== undefined ? root.nodeXByTask[tasks[j]] : dayWidth / 2)
 
-                        function pushRow(kind, startDate, endDate)
+                        function pushRow(kind, startDate, endDate, rowHasDates, rowNodeX)
                         {
                             items.push({
                                 type: "task",
@@ -109,27 +212,36 @@ Rectangle
                                 taskEnd: endDate,
                                 taskStatus: taskData.status,
                                 taskComment: taskData.comment,
-                                isCompleted: isCompleted
+                                isCompleted: isCompleted,
+                                hasDates: rowHasDates,
+                                nodeX: rowNodeX,
+                                localGraphState: taskData.localGraphState
                             })
                             taskCounter++
                         }
 
                         if (mode === 0)
                         {
-                            pushRow("target", taskData.startDate, taskData.endDate)
+                            pushRow("target", taskData.startDate, taskData.endDate, hasDates, nodeX)
                         }
                         else if (mode === 1)
                         {
                             if (isCompleted)
-                                pushRow("target", taskData.startDate, taskData.endDate)
+                                pushRow("target", taskData.startDate, taskData.endDate, hasDates, nodeX)
                             else
-                                pushRow("forecast", taskData.forecastStart, taskData.forecastEnd)
+                            {
+                                var fHasDates = isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
+                                pushRow("forecast", taskData.forecastStart, taskData.forecastEnd, fHasDates, nodeX)
+                            }
                         }
                         else
                         {
-                            pushRow("target", taskData.startDate, taskData.endDate)
+                            pushRow("target", taskData.startDate, taskData.endDate, hasDates, nodeX)
                             if (!isCompleted)
-                                pushRow("forecast", taskData.forecastStart, taskData.forecastEnd)
+                            {
+                                var fHasDates2 = isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
+                                pushRow("forecast", taskData.forecastStart, taskData.forecastEnd, fHasDates2, nodeX)
+                            }
                         }
                     }
                 }
@@ -156,17 +268,13 @@ Rectangle
     function updateTaskDates(taskId, newStart, newEnd)
     {
         if (projectController)
-        {
             projectController.updateTaskDates(taskId, newStart, newEnd)
-        }
     }
 
     function updateForecastDates(taskId, newStart, newEnd)
     {
         if (projectController)
-        {
             projectController.updateForecastDates(taskId, newStart, newEnd)
-        }
     }
 
     Connections
@@ -217,21 +325,43 @@ Rectangle
         return result
     }
 
+    function getDependencyAnchorX(rowIndex, isOutgoing)
+    {
+        if (rowIndex < 0 || rowIndex >= visibleItems.length) return -1
+        var item = visibleItems[rowIndex]
+        if (!item) return -1
+
+        if (item.hasDates)
+        {
+            if (isOutgoing)
+            {
+                var endDays = Math.floor((new Date(item.taskEnd) - displayStart) / 86400000)
+                return endDays * dayWidth + dayWidth
+            }
+            else
+            {
+                var startDays = Math.floor((new Date(item.taskStart) - displayStart) / 86400000)
+                return startDays * dayWidth
+            }
+        }
+        else
+        {
+            // Узел: item.nodeX — центр круга
+            var nodeCenter = item.nodeX
+            return isOutgoing ? nodeCenter + 15 : nodeCenter - 15
+        }
+    }
+
     function drawDependencyLine(ctx, fromRow, toRow)
     {
         if (fromRow < 0 || toRow < 0) return
-        var fromData = visibleItems[fromRow]
-        var toData = visibleItems[toRow]
 
-        var fromEnd = new Date(fromData.taskEnd)
-        var fromDays = Math.floor((fromEnd - displayStart) / 86400000)
-        var fromX = fromDays * dayWidth + dayWidth
+        var fromX = getDependencyAnchorX(fromRow, true)
+        var toX = getDependencyAnchorX(toRow, false)
+        if (fromX < 0 || toX < 0) return
 
         var fromY = fromRow * rowHeight + rowHeight / 2
         var toY = toRow * rowHeight + rowHeight / 2
-        var toStart = new Date(toData.taskStart)
-        var toDays = Math.floor((toStart - displayStart) / 86400000)
-        var toX = toDays * dayWidth
 
         ctx.beginPath()
         ctx.strokeStyle = "#9966cc"
@@ -337,9 +467,7 @@ Rectangle
             for (var vi = 0; vi < visibleItems.length; vi++)
             {
                 if (visibleItems[vi].type === "group")
-                {
                     groupRows.push(vi)
-                }
             }
             for (var gi = 0; gi < groupRows.length; gi++)
             {
@@ -379,7 +507,6 @@ Rectangle
             ctx.clearRect(0, 0, width, height)
 
             if (!showDependencies) return
-
             if (!projectController || !projectController.projectData || !projectController.projectData.dependencyModel)
                 return
 
@@ -450,9 +577,7 @@ Rectangle
                 x:
                 {
                     if (currentTimeLine && currentTimeLine.visible)
-                    {
                         return currentTimeLine.x + 10
-                    }
                     return 10
                 }
                 anchors.verticalCenter: parent.verticalCenter
@@ -461,22 +586,62 @@ Rectangle
                 z: 3
             }
 
+            // Узел (для задачи без сроков)
+            Rectangle
+            {
+                id: nodeCircle
+                visible: modelData && modelData.type === "task" && !modelData.hasDates
+                x: modelData ? (modelData.nodeX - 15) : 0
+                y: rowContainer.height / 2 - 15
+                width: 30
+                height: 30
+                radius: 15
+                color:
+                {
+                    if (!modelData) return "#FFD700"
+                    switch (modelData.taskStatus)
+                    {
+                        case 0: return "#FFD700"
+                        case 1: return "#32CD32"
+                        case 2: return "#FF8C00"
+                        case 3: return "#FF4444"
+                        default: return "#FFD700"
+                    }
+                }
+                z: 4
+
+                MouseArea
+                {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.RightButton
+                    hoverEnabled: true
+                    onClicked: function(mouse)
+                    {
+                        if (mouse.button === Qt.RightButton && modelData)
+                        {
+                            taskContextMenu.taskId = modelData.taskId
+                            taskContextMenu.popup()
+                        }
+                    }
+                }
+            }
+
             Rectangle
             {
                 id: ganttBar
-                visible: modelData && modelData.type === "task"
+                visible: modelData && modelData.type === "task" && modelData.hasDates
 
                 x:
                 {
                     if (!modelData || !modelData.taskStart || !root.displayStart) return 0
-                    var daysDiff = Math.floor((modelData.taskStart - root.displayStart) / (1000 * 60 * 60 * 24))
+                    var daysDiff = Math.floor((new Date(modelData.taskStart) - root.displayStart) / 86400000)
                     return Math.max(0, daysDiff * root.dayWidth)
                 }
 
                 width:
                 {
                     if (!modelData || !modelData.taskStart || !modelData.taskEnd) return 10
-                    var daysDiff = Math.floor((modelData.taskEnd - modelData.taskStart) / (1000 * 60 * 60 * 24)) + 1
+                    var daysDiff = Math.floor((new Date(modelData.taskEnd) - new Date(modelData.taskStart)) / 86400000) + 1
                     return Math.max(10, daysDiff * root.dayWidth)
                 }
 
@@ -542,7 +707,7 @@ Rectangle
                     {
                         if (!modelData) return ""
                         var label = (modelData.rowKind === "forecast") ? "Прогноз: " : ""
-                        var duration = Math.floor((modelData.taskEnd - modelData.taskStart) / (24 * 60 * 60 * 1000)) + 1
+                        var duration = Math.floor((new Date(modelData.taskEnd) - new Date(modelData.taskStart)) / (24 * 60 * 60 * 1000)) + 1
                         var commentText = (modelData.taskComment && modelData.taskComment !== "") ? modelData.taskComment : "-"
                         return label + modelData.taskTitle +
                                "\nДлительность: " + duration + " дней" +
@@ -605,9 +770,7 @@ Rectangle
                     {
                         if (root.externalFlickable) root.externalFlickable.interactive = true
                         if (drag.active)
-                        {
                             parent.updateDates()
-                        }
                     }
                 }
 
@@ -653,9 +816,7 @@ Rectangle
                                 var newWidth = startWidth + delta
                                 newWidth = Math.max(10, Math.round(newWidth / root.dayWidth) * root.dayWidth)
                                 if (newWidth !== ganttBar.width)
-                                {
                                     ganttBar.width = newWidth
-                                }
                             }
                         }
 
@@ -689,7 +850,8 @@ Rectangle
             {
                 model:
                 {
-                    if (modelData && modelData.type === "task" && modelData.rowKind === "target" && root.showTaskHistory)
+                    if (modelData && modelData.type === "task" && modelData.rowKind === "target"
+                        && modelData.hasDates && root.showTaskHistory)
                     {
                         var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
                         return task && task.dateHistory ? task.dateHistory : []

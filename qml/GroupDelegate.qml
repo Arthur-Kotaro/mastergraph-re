@@ -124,9 +124,7 @@ Item
                     onClicked:
                     {
                         if (projectController && projectController.projectData)
-                        {
                             projectController.projectData.groupModel.setGroupExpanded(groupId, !root.expanded)
-                        }
                     }
                 }
             }
@@ -149,9 +147,7 @@ Item
             onClicked: function(mouse)
             {
                 if (mouse.button === Qt.RightButton)
-                {
                     groupContextMenu.popup()
-                }
             }
         }
 
@@ -169,9 +165,7 @@ Item
                         mainWindow.newTaskDialog.openForGroup(groupId)
                         refreshTasks()
                         if (typeof mainWindow !== "undefined" && mainWindow && mainWindow.gridArea)
-                        {
                             mainWindow.gridArea.updateData()
-                        }
                     }
                 }
             }
@@ -179,33 +173,17 @@ Item
             MenuItem
             {
                 text: "Переименовать"
-                onTriggered:
-                {
-                    renameGroupDialog.openWithGroup(groupId, groupName)
-                }
+                onTriggered: renameGroupDialog.openWithGroup(groupId, groupName)
             }
 
             MenuSeparator {}
 
-            MenuItem
-            {
-                text: "Добавить группу сверху"
-                onTriggered: addGroupAbove()
-            }
-
-            MenuItem
-            {
-                text: "Добавить группу снизу"
-                onTriggered: addGroupBelow()
-            }
+            MenuItem { text: "Добавить группу сверху"; onTriggered: addGroupAbove() }
+            MenuItem { text: "Добавить группу снизу"; onTriggered: addGroupBelow() }
 
             MenuSeparator {}
 
-            MenuItem
-            {
-                text: "Удалить"
-                onTriggered: deleteGroup()
-            }
+            MenuItem { text: "Удалить"; onTriggered: deleteGroup() }
         }
     }
 
@@ -234,24 +212,62 @@ Item
                 property string rowKind: modelData ? modelData.rowKind : "target"
                 property var taskData: modelData ? modelData.data : null
 
-                function startDateText()
+                function isValidDate(d)
+                {
+                    return d !== undefined && d !== null && !isNaN(new Date(d).getTime())
+                }
+
+                function hasDates()
+                {
+                    if (!taskData) return false
+                    return isValidDate(taskData.startDate) && isValidDate(taskData.endDate)
+                }
+
+                function titleText()
                 {
                     if (!taskData) return ""
-                    var d = (rowKind === "forecast" && !modelData.isCompleted) ? taskData.forecastStart : taskData.startDate
-                    return d ? Qt.formatDateTime(d, "dd.MM.yyyy") : ""
+                    var prefix = ""
+                    if (taskData.localGraphState !== undefined && taskData.localGraphState !== 0)
+                        prefix = "* "
+                    return prefix + taskData.title
+                }
+
+                function responsibleText()
+                {
+                    if (!taskData) return ""
+                    var r = taskData.responsible
+                    return (r && r.length > 0) ? r : "—"
+                }
+
+                function startDateText()
+                {
+                    if (!taskData) return "—"
+                    var d
+                    if (rowKind === "forecast" && !modelData.isCompleted)
+                        d = taskData.forecastStart
+                    else
+                        d = taskData.startDate
+                    if (!isValidDate(d)) return "—"
+                    return Qt.formatDateTime(new Date(d), "dd.MM.yyyy")
                 }
 
                 function endDateText()
                 {
-                    if (!taskData) return ""
-                    var d = (rowKind === "forecast" && !modelData.isCompleted) ? taskData.forecastEnd : taskData.endDate
-                    return d ? Qt.formatDateTime(d, "dd.MM.yyyy") : ""
+                    if (!taskData) return "—"
+                    var d
+                    if (rowKind === "forecast" && !modelData.isCompleted)
+                        d = taskData.forecastEnd
+                    else
+                        d = taskData.endDate
+                    if (!isValidDate(d)) return "—"
+                    return Qt.formatDateTime(new Date(d), "dd.MM.yyyy")
                 }
 
                 function viewLabelText()
                 {
                     if (rowKind === "forecast") return "Прогноз"
                     if (modelData && modelData.isCompleted) return "Факт"
+                    if (!hasDates()) return "Драфт"
                     return "Цель"
                 }
 
@@ -278,7 +294,7 @@ Item
                                 color: "transparent"
                                 Text
                                 {
-                                    text: taskData ? taskData.title : ""
+                                    text: titleText()
                                     anchors.left: parent.left
                                     anchors.leftMargin: 10
                                     anchors.verticalCenter: parent.verticalCenter
@@ -295,7 +311,7 @@ Item
                                 color: "transparent"
                                 Text
                                 {
-                                    text: taskData ? taskData.responsible : ""
+                                    text: responsibleText()
                                     anchors.left: parent.left
                                     anchors.leftMargin: 20
                                     anchors.verticalCenter: parent.verticalCenter
@@ -405,12 +421,7 @@ Item
             anchors.margins: 15
             spacing: 15
 
-            Label
-            {
-                text: "Новое название группы:"
-                Layout.fillWidth: true
-                font.pixelSize: 13
-            }
+            Label { text: "Новое название группы:"; Layout.fillWidth: true; font.pixelSize: 13 }
 
             TextField
             {
@@ -423,9 +434,7 @@ Item
                 onAccepted:
                 {
                     if (newNameField.text !== "")
-                    {
                         renameGroupDialog.accept()
-                    }
                 }
             }
 
@@ -458,9 +467,7 @@ Item
         onAccepted:
         {
             if (newNameField.text !== "" && projectController && projectController.projectData && groupId)
-            {
                 projectController.projectData.groupModel.renameGroup(groupId, newNameField.text)
-            }
         }
     }
 
@@ -505,9 +512,7 @@ Item
         {
             var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
             for (var i = tasks.length - 1; i >= 0; i--)
-            {
                 projectController.removeTask(tasks[i])
-            }
             projectController.projectData.groupModel.removeGroup(groupId)
         }
     }
