@@ -1,13 +1,12 @@
 import QtQuick 6.0
 import QtQuick.Controls 6.0
-import QtQuick.Layouts 6.0
 
 Flickable
 {
     id: root
     clip: true
     contentWidth: width
-    contentHeight: tasksColumn.height
+    contentHeight: contentItem.height
     boundsBehavior: Flickable.StopAtBounds
     interactive: false
 
@@ -45,196 +44,249 @@ Flickable
         function onModelReset() { refreshTasks() }
     }
 
-    Column
+    Connections
     {
-        id: tasksColumn
+        target: projectController
+        function onProjectDataChanged() { refreshTasks() }
+        function onProjectLoaded() { refreshTasks() }
+    }
+
+    Item
+    {
+        id: contentItem
         width: root.width
-        spacing: 0
+        height: Math.max(root.height, tasksColumn.height)
 
-        Repeater
+        MouseArea
         {
-            id: tasksRepeater
-            model: []
-
-            delegate: Rectangle
+            id: emptyArea
+            anchors.fill: parent
+            acceptedButtons: Qt.RightButton
+            onClicked: function(mouse)
             {
-                width: root.width
-                height: 40
-                color: "white"
-                border.color: "#eeeeee"
-                border.width: 1
+                if (mouse.button === Qt.RightButton)
+                    emptyContextMenu.popup()
+            }
 
-                property string taskId: modelData
-                property var taskData: (projectController && projectController.projectData)
-                                       ? projectController.projectData.taskModel.getTask(taskId) : null
+            Menu
+            {
+                id: emptyContextMenu
 
-                function isValidDate(d)
+                MenuItem
                 {
-                    return d !== undefined && d !== null && !isNaN(new Date(d).getTime())
-                }
-
-                function hasDates()
-                {
-                    if (!taskData) return false
-                    return isValidDate(taskData.startDate) && isValidDate(taskData.endDate)
-                }
-
-                function titleText()
-                {
-                    if (!taskData) return ""
-                    var prefix = ""
-                    if (taskData.localGraphState !== undefined && taskData.localGraphState !== 0)
-                        prefix = "* "
-                    return prefix + taskData.title
-                }
-
-                function responsibleText()
-                {
-                    if (!taskData) return "—"
-                    var r = taskData.responsible
-                    return (r && r.length > 0) ? r : "—"
-                }
-
-                function startDateText()
-                {
-                    if (!taskData) return "—"
-                    if (!isValidDate(taskData.startDate)) return "—"
-                    return Qt.formatDateTime(new Date(taskData.startDate), "dd.MM.yyyy")
-                }
-
-                function endDateText()
-                {
-                    if (!taskData) return "—"
-                    if (!isValidDate(taskData.endDate)) return "—"
-                    return Qt.formatDateTime(new Date(taskData.endDate), "dd.MM.yyyy")
-                }
-
-                function viewLabelText()
-                {
-                    if (!taskData) return ""
-                    if (taskData.status === 1) return "Факт"
-                    if (!hasDates()) return "Драфт"
-                    return "Цель"
-                }
-
-                Row
-                {
-                    anchors.fill: parent
-                    anchors.leftMargin: 5
-                    anchors.rightMargin: 5
-                    spacing: 0
-
-                    Rectangle
+                    text: "Добавить задачу"
+                    onTriggered:
                     {
-                        width: parent.width - 265
-                        height: parent.height
-                        color: "transparent"
+                        if (mainWindow && mainWindow.newTaskDialog)
+                            mainWindow.newTaskDialog.openForGroup("local")
+                    }
+                }
 
-                        Row
+                MenuItem
+                {
+                    text: "Добавить каскад"
+                    onTriggered: if (mainWindow) mainWindow.cascadeDialog.open()
+                }
+
+                MenuItem
+                {
+                    text: "Добавить список"
+                    onTriggered: if (mainWindow) mainWindow.listDialog.open()
+                }
+            }
+        }
+
+        Column
+        {
+            id: tasksColumn
+            width: root.width
+            spacing: 0
+
+            Repeater
+            {
+                id: tasksRepeater
+                model: []
+
+                delegate: Rectangle
+                {
+                    width: root.width
+                    height: 40
+                    color: "white"
+                    border.color: "#eeeeee"
+                    border.width: 1
+
+                    property string taskId: modelData
+                    property var taskData: (projectController && projectController.projectData)
+                                           ? projectController.projectData.taskModel.getTask(taskId) : null
+
+                    function isValidDate(d)
+                    {
+                        return d !== undefined && d !== null && !isNaN(new Date(d).getTime())
+                    }
+
+                    function hasDates()
+                    {
+                        if (!taskData) return false
+                        return isValidDate(taskData.startDate) && isValidDate(taskData.endDate)
+                    }
+
+                    function titleText()
+                    {
+                        if (!taskData) return ""
+                        var prefix = ""
+                        if (taskData.localGraphState !== undefined && taskData.localGraphState !== 0)
+                            prefix = "* "
+                        return prefix + taskData.title
+                    }
+
+                    function responsibleText()
+                    {
+                        if (!taskData) return "—"
+                        var r = taskData.responsible
+                        return (r && r.length > 0) ? r : "—"
+                    }
+
+                    function startDateText()
+                    {
+                        if (!taskData) return "—"
+                        if (!isValidDate(taskData.startDate)) return "—"
+                        return Qt.formatDateTime(new Date(taskData.startDate), "dd.MM.yyyy")
+                    }
+
+                    function endDateText()
+                    {
+                        if (!taskData) return "—"
+                        if (!isValidDate(taskData.endDate)) return "—"
+                        return Qt.formatDateTime(new Date(taskData.endDate), "dd.MM.yyyy")
+                    }
+
+                    function viewLabelText()
+                    {
+                        if (!taskData) return ""
+                        if (taskData.status === 1) return "Факт"
+                        if (!hasDates()) return "Драфт"
+                        return "Цель"
+                    }
+
+                    Row
+                    {
+                        anchors.fill: parent
+                        anchors.leftMargin: 5
+                        anchors.rightMargin: 5
+                        spacing: 0
+
+                        Rectangle
                         {
-                            anchors.fill: parent
-                            Rectangle
+                            width: parent.width - 265
+                            height: parent.height
+                            color: "transparent"
+
+                            Row
                             {
-                                width: parent.width * 0.64
-                                height: parent.height
-                                color: "transparent"
-                                Text
+                                anchors.fill: parent
+                                Rectangle
                                 {
-                                    text: titleText()
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 10
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    elide: Text.ElideRight
-                                    width: parent.width - 20
-                                    font.pixelSize: 12
-                                    color: "#222222"
+                                    width: parent.width * 0.64
+                                    height: parent.height
+                                    color: "transparent"
+                                    Text
+                                    {
+                                        text: titleText()
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: 10
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        elide: Text.ElideRight
+                                        width: parent.width - 20
+                                        font.pixelSize: 12
+                                        color: "#222222"
+                                    }
+                                }
+                                Rectangle
+                                {
+                                    width: parent.width * 0.36
+                                    height: parent.height
+                                    color: "transparent"
+                                    Text
+                                    {
+                                        text: responsibleText()
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: 20
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        elide: Text.ElideRight
+                                        width: parent.width - 10
+                                        font.pixelSize: 12
+                                    }
                                 }
                             }
-                            Rectangle
+                        }
+
+                        Rectangle
+                        {
+                            width: 65
+                            height: parent.height
+                            color: "transparent"
+                            Text
                             {
-                                width: parent.width * 0.36
-                                height: parent.height
-                                color: "transparent"
-                                Text
-                                {
-                                    text: responsibleText()
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 20
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    elide: Text.ElideRight
-                                    width: parent.width - 10
-                                    font.pixelSize: 12
-                                }
+                                text: viewLabelText()
+                                anchors.left: parent.left
+                                anchors.leftMargin: 4
+                                anchors.verticalCenter: parent.verticalCenter
+                                font.pixelSize: 12
+                                color: "#444444"
+                            }
+                        }
+
+                        Rectangle
+                        {
+                            width: 100
+                            height: parent.height
+                            color: "transparent"
+                            Text
+                            {
+                                text: startDateText()
+                                anchors.left: parent.left
+                                anchors.leftMargin: 30
+                                anchors.verticalCenter: parent.verticalCenter
+                                font.pixelSize: 12
+                            }
+                        }
+
+                        Rectangle
+                        {
+                            width: 100
+                            height: parent.height
+                            color: "transparent"
+                            Text
+                            {
+                                text: endDateText()
+                                anchors.left: parent.left
+                                anchors.leftMargin: 30
+                                anchors.verticalCenter: parent.verticalCenter
+                                font.pixelSize: 12
                             }
                         }
                     }
 
-                    Rectangle
+                    MouseArea
                     {
-                        width: 65
-                        height: parent.height
-                        color: "transparent"
-                        Text
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        acceptedButtons: Qt.RightButton
+                        cursorShape: Qt.ArrowCursor
+                        onClicked: function(mouse)
                         {
-                            text: viewLabelText()
-                            anchors.left: parent.left
-                            anchors.leftMargin: 4
-                            anchors.verticalCenter: parent.verticalCenter
-                            font.pixelSize: 12
-                            color: "#444444"
+                            if (mouse.button === Qt.RightButton && taskId)
+                            {
+                                taskContextMenu.taskId = taskId
+                                taskContextMenu.popup()
+                            }
                         }
                     }
 
-                    Rectangle
+                    TaskContextMenu
                     {
-                        width: 100
-                        height: parent.height
-                        color: "transparent"
-                        Text
-                        {
-                            text: startDateText()
-                            anchors.left: parent.left
-                            anchors.leftMargin: 30
-                            anchors.verticalCenter: parent.verticalCenter
-                            font.pixelSize: 12
-                        }
+                        id: taskContextMenu
                     }
-
-                    Rectangle
-                    {
-                        width: 100
-                        height: parent.height
-                        color: "transparent"
-                        Text
-                        {
-                            text: endDateText()
-                            anchors.left: parent.left
-                            anchors.leftMargin: 30
-                            anchors.verticalCenter: parent.verticalCenter
-                            font.pixelSize: 12
-                        }
-                    }
-                }
-
-                MouseArea
-                {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    acceptedButtons: Qt.RightButton
-                    cursorShape: Qt.ArrowCursor
-                    onClicked: function(mouse)
-                    {
-                        if (mouse.button === Qt.RightButton && taskId)
-                        {
-                            taskContextMenu.taskId = taskId
-                            taskContextMenu.popup()
-                        }
-                    }
-                }
-
-                TaskContextMenu
-                {
-                    id: taskContextMenu
                 }
             }
         }

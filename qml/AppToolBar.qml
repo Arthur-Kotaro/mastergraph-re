@@ -29,13 +29,21 @@ Rectangle
             Menu
             {
                 id: fileMenu
-                MenuItem { text: "Создать"; onTriggered: { mainWindow.newProjectDialog.refreshData(); mainWindow.newProjectDialog.open() } }
-                MenuItem { text: "Открыть"; onTriggered: mainWindow.openFileDialog.open() }
-                MenuSeparator {}
+                MenuItem {
+                    text: "Создать"
+                    visible: !appToolBar.isLocalMode
+                    onTriggered: { mainWindow.newProjectDialog.refreshData(); mainWindow.newProjectDialog.open() }
+                }
+                MenuItem {
+                    text: "Открыть"
+                    visible: !appToolBar.isLocalMode
+                    onTriggered: mainWindow.openFileDialog.open()
+                }
+                MenuSeparator { visible: !appToolBar.isLocalMode }
                 MenuItem { text: "Сохранить"; onTriggered: { if(projectController && projectController.inEditMode) projectController.saveProject() } }
                 MenuItem { text: "Сохранить как"; onTriggered: { if(projectController && projectController.inEditMode) mainWindow.saveAsDialog.open() } }
                 MenuSeparator {}
-                MenuItem { text: "Выход"; onTriggered: Qt.quit() }
+                MenuItem { text: "Закрыть"; onTriggered: Qt.quit() }
             }
         }
 
@@ -143,8 +151,6 @@ Rectangle
             {
                 if (mainWindow && mainWindow.gridArea)
                     mainWindow.gridArea.showTaskHistory = checked
-                if (mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar)
-                    mainWindow.calendarHeader.milestoneBar.showRescheduled = checked
             }
             font.pixelSize: 12
         }
@@ -168,8 +174,6 @@ Rectangle
             {
                 if (mainWindow && mainWindow.gridArea)
                     mainWindow.gridArea.updateData()
-                if (mainWindow && mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar && mainWindow.calendarHeader.milestoneBar.canvas)
-                    mainWindow.calendarHeader.milestoneBar.canvas.requestPaint()
             }
         }
 

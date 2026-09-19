@@ -23,6 +23,7 @@ set(SOURCES
     src/SettingsManager.cpp
     src/ExportManager.cpp
     src/ProjectController.cpp
+    src/SessionManager.cpp
     qml.qrc
 )
 
@@ -37,6 +38,7 @@ set(HEADERS
     include/SettingsManager.h
     include/ExportManager.h
     include/ProjectController.h
+    include/SessionManager.h
     include/GlobalDefines.h
 )
 

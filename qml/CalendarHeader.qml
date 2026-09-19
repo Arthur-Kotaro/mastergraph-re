@@ -20,6 +20,11 @@ Rectangle
                && projectController.projectData.graphKind === 1
     }
 
+    function isValidDate(d)
+    {
+        return d !== undefined && d !== null && !isNaN(new Date(d).getTime())
+    }
+
     function getSecondSundayAfter(date)
     {
         var d = new Date(date)
@@ -41,19 +46,44 @@ Rectangle
 
     function updateDisplayRange()
     {
+        var localMode = (projectController && projectController.projectData
+                         && projectController.projectData.graphKind === 1)
+
+        if (localMode)
+        {
+            var linkedStart = projectController.projectData.getLinkedTargetStart()
+            var linkedEnd = projectController.projectData.getLinkedTargetEnd()
+
+            var s, e
+            if (isValidDate(linkedStart) && isValidDate(linkedEnd))
+            {
+                s = new Date(linkedStart)
+                s.setDate(s.getDate() - 14)
+                s.setHours(0, 0, 0, 0)
+                e = new Date(linkedEnd)
+                e.setDate(e.getDate() + 14)
+                e.setHours(23, 59, 59, 999)
+            }
+            else
+            {
+                var now = new Date()
+                s = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+                e = new Date(now.getFullYear(), now.getMonth() + 2, 0)
+                e.setHours(23, 59, 59, 999)
+            }
+
+            displayStart = s
+            displayEnd = e
+            return
+        }
+
         var earliest = projectController?.projectData?.getEarliestDate()
         var latest = projectController?.projectData?.getLatestDate()
-
         if (!earliest || !latest) return
-
         var start = getMondayBefore(earliest, 4)
         var end = getSecondSundayAfter(latest)
-
-        var startChanged = displayStart.toDateString() !== start.toDateString()
-        var endChanged = displayEnd.toDateString() !== end.toDateString()
-
-        if (startChanged) displayStart = start
-        if (endChanged) displayEnd = end
+        if (displayStart.toDateString() !== start.toDateString()) displayStart = start
+        if (displayEnd.toDateString() !== end.toDateString()) displayEnd = end
     }
 
     property int dayWidth: projectController && projectController.settingsManager.zoomLevel === 1 ? 10 : 30
@@ -69,10 +99,7 @@ Rectangle
 
     signal calendarWidthChanged()
 
-    onContentWidthChanged:
-    {
-        calendarWidthChanged()
-    }
+    onContentWidthChanged: calendarWidthChanged()
 
     function rebuildData()
     {
@@ -139,6 +166,20 @@ Rectangle
 
     Connections
     {
+        target: projectController
+        function onProjectDataChanged() { refresh() }
+        function onProjectLoaded() { refresh() }
+    }
+
+    Connections
+    {
+        target: projectController?.projectData
+        function onGraphKindChanged() { refresh() }
+        function onDataCleared() { refresh() }
+    }
+
+    Connections
+    {
         target: projectController?.projectData?.milestoneModel
         enabled: target !== null
         function onMilestonesChanged() { refresh() }
@@ -154,12 +195,6 @@ Rectangle
         function onDataChanged() { refresh() }
     }
 
-    Connections
-    {
-        target: projectController?.projectData
-        function onGraphKindChanged() { refresh() }
-    }
-
     onDisplayStartChanged: rebuildData()
     onDisplayEndChanged: rebuildData()
 
@@ -167,7 +202,6 @@ Rectangle
     {
         spacing: 0
 
-        // 1. Годы
         Rectangle
         {
             width: contentWidth; height: rowHeight; color: "#e0e0e0"; border.color: "#888888"; border.width: 1
@@ -176,7 +210,6 @@ Rectangle
                     Text { text: modelData.year; anchors.centerIn: parent; font.bold: true; font.pixelSize: 14 } } } }
         }
 
-        // 2. Месяцы
         Rectangle
         {
             width: contentWidth; height: rowHeight; color: "#e8e8e8"; border.color: "#888888"; border.width: 1
@@ -185,7 +218,6 @@ Rectangle
                     Text { text: modelData.name; anchors.centerIn: parent; font.pixelSize: 12 } } } }
         }
 
-        // 3. Недели
         Rectangle
         {
             width: contentWidth; height: rowHeight; color: "#f0f0f0"; border.color: "#aaaaaa"; border.width: 1
@@ -194,7 +226,6 @@ Rectangle
                     Text { text: "КН" + modelData.num; anchors.centerIn: parent; font.pixelSize: 10 } } } }
         }
 
-        // 4. Дни
         Rectangle
         {
             width: contentWidth; height: rowHeight; color: "#f8f8f8"; border.color: "#aaaaaa"; border.width: 1
@@ -207,7 +238,6 @@ Rectangle
                         Text { text: root.dayNumbers[index] || ""; anchors.horizontalCenter: parent.horizontalCenter; font.pixelSize: 11 } } } } }
         }
 
-        // 5. Вехи (только для мастерграфика)
         MilestoneBar
         {
             id: milestoneBar
@@ -217,7 +247,6 @@ Rectangle
             startDate: displayStart; dayWidth: dayWidth
         }
 
-        // 6. Актуальность
         Rectangle
         {
             width: contentWidth

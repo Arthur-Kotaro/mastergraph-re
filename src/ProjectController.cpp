@@ -6,7 +6,9 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-ProjectController::ProjectController(QObject *parent): QObject(parent), m_inEditMode(false)
+ProjectController::ProjectController(QObject *parent): QObject(parent)
+    , m_projectData(nullptr)
+    , m_inEditMode(false)
 {
     m_projectData = new ProjectData(this);
     m_resourceManager = new ResourceManager(this);
@@ -40,8 +42,6 @@ void ProjectController::createNewProject(const QString& projectName, const QStri
                                          const QDate& startDate, const QString& filePath,
                                          const QStringList& selectedTaskGroups)
 {
-    qDebug() << "Creating new project:" << projectName << "at" << filePath;
-
     m_projectData->clear();
     m_projectData->set_ProjectName(projectName);
     m_projectData->set_ProjectType(projectType);
@@ -72,10 +72,7 @@ void ProjectController::createNewProject(const QString& projectName, const QStri
         QVariantMap groupMap = groupData.toMap();
         QString groupName = groupMap["name"].toString();
         if (selectedTaskGroups.isEmpty() || selectedTaskGroups.contains(groupName))
-        {
             m_projectData->get_groupModel()->addGroup(groupName);
-            qDebug() << "Added group:" << groupName;
-        }
     }
 
     m_projectData->recalculateEndDate();
@@ -101,10 +98,34 @@ void ProjectController::openProject(const QString& filePath)
     }
 
     m_projectData->set_FilePath(filePath);
+    refreshAllLocalGraphForecasts();
     m_projectData->set_Modified(false);
     set_InEditMode(true);
     emit projectLoaded();
     m_projectData->refreshAll();
+}
+
+bool ProjectController::openLocalGraphFile(const QString& filePath)
+{
+    QVariantMap projectData = m_resourceManager->loadProjectFromFile(filePath);
+    if (projectData.isEmpty())
+    {
+        emit errorOccurred("Не удалось загрузить локальный график");
+        return false;
+    }
+
+    if (!m_projectData->fromJson(projectData))
+    {
+        emit errorOccurred("Ошибка загрузки данных локального графика");
+        return false;
+    }
+
+    m_projectData->set_FilePath(filePath);
+    m_projectData->set_Modified(false);
+    set_InEditMode(true);
+    emit projectLoaded();
+    m_projectData->refreshAll();
+    return true;
 }
 
 void ProjectController::saveProject()
@@ -112,11 +133,8 @@ void ProjectController::saveProject()
     if (m_projectData->get_filePath().isEmpty())
     {
         emit errorOccurred("Путь к файлу не указан");
-        qDebug() << "saveProject: filePath is EMPTY!";
         return;
     }
-
-    qDebug() << "saveProject: filePath = " << m_projectData->get_filePath();
 
     QVariantMap data = m_projectData->toJson();
     if (m_resourceManager->saveProjectToFile(data, m_projectData->get_filePath()))
@@ -124,12 +142,10 @@ void ProjectController::saveProject()
         m_projectData->set_Modified(false);
         m_projectData->updateLastModified();
         emit projectSaved();
-        qDebug() << "Project saved to:" << m_projectData->get_filePath();
     }
     else
     {
         emit errorOccurred("Ошибка сохранения проекта");
-        qDebug() << "saveProject: FAILED to save to:" << m_projectData->get_filePath();
     }
 }
 
@@ -160,7 +176,6 @@ void ProjectController::addTask(const QString& groupId, const QString& title,
     m_projectData->get_taskModel()->addTask(groupId, title, responsible, startDate, endDate);
     m_projectData->recalculateEndDate();
     m_projectData->set_Modified(true);
-    qDebug() << "Task added:" << title << "to group:" << groupId;
 }
 
 void ProjectController::addTaskWithoutDates(const QString& groupId, const QString& title,
@@ -419,8 +434,7 @@ QString ProjectController::localGraphDirectory() const
 
     QFileInfo fi(masterPath);
     QString baseName = fi.completeBaseName();
-    QString dirPath = fi.absolutePath() + "/subGraph_" + baseName;
-    return dirPath;
+    return fi.absolutePath() + "/subGraph_" + baseName;
 }
 
 QString ProjectController::getLocalGraphPath(const QString& taskId) const
@@ -431,7 +445,6 @@ QString ProjectController::getLocalGraphPath(const QString& taskId) const
     QString masterPath = m_projectData->get_filePath();
     QFileInfo fi(masterPath);
     QString baseName = fi.completeBaseName();
-
     return dirPath + "/" + taskId + "-" + baseName + ".gantt";
 }
 
@@ -556,8 +569,6 @@ bool ProjectController::createLocalGraph(const QString& taskId)
     m_projectData->get_taskModel()->setLocalGraphState(taskId,
         static_cast<int>(GanttDefines::LocalGraphState::Attached));
     m_projectData->set_Modified(true);
-
-    qDebug() << "Local graph created:" << path;
     return true;
 }
 
@@ -635,8 +646,6 @@ bool ProjectController::createLocalGraphOverwrite(const QString& taskId)
     m_projectData->get_taskModel()->setLocalGraphState(taskId,
         static_cast<int>(GanttDefines::LocalGraphState::Attached));
     m_projectData->set_Modified(true);
-
-    qDebug() << "Local graph overwritten:" << path;
     return true;
 }
 
@@ -668,12 +677,98 @@ bool ProjectController::attachExistingLocalGraph(const QString& taskId)
         return false;
     }
 
-    // TODO (C6): прочитать ЛГ и обновить прогноз/прогресс задачи МГ
-
     m_projectData->get_taskModel()->setLocalGraphState(taskId,
         static_cast<int>(GanttDefines::LocalGraphState::Attached));
     m_projectData->set_Modified(true);
-
-    qDebug() << "Local graph attached:" << path;
     return true;
+}
+
+void ProjectController::refreshLocalGraphForecast(const QString& taskId, const QString& localGraphPath, bool markModified)
+{
+    if (taskId.isEmpty() || localGraphPath.isEmpty()) return;
+
+    QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
+    if (task.isEmpty()) return;
+
+    if (task["status"].toInt() == static_cast<int>(GanttDefines::TaskStatus::Completed))
+        return;
+
+    QFile file(localGraphPath);
+    if (!file.open(QIODevice::ReadOnly)) return;
+
+    QByteArray data = file.readAll();
+    file.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(data);
+    if (doc.isNull() || !doc.isObject()) return;
+
+    QVariantMap localMap = doc.object().toVariantMap();
+    QVariantList localTasks = localMap["tasks"].toList();
+
+    if (localTasks.isEmpty()) return;
+
+    QDate minStart;
+    QDate maxEnd;
+    int completedCount = 0;
+
+    for (const auto& lt : localTasks)
+    {
+        QVariantMap ltm = lt.toMap();
+        QDate s = QDate::fromString(ltm["startDate"].toString(), "dd.MM.yyyy");
+        QDate e = QDate::fromString(ltm["endDate"].toString(), "dd.MM.yyyy");
+        int status = ltm["status"].toInt();
+
+        if (s.isValid() && (!minStart.isValid() || s < minStart))
+            minStart = s;
+        if (e.isValid() && (!maxEnd.isValid() || e > maxEnd))
+            maxEnd = e;
+        if (status == static_cast<int>(GanttDefines::TaskStatus::Completed))
+            completedCount++;
+    }
+
+    if (!minStart.isValid() || !maxEnd.isValid()) return;
+
+    m_projectData->get_taskModel()->updateForecastDates(taskId, minStart, maxEnd);
+    m_projectData->get_taskModel()->setTaskProgress(taskId, completedCount, localTasks.size());
+
+    if (completedCount == localTasks.size() && localTasks.size() > 0)
+        m_projectData->get_taskModel()->setTaskStatus(taskId,
+                                                      GanttDefines::TaskStatus::Completed);
+
+        m_projectData->recalculateEndDate();
+    if (markModified)
+        m_projectData->set_Modified(true);
+
+    qDebug() << "refreshLocalGraphForecast:" << taskId
+    << "forecast" << minStart.toString("dd.MM.yyyy") << "-" << maxEnd.toString("dd.MM.yyyy")
+    << "progress" << completedCount << "/" << localTasks.size();
+}
+
+void ProjectController::refreshAllLocalGraphForecasts()
+{
+    if (m_projectData->get_filePath().isEmpty()) return;
+
+    QVariantList allTasks = m_projectData->get_taskModel()->getAllTasks();
+    for (const auto& tv : allTasks)
+    {
+        QVariantMap task = tv.toMap();
+        QString taskId = task["id"].toString();
+        int lgs = task["localGraphState"].toInt();
+
+        if (lgs != static_cast<int>(GanttDefines::LocalGraphState::Attached)
+            && lgs != static_cast<int>(GanttDefines::LocalGraphState::Missing))
+            continue;
+
+        QString path = getLocalGraphPath(taskId);
+        if (path.isEmpty() || !QFile::exists(path))
+        {
+            m_projectData->get_taskModel()->setLocalGraphState(taskId,
+                                                               static_cast<int>(GanttDefines::LocalGraphState::Missing));
+            continue;
+        }
+
+        refreshLocalGraphForecast(taskId, path, false);
+        m_projectData->get_taskModel()->setLocalGraphState(taskId,
+                                                           static_cast<int>(GanttDefines::LocalGraphState::Attached));
+    }
 }

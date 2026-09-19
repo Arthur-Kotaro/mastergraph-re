@@ -117,6 +117,25 @@ void ProjectData::set_GraphKind(GanttDefines::GraphKind kind)
     }
 }
 
+int ProjectData::get_graphKindInt() const
+{
+    return static_cast<int>(m_graphKind);
+}
+
+void ProjectData::set_GraphKindInt(int kind)
+{
+    if (kind == 0 || kind == 1)
+        set_GraphKind(static_cast<GanttDefines::GraphKind>(kind));
+}
+
+QDate ProjectData::getLinkedTargetStart() const { return m_linkedTargetStart; }
+QDate ProjectData::getLinkedTargetEnd() const { return m_linkedTargetEnd; }
+void ProjectData::set_LinkedTargetStart(const QDate& date) { m_linkedTargetStart = date; }
+void ProjectData::set_LinkedTargetEnd(const QDate& date) { m_linkedTargetEnd = date; }
+
+QString ProjectData::getLinkedMasterTaskId() const { return m_linkedMasterTaskId; }
+void ProjectData::set_LinkedMasterTaskId(const QString& taskId) { m_linkedMasterTaskId = taskId; }
+
 void ProjectData::updateLastModified()
 {
     set_LastModifiedDateTime(QDateTime::currentDateTime());
@@ -155,6 +174,9 @@ void ProjectData::clear()
     m_lastModifiedDateTime = QDateTime();
 
     m_graphKind = GanttDefines::GraphKind::Master;
+    m_linkedTargetStart = QDate();
+    m_linkedTargetEnd = QDate();
+    m_linkedMasterTaskId.clear();
 
     set_Modified(false);
     emit dataCleared();
@@ -169,9 +191,15 @@ QVariantMap ProjectData::toJson() const
     result["creationDateTime"] = m_creationDateTime.toString("dd.MM.yyyy hh:mm:ss");
     result["lastModifiedDateTime"] = m_lastModifiedDateTime.toString("dd.MM.yyyy hh:mm:ss");
 
-    // graphKind: пишем только если local (master — по умолчанию, поле отсутствует)
     if (m_graphKind == GanttDefines::GraphKind::Local)
         result["graphKind"] = "local";
+
+    if (m_linkedTargetStart.isValid())
+        result["linkedTargetStart"] = m_linkedTargetStart.toString("dd.MM.yyyy");
+    if (m_linkedTargetEnd.isValid())
+        result["linkedTargetEnd"] = m_linkedTargetEnd.toString("dd.MM.yyyy");
+    if (!m_linkedMasterTaskId.isEmpty())
+        result["linkedMasterTaskId"] = m_linkedMasterTaskId;
 
     QVariantList groups;
     for (int i = 0; i < m_groupModel->rowCount(); ++i)
@@ -279,6 +307,10 @@ bool ProjectData::fromJson(const QVariantMap& json)
     m_lastModifiedDateTime = QDateTime::fromString(json["lastModifiedDateTime"].toString(), "dd.MM.yyyy hh:mm:ss");
 
     m_graphKind = GanttDefines::stringToGraphKind(json["graphKind"].toString());
+
+    m_linkedTargetStart = QDate::fromString(json["linkedTargetStart"].toString(), "dd.MM.yyyy");
+    m_linkedTargetEnd = QDate::fromString(json["linkedTargetEnd"].toString(), "dd.MM.yyyy");
+    m_linkedMasterTaskId = json["linkedMasterTaskId"].toString();
 
     if (m_graphKind == GanttDefines::GraphKind::Local)
     {
@@ -394,6 +426,7 @@ bool ProjectData::fromJson(const QVariantMap& json)
     }
     recalculateEndDate();
     set_Modified(false);
+    emit graphKindChanged();
     return true;
 }
 

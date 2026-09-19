@@ -27,7 +27,6 @@ Rectangle
 
     property var nodeXByTask: ({})
 
-    // Локальный режим: граф — локальный (без групп, вех, режимов)
     readonly property bool isLocalMode: {
         return projectController && projectController.projectData
                && projectController.projectData.graphKind === 1
@@ -44,6 +43,13 @@ Rectangle
 
     Connections
     {
+        target: projectController
+        function onProjectDataChanged() { updateData() }
+        function onProjectLoaded() { updateData() }
+    }
+
+    Connections
+    {
         target: projectController?.settingsManager
         function onViewModeChanged() { updateData() }
     }
@@ -56,7 +62,7 @@ Rectangle
 
     function currentViewMode()
     {
-        if (isLocalMode) return 0  // В локальном режиме всегда Target
+        if (isLocalMode) return 0
         return projectController && projectController.settingsManager
                ? projectController.settingsManager.viewMode : 0
     }
@@ -98,65 +104,105 @@ Rectangle
     {
         if (nodes[taskId] !== undefined) return nodes[taskId]
 
-        var preds = projectController.projectData.dependencyModel.getPredecessors(taskId)
-        var maxPredEnd = null
-        var maxPredNodeX = -1
+            var preds = projectController.projectData.dependencyModel.getPredecessors(taskId)
+            var maxPredEnd = null
+            var maxPredNodeX = -1
 
-        for (var i = 0; i < preds.length; i++)
-        {
-            var pid = preds[i]
-            var predTask = taskById[pid]
-            if (!predTask) continue
-
-            if (hasTaskDates(predTask))
+            for (var i = 0; i < preds.length; i++)
             {
-                var pEnd = new Date(predTask.endDate)
-                if (maxPredEnd === null || pEnd > maxPredEnd)
-                    maxPredEnd = pEnd
-            }
-            else
-            {
-                var pNodeX = computeNodeX(pid, taskById, nodes)
-                if (pNodeX > maxPredNodeX) maxPredNodeX = pNodeX
-            }
-        }
+                var pid = preds[i]
+                var predTask = taskById[pid]
+                if (!predTask) continue
 
-        var result
-        if (maxPredEnd !== null)
-            result = (daysFromStart(maxPredEnd) + 1) * dayWidth + dayWidth / 2
-        else if (maxPredNodeX >= 0)
-            result = maxPredNodeX + 3 * dayWidth
-        else
-            result = dayWidth / 2
+                    if (hasTaskDates(predTask))
+                    {
+                        var pEnd = new Date(predTask.endDate)
+                        if (maxPredEnd === null || pEnd > maxPredEnd)
+                            maxPredEnd = pEnd
+                    }
+                    else if (isValidDate(predTask.forecastEnd))
+                    {
+                        // У предшественника нет целевых дат, но есть прогноз
+                        var pForecastEnd = new Date(predTask.forecastEnd)
+                        if (maxPredEnd === null || pForecastEnd > maxPredEnd)
+                            maxPredEnd = pForecastEnd
+                    }
+                    else
+                    {
+                        var pNodeX = computeNodeX(pid, taskById, nodes)
+                        if (pNodeX > maxPredNodeX) maxPredNodeX = pNodeX
+                    }
+            }
 
-        if (result < dayWidth / 2) result = dayWidth / 2
-        nodes[taskId] = result
-        return result
+            var result
+            if (maxPredEnd !== null)
+                result = (daysFromStart(maxPredEnd) + 1) * dayWidth + dayWidth / 2
+                else if (maxPredNodeX >= 0)
+                    result = maxPredNodeX + 3 * dayWidth
+                    else
+                        result = dayWidth / 2
+
+                        if (result < dayWidth / 2) result = dayWidth / 2
+                            nodes[taskId] = result
+                            return result
     }
 
     function updateData()
     {
         if (!projectController || !projectController.projectData) return
 
-        var earliest = projectController.projectData.getEarliestDate()
-        var latest = projectController.projectData.getLatestDate()
+        var localMode = (projectController.projectData.graphKind === 1)
 
-        if (earliest && latest)
+        if (localMode)
         {
-            var start = new Date(earliest)
-            while (start.getDay() !== 1) start.setDate(start.getDate() - 1)
-            start.setDate(start.getDate() - 28)
-            start.setHours(0, 0, 0, 0)
-            displayStart = start
+            var linkedStart = projectController.projectData.getLinkedTargetStart()
+            var linkedEnd = projectController.projectData.getLinkedTargetEnd()
 
-            var end = new Date(latest)
-            while (end.getDay() !== 0) end.setDate(end.getDate() + 1)
-            end.setDate(end.getDate() + 14)
-            end.setHours(23, 59, 59, 999)
-            displayEnd = end
+            var s, e
+            if (isValidDate(linkedStart) && isValidDate(linkedEnd))
+            {
+                s = new Date(linkedStart)
+                s.setDate(s.getDate() - 14)
+                s.setHours(0, 0, 0, 0)
+                e = new Date(linkedEnd)
+                e.setDate(e.getDate() + 14)
+                e.setHours(23, 59, 59, 999)
+            }
+            else
+            {
+                var now = new Date()
+                s = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+                e = new Date(now.getFullYear(), now.getMonth() + 2, 0)
+                e.setHours(23, 59, 59, 999)
+            }
 
-            totalDays = Math.max(1, Math.floor((end - start) / 86400000) + 1)
+            displayStart = s
+            displayEnd = e
+            totalDays = Math.max(1, Math.floor((e - s) / 86400000) + 1)
             gridWidth = totalDays * dayWidth
+        }
+        else
+        {
+            var earliest = projectController.projectData.getEarliestDate()
+            var latest = projectController.projectData.getLatestDate()
+
+            if (earliest && latest)
+            {
+                var start = new Date(earliest)
+                while (start.getDay() !== 1) start.setDate(start.getDate() - 1)
+                start.setDate(start.getDate() - 28)
+                start.setHours(0, 0, 0, 0)
+                displayStart = start
+
+                var end = new Date(latest)
+                while (end.getDay() !== 0) end.setDate(end.getDate() + 1)
+                end.setDate(end.getDate() + 14)
+                end.setHours(23, 59, 59, 999)
+                displayEnd = end
+
+                totalDays = Math.max(1, Math.floor((end - start) / 86400000) + 1)
+                gridWidth = totalDays * dayWidth
+            }
         }
 
         var allTasks = []
@@ -175,9 +221,9 @@ Rectangle
             }
         }
 
-        // Локальный режим: если групп нет, собираем задачи напрямую
-        if (allTasks.length === 0 && isLocalMode)
+        if (allTasks.length === 0 || localMode)
         {
+            allTasks = []
             var all = projectController.projectData.taskModel.getAllTasks()
             for (var ai = 0; ai < all.length; ai++)
                 allTasks.push(all[ai])
@@ -189,13 +235,11 @@ Rectangle
         var items = []
         var taskCounter = 0
 
-        // Локальный режим: плоский список без групп
-        if (isLocalMode)
+        if (localMode)
         {
-            var localTasks = allTasks
-            for (var li = 0; li < localTasks.length; li++)
+            for (var li = 0; li < allTasks.length; li++)
             {
-                var tdL = localTasks[li]
+                var tdL = allTasks[li]
                 var isCompletedL = (tdL.status === 1)
                 var hasDatesL = hasTaskDates(tdL)
                 var nodeXL = hasDatesL ? 0 : (root.nodeXByTask[tdL.id] !== undefined ? root.nodeXByTask[tdL.id] : dayWidth / 2)
@@ -295,7 +339,8 @@ Rectangle
             visibleItems = items
             updateCounter++
             totalRows = visibleItems.length
-            contentHeight = totalRows * rowHeight
+            var minH = root.externalFlickable ? root.externalFlickable.height : (rowHeight * 5)
+            contentHeight = Math.max(minH, totalRows * rowHeight)
 
             root.width = gridWidth
             root.height = contentHeight
@@ -325,6 +370,7 @@ Rectangle
         function onDataChanged() { updateData() }
         function onRowsInserted() { updateData() }
         function onRowsRemoved() { updateData() }
+        function onModelReset() { updateData() }
     }
 
     Connections
@@ -342,6 +388,7 @@ Rectangle
     {
         target: projectController?.projectData?.milestoneModel
         function onMilestonesChanged() { updateData() }
+        function onModelReset() { updateData() }
     }
 
     Connections
@@ -349,6 +396,7 @@ Rectangle
         target: projectController?.projectData?.dependencyModel
         function onRowsInserted() { updateData() }
         function onRowsRemoved() { updateData() }
+        function onModelReset() { updateData() }
     }
 
     width: gridWidth
@@ -627,6 +675,14 @@ Rectangle
                 z: 3
             }
 
+            function isForecastLocked()
+            {
+                if (!modelData) return false
+                    if (modelData.rowKind !== "forecast") return false
+                        var lgs = modelData.localGraphState !== undefined ? modelData.localGraphState : 0
+                        return (lgs === 2 || lgs === 3)  // Attached или Missing
+            }
+
             Rectangle
             {
                 id: nodeCircle
@@ -770,6 +826,19 @@ Rectangle
 
                     onPressed: function(mouse)
                     {
+                        if (mouse.button === Qt.RightButton)
+                        {
+                            taskContextMenu.taskId = modelData.taskId
+                            taskContextMenu.popup()
+                            return
+                        }
+
+                        if (rowContainer.isForecastLocked())
+                        {
+                            drag.target = null
+                            mouse.accepted = false
+                            return
+                        }
                         if (projectController && projectController.settingsManager.editingLocked)
                         {
                             drag.target = null
@@ -784,16 +853,16 @@ Rectangle
                         }
 
                         if (root.externalFlickable) root.externalFlickable.interactive = false
-
-                        if (mouse.button === Qt.RightButton)
-                        {
-                            taskContextMenu.taskId = modelData.taskId
-                            taskContextMenu.popup()
-                        }
                     }
 
                     onPositionChanged:
                     {
+                        if(rowContainer.isForecastLocked())
+                        {
+                            drag.target = null
+                            return
+                        }
+
                         if (projectController && projectController.settingsManager.editingLocked)
                         {
                             drag.target = null
@@ -801,9 +870,7 @@ Rectangle
                         }
                         drag.target = parent
                         if (drag.active)
-                        {
                             parent.x = Math.round(parent.x / root.dayWidth) * root.dayWidth
-                        }
                     }
 
                     onReleased:
@@ -822,12 +889,12 @@ Rectangle
                     color: Qt.darker(parent.color, 1.5)
                     radius: 2
                     visible: moveArea.containsMouse
-                    enabled: !(modelData && modelData.isCompleted)
+                    enabled: !(modelData && modelData.isCompleted) && !rowContainer.isForecastLocked()
 
                     MouseArea
                     {
                         id: resizeArea
-                        enabled: !(modelData && modelData.isCompleted)
+                        enabled: !(modelData && modelData.isCompleted) && !rowContainer.isForecastLocked()
                         anchors.fill: parent
                         cursorShape: Qt.SizeHorCursor
 
@@ -836,6 +903,7 @@ Rectangle
 
                         onPressed:
                         {
+                            if (rowContainer.isForecastLocked()) return
                             if (projectController && projectController.settingsManager.editingLocked) return
                             if (modelData && modelData.isCompleted) return
 
@@ -846,6 +914,7 @@ Rectangle
 
                         onPositionChanged:
                         {
+                            if (rowContainer.isForecastLocked()) return
                             if (projectController && projectController.settingsManager.editingLocked) return
                             if (modelData && modelData.isCompleted) return
 

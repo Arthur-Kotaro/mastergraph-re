@@ -11,7 +11,7 @@
 class ProjectController : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(ProjectData* projectData READ get_projectData CONSTANT)
+    Q_PROPERTY(ProjectData* projectData READ get_projectData NOTIFY projectDataChanged)
     Q_PROPERTY(ResourceManager* resourceManager READ get_resourceManager CONSTANT)
     Q_PROPERTY(SettingsManager* settingsManager READ get_settingsManager CONSTANT)
     Q_PROPERTY(ExportManager* exportManager READ get_exportManager CONSTANT)
@@ -32,6 +32,7 @@ public:
                                       const QDate& startDate, const QString& filePath,
                                       const QStringList& selectedTaskGroups);
     Q_INVOKABLE void openProject(const QString& filePath);
+    Q_INVOKABLE bool openLocalGraphFile(const QString& filePath);
     Q_INVOKABLE void saveProject();
     Q_INVOKABLE void saveProjectAs(const QString& filePath);
     Q_INVOKABLE void exportToPng(const QString& filePath, int width, int height);
@@ -55,12 +56,15 @@ public:
     Q_INVOKABLE QString getLocalGraphPath(const QString& taskId) const;
     Q_INVOKABLE bool localGraphFileExists(const QString& taskId) const;
 
+    Q_INVOKABLE void refreshLocalGraphForecast(const QString& taskId, const QString& localGraphPath, bool markModified);
+
 signals:
     void inEditModeChanged();
     void projectLoaded();
     void projectSaved();
     void errorOccurred(const QString& message);
     void cascadeUpdateRequired(const QString& taskId);
+    void projectDataChanged();
 
 private slots:
     void onTaskDatesChanged(const QString& taskId);
@@ -78,6 +82,7 @@ private:
 
     QDate endOfPredecessor(const QVariantMap& predTask) const;
     QString localGraphDirectory() const;
+    void refreshAllLocalGraphForecasts();
 };
 
 #endif

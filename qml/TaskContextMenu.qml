@@ -10,6 +10,7 @@ Menu
     property var onAddTaskBelowCallback: null
 
     property bool canAcceptForecast: false
+    property bool canEditForecast: true
     property int localGraphState: 0
     property bool isTaskCompleted: false
 
@@ -18,6 +19,7 @@ Menu
     function updateState()
     {
         canAcceptForecast = false
+        canEditForecast = true
         localGraphState = 0
         isTaskCompleted = false
 
@@ -28,6 +30,9 @@ Menu
 
         isTaskCompleted = (task.status === 1)
         localGraphState = task.localGraphState !== undefined ? task.localGraphState : 0
+
+        // Прогноз редактируется вручную только если у задачи нет ЛГ
+        canEditForecast = !(localGraphState === 2 || localGraphState === 3)
 
         if (projectController.settingsManager.editingLocked) return
         if (isTaskCompleted) return
@@ -95,6 +100,7 @@ Menu
     MenuItem
     {
         text: "Изменить прогнозные сроки"
+        enabled: root.canEditForecast && !root.isTaskCompleted
         onTriggered:
         {
             if (root.taskId && typeof mainWindow !== "undefined" && mainWindow.editForecastDatesDialog)
@@ -189,7 +195,8 @@ Menu
             enabled: root.localGraphState === 2
             onTriggered:
             {
-                // TODO: C4
+                if (root.taskId && sessionManager)
+                    sessionManager.openLocalGraphSession(root.taskId)
             }
         }
 
@@ -201,7 +208,7 @@ Menu
                      || root.localGraphState === 3
             onTriggered:
             {
-                // TODO: C4
+                // TODO: C4.5
             }
         }
     }

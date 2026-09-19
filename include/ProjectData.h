@@ -26,7 +26,7 @@ class ProjectData : public QObject
 
     Q_PROPERTY(QDateTime creationDateTime READ get_creationDateTime WRITE set_CreationDateTime NOTIFY creationDateTimeChanged)
     Q_PROPERTY(QDateTime lastModifiedDateTime READ get_lastModifiedDateTime WRITE set_LastModifiedDateTime NOTIFY lastModifiedDateTimeChanged)
-    Q_PROPERTY(GanttDefines::GraphKind graphKind READ get_graphKind WRITE set_GraphKind NOTIFY graphKindChanged)
+    Q_PROPERTY(int graphKind READ get_graphKindInt WRITE set_GraphKindInt NOTIFY graphKindChanged)
 
 public:
     explicit ProjectData(QObject *parent = nullptr);
@@ -57,6 +57,17 @@ public:
 
     GanttDefines::GraphKind get_graphKind() const;
     void set_GraphKind(GanttDefines::GraphKind kind);
+
+    int get_graphKindInt() const;
+    void set_GraphKindInt(int kind);
+
+    Q_INVOKABLE QDate getLinkedTargetStart() const;
+    Q_INVOKABLE QDate getLinkedTargetEnd() const;
+    void set_LinkedTargetStart(const QDate& date);
+    void set_LinkedTargetEnd(const QDate& date);
+
+    Q_INVOKABLE QString getLinkedMasterTaskId() const;
+    void set_LinkedMasterTaskId(const QString& taskId);
 
     TaskModel* get_taskModel() const;
     GroupModel* get_groupModel() const;
@@ -95,6 +106,9 @@ private:
     QDateTime m_creationDateTime;
     QDateTime m_lastModifiedDateTime;
     GanttDefines::GraphKind m_graphKind;
+    QDate m_linkedTargetStart;
+    QDate m_linkedTargetEnd;
+    QString m_linkedMasterTaskId;
 
     TaskModel* m_taskModel;
     GroupModel* m_groupModel;

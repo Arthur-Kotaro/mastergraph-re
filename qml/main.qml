@@ -12,12 +12,30 @@ ApplicationWindow
     minimumWidth: 1400
     minimumHeight: 750
     visible: true
+
+    readonly property bool isLocalWindow: {
+        return projectController && projectController.projectData
+               && projectController.projectData.graphKind === 1
+    }
+
     title:
     {
         if (projectController && projectController.projectData && projectController.projectData.projectName)
+        {
+            if (isLocalWindow)
+                return "Мастерграфик: re. Локальный график: " + projectController.projectData.projectName
             return "Мастерграфик: re. Проект: " + projectController.projectData.projectName
-        else
-            return "Мастерграфик: re"
+        }
+        return "Мастерграфик: re"
+    }
+
+    onClosing: {
+        if (isLocalWindow && sessionManager && projectController)
+        {
+            var tId = projectController.projectData.getLinkedMasterTaskId()
+            if (tId !== "")
+                sessionManager.notifyWindowClosed(tId)
+        }
     }
 
     property bool inEditMode: (projectController && projectController.inEditMode) || false
@@ -54,25 +72,25 @@ ApplicationWindow
     property alias calendarHeader: calendarHeader
 
     // --- Файл ---
-    Shortcut { sequence: "Ctrl+N"; onActivated: if (projectController) { newProjectDialog.refreshData(); newProjectDialog.open() } }
-    Shortcut { sequence: "Ctrl+O"; onActivated: if (projectController) openFileDialog.open() }
+    Shortcut { sequence: "Ctrl+N"; enabled: !isLocalWindow; onActivated: if (projectController && !isLocalWindow) { newProjectDialog.refreshData(); newProjectDialog.open() } }
+    Shortcut { sequence: "Ctrl+O"; enabled: !isLocalWindow; onActivated: if (projectController && !isLocalWindow) openFileDialog.open() }
     Shortcut { sequence: "Ctrl+S"; enabled: inEditMode && !editingText; onActivated: if (projectController && inEditMode) projectController.saveProject() }
     Shortcut { sequence: "Ctrl+Shift+S"; enabled: inEditMode && !editingText; onActivated: if (projectController && inEditMode) saveAsDialog.open() }
 
     // --- Режимы отображения ---
     Shortcut {
         sequence: "Ctrl+1"
-        enabled: inEditMode
+        enabled: inEditMode && !isLocalWindow
         onActivated: if (projectController) projectController.settingsManager.setViewMode(0)
     }
     Shortcut {
         sequence: "Ctrl+2"
-        enabled: inEditMode
+        enabled: inEditMode && !isLocalWindow
         onActivated: if (projectController) projectController.settingsManager.setViewMode(1)
     }
     Shortcut {
         sequence: "Ctrl+3"
-        enabled: inEditMode
+        enabled: inEditMode && !isLocalWindow
         onActivated: if (projectController) projectController.settingsManager.setViewMode(2)
     }
 
@@ -93,8 +111,6 @@ ApplicationWindow
         onActivated: {
             if (mainWindow.gridArea)
                 mainWindow.gridArea.showTaskHistory = !mainWindow.gridArea.showTaskHistory
-            if (mainWindow.calendarHeader && mainWindow.calendarHeader.milestoneBar)
-                mainWindow.calendarHeader.milestoneBar.showRescheduled = mainWindow.gridArea.showTaskHistory
         }
     }
     Shortcut {
@@ -159,7 +175,6 @@ ApplicationWindow
         flickableRight.contentY = Math.max(0, flickableRight.contentY - step)
     }
 
-    // --- Прочее ---
     Shortcut { sequence: "F1"; onActivated:
     {
         if (mainWindow.visibility === Window.FullScreen) mainWindow.showNormal()
@@ -172,6 +187,12 @@ ApplicationWindow
         function onProjectLoaded()
         {
             if (gridArea) gridArea.updateData()
+            if (calendarHeader) calendarHeader.refresh()
+        }
+        function onProjectDataChanged()
+        {
+            if (gridArea) gridArea.updateData()
+            if (calendarHeader) calendarHeader.refresh()
         }
         function onErrorOccurred(message)
         {
@@ -179,6 +200,17 @@ ApplicationWindow
                 toast.show(message)
         }
     }
+
+    Connections
+    {
+        target: sessionManager
+        enabled: !mainWindow.isLocalWindow
+        function onLocalGraphSaved(taskId, filePath)
+        {
+            if (projectController) projectController.refreshLocalGraphForecast(taskId, filePath, true)
+        }
+    }
+
     AppToolBar { id: appToolBar; anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right }
 
     Item
@@ -232,9 +264,7 @@ ApplicationWindow
                     onPositionChanged:
                     {
                         if (drag.active)
-                        {
                             leftPanelWidth = splitter.x
-                        }
                     }
                 }
             }
@@ -250,7 +280,7 @@ ApplicationWindow
                 {
                     id: calendarHeader
                     x: -flickableRight.contentX
-                    width: parent.width
+                    width: calendarHeader.contentWidth
                     height: 240
                 }
 
