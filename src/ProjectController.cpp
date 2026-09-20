@@ -772,3 +772,36 @@ void ProjectController::refreshAllLocalGraphForecasts()
                                                            static_cast<int>(GanttDefines::LocalGraphState::Attached));
     }
 }
+
+void ProjectController::detachLocalGraph(const QString& taskId, bool deleteFile)
+{
+    if (m_settingsManager->editingLocked())
+    {
+        emit errorOccurred("Редактирование заблокировано");
+        return;
+    }
+
+    QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
+    if (task.isEmpty()) return;
+
+    int lgs = task["localGraphState"].toInt();
+    if (lgs == static_cast<int>(GanttDefines::LocalGraphState::NotRequired))
+        return;
+
+    QString path = getLocalGraphPath(taskId);
+
+    if (deleteFile && !path.isEmpty() && QFile::exists(path))
+    {
+        if (!QFile::remove(path))
+        {
+            emit errorOccurred("Не удалось удалить файл локального графика");
+            return;
+        }
+    }
+
+    m_projectData->get_taskModel()->setLocalGraphState(taskId,
+                                                       static_cast<int>(GanttDefines::LocalGraphState::NotRequired));
+    m_projectData->set_Modified(true);
+
+    qDebug() << "detachLocalGraph:" << taskId << "deleteFile:" << deleteFile;
+}

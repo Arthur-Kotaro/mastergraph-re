@@ -13,9 +13,9 @@ ApplicationWindow
     minimumHeight: 750
     visible: true
 
-    readonly property bool isLocalWindow: {
-        return projectController && projectController.projectData
-               && projectController.projectData.graphKind === 1
+    readonly property bool isLocalWindow:
+    {
+        return projectController && projectController.projectData && projectController.projectData.graphKind === 1
     }
 
     title:
@@ -41,7 +41,8 @@ ApplicationWindow
     property bool inEditMode: (projectController && projectController.inEditMode) || false
     property int leftPanelWidth: 525
 
-    readonly property bool editingText: {
+    readonly property bool editingText:
+    {
         var item = activeFocusItem
         if (!item) return false
         return (item instanceof TextInput
@@ -70,6 +71,9 @@ ApplicationWindow
     property alias localGraphExistsDialog: localGraphExistsDialog
     property alias leftPanel: leftPanel
     property alias calendarHeader: calendarHeader
+    property alias detachLocalGraphDialog: detachLocalGraphDialog
+
+
 
     // --- Файл ---
     Shortcut { sequence: "Ctrl+N"; enabled: !isLocalWindow; onActivated: if (projectController && !isLocalWindow) { newProjectDialog.refreshData(); newProjectDialog.open() } }
@@ -420,6 +424,7 @@ ApplicationWindow
     ResponsibleDialog { id: responsibleDialog }
     RenameTaskDialog { id: renameTaskDialog }
     LocalGraphExistsDialog { id: localGraphExistsDialog }
+    DetachLocalGraphDialog { id: detachLocalGraphDialog }
 
     Labs.FileDialog
     {

@@ -204,11 +204,12 @@ Menu
         {
             text: "Отвязать локальный график"
             enabled: root.localGraphState === 1
-                     || root.localGraphState === 2
-                     || root.localGraphState === 3
+            || root.localGraphState === 2
+            || root.localGraphState === 3
             onTriggered:
             {
-                // TODO: C4.5
+                if (root.taskId && mainWindow && mainWindow.detachLocalGraphDialog)
+                    mainWindow.detachLocalGraphDialog.openForTask(root.taskId)
             }
         }
     }

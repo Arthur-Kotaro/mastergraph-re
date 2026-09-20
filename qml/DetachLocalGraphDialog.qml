@@ -5,9 +5,9 @@ import QtQuick.Layouts 6.0
 Dialog
 {
     id: root
-    title: "Локальный график уже существует"
-    width: 760
-    height: 280
+    title: "Отвязать локальный график"
+    width: 500
+    height: 240
     modal: true
     standardButtons: Dialog.NoButton
     anchors.centerIn: Overlay.overlay
@@ -28,7 +28,7 @@ Dialog
 
         Label
         {
-            text: "Файл локального графика для этой задачи уже существует."
+            text: "Локальный график будет отвязан от задачи."
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
             font.pixelSize: 14
@@ -36,7 +36,7 @@ Dialog
 
         Label
         {
-            text: "Использовать его как источник прогноза или перезаписать новым пустым файлом?"
+            text: "Удалить файл локального графика с диска или оставить его?"
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
             font.pixelSize: 13
@@ -48,34 +48,30 @@ Dialog
         RowLayout
         {
             Layout.fillWidth: true
-            spacing: 12
-
-            Item { Layout.fillWidth: true }
+            spacing: 10
 
             Button
             {
-                text: "Использовать существующий"
-                Layout.preferredWidth: 260
+                text: "Удалить файл"
+                Layout.fillWidth: true
                 Layout.preferredHeight: 36
-                font.pixelSize: 13
                 onClicked:
                 {
                     if (projectController && root.taskId)
-                        projectController.attachExistingLocalGraph(root.taskId)
+                        projectController.detachLocalGraph(root.taskId, true)
                     root.close()
                 }
             }
 
             Button
             {
-                text: "Перезаписать"
-                Layout.preferredWidth: 160
+                text: "Оставить файл"
+                Layout.fillWidth: true
                 Layout.preferredHeight: 36
-                font.pixelSize: 13
                 onClicked:
                 {
                     if (projectController && root.taskId)
-                        projectController.createLocalGraphOverwrite(root.taskId)
+                        projectController.detachLocalGraph(root.taskId, false)
                     root.close()
                 }
             }
@@ -83,9 +79,8 @@ Dialog
             Button
             {
                 text: "Отмена"
-                Layout.preferredWidth: 120
+                Layout.fillWidth: true
                 Layout.preferredHeight: 36
-                font.pixelSize: 13
                 onClicked: root.close()
             }
         }

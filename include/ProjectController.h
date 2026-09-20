@@ -55,7 +55,7 @@ public:
     Q_INVOKABLE bool attachExistingLocalGraph(const QString& taskId);
     Q_INVOKABLE QString getLocalGraphPath(const QString& taskId) const;
     Q_INVOKABLE bool localGraphFileExists(const QString& taskId) const;
-
+    Q_INVOKABLE void detachLocalGraph(const QString& taskId, bool deleteFile);
     Q_INVOKABLE void refreshLocalGraphForecast(const QString& taskId, const QString& localGraphPath, bool markModified);
 
 signals:
