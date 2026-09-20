@@ -25,7 +25,8 @@ Rectangle
     property var visibleItems: []
     property int updateCounter: 0
 
-    property var nodeXByTask: ({})
+    property var nodeXByTaskTarget: ({})
+    property var nodeXByTaskForecast: ({})
 
     readonly property bool isLocalMode: {
         return projectController && projectController.projectData
@@ -77,6 +78,11 @@ Rectangle
         return taskData && isValidDate(taskData.startDate) && isValidDate(taskData.endDate)
     }
 
+    function hasTaskForecast(taskData)
+    {
+        return taskData && isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
+    }
+
     function daysFromStart(dateValue)
     {
         return Math.floor((new Date(dateValue) - root.displayStart) / 86400000)
@@ -84,67 +90,79 @@ Rectangle
 
     function computeNodePositions(allTasks)
     {
-        var nodes = {}
         var taskById = {}
-
         for (var i = 0; i < allTasks.length; i++)
             taskById[allTasks[i].id] = allTasks[i]
+
+        var targetNodes = {}
+        var forecastNodes = {}
 
         for (var k = 0; k < allTasks.length; k++)
         {
             var task = allTasks[k]
             if (hasTaskDates(task)) continue
-            nodes[task.id] = computeNodeX(task.id, taskById, nodes)
+            if (hasTaskForecast(task)) continue
+
+            targetNodes[task.id] = computeNodeX(task.id, "target", taskById, targetNodes)
+            forecastNodes[task.id] = computeNodeX(task.id, "forecast", taskById, forecastNodes)
         }
 
-        root.nodeXByTask = nodes
+        root.nodeXByTaskTarget = targetNodes
+        root.nodeXByTaskForecast = forecastNodes
     }
 
-    function computeNodeX(taskId, taskById, nodes)
+    function computeNodeX(taskId, kind, taskById, nodes)
     {
         if (nodes[taskId] !== undefined) return nodes[taskId]
 
-            var preds = projectController.projectData.dependencyModel.getPredecessors(taskId)
-            var maxPredEnd = null
-            var maxPredNodeX = -1
+        var preds = projectController.projectData.dependencyModel.getPredecessors(taskId)
+        var maxPredEnd = null
+        var maxPredNodeX = -1
 
-            for (var i = 0; i < preds.length; i++)
+        for (var i = 0; i < preds.length; i++)
+        {
+            var pid = preds[i]
+            var predTask = taskById[pid]
+            if (!predTask) continue
+
+            var pEnd = null
+
+            if (kind === "target")
             {
-                var pid = preds[i]
-                var predTask = taskById[pid]
-                if (!predTask) continue
-
-                    if (hasTaskDates(predTask))
-                    {
-                        var pEnd = new Date(predTask.endDate)
-                        if (maxPredEnd === null || pEnd > maxPredEnd)
-                            maxPredEnd = pEnd
-                    }
-                    else if (isValidDate(predTask.forecastEnd))
-                    {
-                        // У предшественника нет целевых дат, но есть прогноз
-                        var pForecastEnd = new Date(predTask.forecastEnd)
-                        if (maxPredEnd === null || pForecastEnd > maxPredEnd)
-                            maxPredEnd = pForecastEnd
-                    }
-                    else
-                    {
-                        var pNodeX = computeNodeX(pid, taskById, nodes)
-                        if (pNodeX > maxPredNodeX) maxPredNodeX = pNodeX
-                    }
+                if (hasTaskDates(predTask))
+                    pEnd = new Date(predTask.endDate)
+            }
+            else // "forecast"
+            {
+                if (hasTaskForecast(predTask))
+                    pEnd = new Date(predTask.forecastEnd)
+                else if (hasTaskDates(predTask))
+                    pEnd = new Date(predTask.endDate)
             }
 
-            var result
-            if (maxPredEnd !== null)
-                result = (daysFromStart(maxPredEnd) + 1) * dayWidth + dayWidth / 2
-                else if (maxPredNodeX >= 0)
-                    result = maxPredNodeX + 3 * dayWidth
-                    else
-                        result = dayWidth / 2
+            if (pEnd !== null)
+            {
+                if (maxPredEnd === null || pEnd > maxPredEnd)
+                    maxPredEnd = pEnd
+            }
+            else
+            {
+                var pNodeX = computeNodeX(pid, kind, taskById, nodes)
+                if (pNodeX > maxPredNodeX) maxPredNodeX = pNodeX
+            }
+        }
 
-                        if (result < dayWidth / 2) result = dayWidth / 2
-                            nodes[taskId] = result
-                            return result
+        var result
+        if (maxPredEnd !== null)
+            result = (daysFromStart(maxPredEnd) + 1) * dayWidth + dayWidth / 2
+        else if (maxPredNodeX >= 0)
+            result = maxPredNodeX + 3 * dayWidth
+        else
+            result = dayWidth / 2
+
+        if (result < dayWidth / 2) result = dayWidth / 2
+        nodes[taskId] = result
+        return result
     }
 
     function updateData()
@@ -206,27 +224,11 @@ Rectangle
         }
 
         var allTasks = []
-        var groups = projectController.projectData.groupModel
-        if (groups)
+        var ids = projectController.projectData.taskModel.getAllTasks()
+        for (var ai = 0; ai < ids.length; ai++)
         {
-            for (var g = 0; g < groups.rowCount(); g++)
-            {
-                var gid = groups.getGroupId(g)
-                var taskIds = projectController.projectData.taskModel.getTasksForGroup(gid)
-                for (var ti = 0; ti < taskIds.length; ti++)
-                {
-                    var td = projectController.projectData.taskModel.getTask(taskIds[ti])
-                    if (td) allTasks.push(td)
-                }
-            }
-        }
-
-        if (allTasks.length === 0 || localMode)
-        {
-            allTasks = []
-            var all = projectController.projectData.taskModel.getAllTasks()
-            for (var ai = 0; ai < all.length; ai++)
-                allTasks.push(all[ai])
+            var t = projectController.projectData.taskModel.getTask(ids[ai].id)
+            if (t) allTasks.push(t)
         }
 
         computeNodePositions(allTasks)
@@ -242,7 +244,12 @@ Rectangle
                 var tdL = allTasks[li]
                 var isCompletedL = (tdL.status === 1)
                 var hasDatesL = hasTaskDates(tdL)
-                var nodeXL = hasDatesL ? 0 : (root.nodeXByTask[tdL.id] !== undefined ? root.nodeXByTask[tdL.id] : dayWidth / 2)
+                var hasFcL = hasTaskForecast(tdL)
+                var isUnapprovedL = !hasDatesL && hasFcL
+                var nodeXL = 0
+                if (!hasDatesL && !isUnapprovedL)
+                    nodeXL = root.nodeXByTaskTarget[tdL.id] !== undefined
+                             ? root.nodeXByTaskTarget[tdL.id] : dayWidth / 2
 
                 items.push({
                     type: "task",
@@ -253,18 +260,24 @@ Rectangle
                     taskResponsible: tdL.responsible,
                     taskStart: tdL.startDate,
                     taskEnd: tdL.endDate,
+                    forecastStart: tdL.forecastStart,
+                    forecastEnd: tdL.forecastEnd,
                     taskStatus: tdL.status,
                     taskComment: tdL.comment,
                     isCompleted: isCompletedL,
                     hasDates: hasDatesL,
+                    hasForecast: hasFcL,
+                    isUnapproved: isUnapprovedL,
                     nodeX: nodeXL,
                     localGraphState: tdL.localGraphState
                 })
                 taskCounter++
             }
         }
-        else if (groups)
+        else
         {
+            var groups = projectController.projectData.groupModel
+
             for (var i = 0; i < groups.rowCount(); i++)
             {
                 var groupId = groups.getGroupId(i)
@@ -283,10 +296,22 @@ Rectangle
 
                         var isCompleted = (taskData.status === 1)
                         var hasDates = hasTaskDates(taskData)
-                        var nodeX = hasDates ? 0 : (root.nodeXByTask[tasks[j]] !== undefined ? root.nodeXByTask[tasks[j]] : dayWidth / 2)
+                        var hasFc = hasTaskForecast(taskData)
+                        var isUnapproved = !hasDates && hasFc
 
-                        function pushRow(kind, startDate, endDate, rowHasDates, rowNodeX)
+                        function pushRow(kind, startDate, endDate, rowHasDates, rowIsUnapproved)
                         {
+                            var nodeXVal = 0
+                            if (!rowHasDates && !rowIsUnapproved)
+                            {
+                                if (kind === "target")
+                                    nodeXVal = root.nodeXByTaskTarget[tasks[j]] !== undefined
+                                               ? root.nodeXByTaskTarget[tasks[j]] : dayWidth / 2
+                                else
+                                    nodeXVal = root.nodeXByTaskForecast[tasks[j]] !== undefined
+                                               ? root.nodeXByTaskForecast[tasks[j]] : dayWidth / 2
+                            }
+
                             items.push({
                                 type: "task",
                                 rowKind: kind,
@@ -296,11 +321,15 @@ Rectangle
                                 taskResponsible: taskData.responsible,
                                 taskStart: startDate,
                                 taskEnd: endDate,
+                                forecastStart: taskData.forecastStart,
+                                forecastEnd: taskData.forecastEnd,
                                 taskStatus: taskData.status,
                                 taskComment: taskData.comment,
                                 isCompleted: isCompleted,
                                 hasDates: rowHasDates,
-                                nodeX: rowNodeX,
+                                hasForecast: hasFc,
+                                isUnapproved: rowIsUnapproved,
+                                nodeX: nodeXVal,
                                 localGraphState: taskData.localGraphState
                             })
                             taskCounter++
@@ -308,25 +337,25 @@ Rectangle
 
                         if (mode === 0)
                         {
-                            pushRow("target", taskData.startDate, taskData.endDate, hasDates, nodeX)
+                            pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
                         }
                         else if (mode === 1)
                         {
-                            if (isCompleted)
-                                pushRow("target", taskData.startDate, taskData.endDate, hasDates, nodeX)
+                            if (isCompleted || !hasFc)
+                                pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
                             else
                             {
-                                var fHasDates = isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
-                                pushRow("forecast", taskData.forecastStart, taskData.forecastEnd, fHasDates, nodeX)
+                                var fHasDates1 = isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
+                                pushRow("forecast", taskData.forecastStart, taskData.forecastEnd, fHasDates1, isUnapproved)
                             }
                         }
                         else
                         {
-                            pushRow("target", taskData.startDate, taskData.endDate, hasDates, nodeX)
+                            pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
                             if (!isCompleted)
                             {
                                 var fHasDates2 = isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
-                                pushRow("forecast", taskData.forecastStart, taskData.forecastEnd, fHasDates2, nodeX)
+                                pushRow("forecast", taskData.forecastStart, taskData.forecastEnd, fHasDates2, isUnapproved)
                             }
                         }
                     }
@@ -432,6 +461,19 @@ Rectangle
             {
                 var startDays = Math.floor((new Date(item.taskStart) - displayStart) / 86400000)
                 return startDays * dayWidth
+            }
+        }
+        else if (item.isUnapproved)
+        {
+            if (isOutgoing)
+            {
+                var feDays = Math.floor((new Date(item.forecastEnd) - displayStart) / 86400000)
+                return feDays * dayWidth + dayWidth
+            }
+            else
+            {
+                var fsDays = Math.floor((new Date(item.forecastStart) - displayStart) / 86400000)
+                return fsDays * dayWidth
             }
         }
         else
@@ -659,6 +701,14 @@ Rectangle
             height: rowHeight
             color: "transparent"
 
+            function isForecastLocked()
+            {
+                if (!modelData) return false
+                if (modelData.rowKind !== "forecast") return false
+                var lgs = modelData.localGraphState !== undefined ? modelData.localGraphState : 0
+                return (lgs === 2 || lgs === 3)
+            }
+
             Text
             {
                 visible: modelData && modelData.type === "group"
@@ -675,18 +725,10 @@ Rectangle
                 z: 3
             }
 
-            function isForecastLocked()
-            {
-                if (!modelData) return false
-                    if (modelData.rowKind !== "forecast") return false
-                        var lgs = modelData.localGraphState !== undefined ? modelData.localGraphState : 0
-                        return (lgs === 2 || lgs === 3)  // Attached или Missing
-            }
-
             Rectangle
             {
                 id: nodeCircle
-                visible: modelData && modelData.type === "task" && !modelData.hasDates
+                visible: modelData && modelData.type === "task" && !modelData.hasDates && !modelData.isUnapproved
                 x: modelData ? (modelData.nodeX - 15) : 0
                 y: rowContainer.height / 2 - 15
                 width: 30
@@ -725,24 +767,30 @@ Rectangle
             Rectangle
             {
                 id: ganttBar
-                visible: modelData && modelData.type === "task" && modelData.hasDates
+                visible: modelData && modelData.type === "task" && (modelData.hasDates || modelData.isUnapproved)
 
                 x:
                 {
-                    if (!modelData || !modelData.taskStart || !root.displayStart) return 0
-                    var daysDiff = Math.floor((new Date(modelData.taskStart) - root.displayStart) / 86400000)
+                    if (!modelData) return 0
+                    var startVal = modelData.hasDates ? modelData.taskStart : modelData.forecastStart
+                    if (!startVal || !root.displayStart) return 0
+                    var daysDiff = Math.floor((new Date(startVal) - root.displayStart) / 86400000)
                     return Math.max(0, daysDiff * root.dayWidth)
                 }
 
                 width:
                 {
-                    if (!modelData || !modelData.taskStart || !modelData.taskEnd) return 10
-                    var daysDiff = Math.floor((new Date(modelData.taskEnd) - new Date(modelData.taskStart)) / 86400000) + 1
+                    if (!modelData) return 10
+                    var sVal = modelData.hasDates ? modelData.taskStart : modelData.forecastStart
+                    var eVal = modelData.hasDates ? modelData.taskEnd : modelData.forecastEnd
+                    if (!sVal || !eVal) return 10
+                    var daysDiff = Math.floor((new Date(eVal) - new Date(sVal)) / 86400000) + 1
                     return Math.max(10, daysDiff * root.dayWidth)
                 }
 
                 height: parent.height - 8
                 y: 4
+                clip: true
 
                 function getStatusColor()
                 {
@@ -776,6 +824,42 @@ Rectangle
                 radius: 4
                 border.color: Qt.darker(color, 1.2)
                 border.width: 1
+
+                Canvas
+                {
+                    id: stripesCanvas
+                    anchors.fill: parent
+                    visible: modelData && modelData.isUnapproved
+
+                    onPaint:
+                    {
+                        var ctx = getContext("2d")
+                        ctx.clearRect(0, 0, width, height)
+
+                        if (!modelData || !modelData.isUnapproved) return
+                        if (width <= 0 || height <= 0) return
+
+                        var stripeWidth = 12
+                        var gap = 12
+                        var step = stripeWidth + gap
+
+                        ctx.strokeStyle = "#ffffff"
+                        ctx.lineWidth = stripeWidth
+                        ctx.beginPath()
+
+                        var diagonal = height
+                        for (var i = -diagonal; i < width + diagonal; i += step)
+                        {
+                            ctx.moveTo(i, height)
+                            ctx.lineTo(i + diagonal, 0)
+                        }
+                        ctx.stroke()
+                    }
+
+                    onWidthChanged: requestPaint()
+                    onHeightChanged: requestPaint()
+                    onVisibleChanged: if (visible) requestPaint()
+                }
 
                 function updateDates()
                 {
@@ -836,9 +920,9 @@ Rectangle
                         if (rowContainer.isForecastLocked())
                         {
                             drag.target = null
-                            mouse.accepted = false
                             return
                         }
+
                         if (projectController && projectController.settingsManager.editingLocked)
                         {
                             drag.target = null
@@ -857,12 +941,11 @@ Rectangle
 
                     onPositionChanged:
                     {
-                        if(rowContainer.isForecastLocked())
+                        if (rowContainer.isForecastLocked())
                         {
                             drag.target = null
                             return
                         }
-
                         if (projectController && projectController.settingsManager.editingLocked)
                         {
                             drag.target = null
@@ -888,7 +971,7 @@ Rectangle
                     anchors.right: parent.right
                     color: Qt.darker(parent.color, 1.5)
                     radius: 2
-                    visible: moveArea.containsMouse
+                    visible: moveArea.containsMouse && !rowContainer.isForecastLocked()
                     enabled: !(modelData && modelData.isCompleted) && !rowContainer.isForecastLocked()
 
                     MouseArea
@@ -896,7 +979,7 @@ Rectangle
                         id: resizeArea
                         enabled: !(modelData && modelData.isCompleted) && !rowContainer.isForecastLocked()
                         anchors.fill: parent
-                        cursorShape: Qt.SizeHorCursor
+                        cursorShape: rowContainer.isForecastLocked() ? Qt.ArrowCursor : Qt.SizeHorCursor
 
                         property real startWidth: 0
                         property real startMouseX: 0
