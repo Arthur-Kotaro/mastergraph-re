@@ -264,7 +264,9 @@ void TaskModel::setTaskProgress(const QString& taskId, int current, int total)
 
     Task& task = m_tasks[index];
 
-    if (current < 0 || total <= 0 || current > total)
+    bool progressValid = (current >= 0 && total > 0 && current <= total);
+
+    if (!progressValid)
     {
         task.progressCurrent = -1;
         task.progressTotal = -1;
@@ -278,6 +280,14 @@ void TaskModel::setTaskProgress(const QString& taskId, int current, int total)
     QModelIndex modelIndex = createIndex(index, 0);
     emit dataChanged(modelIndex, modelIndex, {GanttDefines::ProgressCurrentRole, GanttDefines::ProgressTotalRole});
     emit taskProgressChanged(taskId);
+
+    // Если прогресс достиг n/n и задача не завершена — переводим в Completed
+    if (progressValid
+        && task.progressCurrent == task.progressTotal
+        && task.status != GanttDefines::TaskStatus::Completed)
+    {
+        setTaskStatus(taskId, GanttDefines::TaskStatus::Completed);
+    }
 }
 
 void TaskModel::setLocalGraphState(const QString& taskId, int state)
