@@ -12,25 +12,25 @@ Rectangle
     property bool showDependencies: true
     property bool showComments: true
     property bool showTaskHistory: true
-    onShowDependenciesChanged: overlayCanvas.requestPaint()
+    property bool showProgress: true
     property date displayStart: new Date()
     property date displayEnd: new Date()
     property int dayWidth: projectController && projectController.settingsManager.zoomLevel === 1 ? 10 : 30
-    onDayWidthChanged: { updateData(); backgroundCanvas.requestPaint(); overlayCanvas.requestPaint() }
     property int totalDays: 1
     property real gridWidth: totalDays * dayWidth
     property int totalRows: 1
     property real contentHeight: 0
-
     property var visibleItems: []
     property int updateCounter: 0
-
     property var nodeXByTaskTarget: ({})
     property var nodeXByTaskForecast: ({})
 
-    readonly property bool isLocalMode: {
-        return projectController && projectController.projectData
-               && projectController.projectData.graphKind === 1
+    onShowDependenciesChanged: overlayCanvas.requestPaint()
+    onDayWidthChanged: { updateData(); backgroundCanvas.requestPaint(); overlayCanvas.requestPaint() }
+
+    readonly property bool isLocalMode:
+    {
+        return projectController && projectController.projectData && projectController.projectData.graphKind === 1
     }
 
     Component.onCompleted: updateData()
@@ -64,8 +64,7 @@ Rectangle
     function currentViewMode()
     {
         if (isLocalMode) return 0
-        return projectController && projectController.settingsManager
-               ? projectController.settingsManager.viewMode : 0
+        return projectController && projectController.settingsManager ? projectController.settingsManager.viewMode : 0
     }
 
     function isValidDate(d)
@@ -129,21 +128,18 @@ Rectangle
 
             if (kind === "target")
             {
-                if (hasTaskDates(predTask))
-                    pEnd = new Date(predTask.endDate)
+                if (hasTaskDates(predTask)) pEnd = new Date(predTask.endDate)
             }
-            else // "forecast"
+            else
             {
-                if (hasTaskForecast(predTask))
-                    pEnd = new Date(predTask.forecastEnd)
+                if (hasTaskForecast(predTask)) pEnd = new Date(predTask.forecastEnd)
                 else if (hasTaskDates(predTask))
                     pEnd = new Date(predTask.endDate)
             }
 
             if (pEnd !== null)
             {
-                if (maxPredEnd === null || pEnd > maxPredEnd)
-                    maxPredEnd = pEnd
+                if (maxPredEnd === null || pEnd > maxPredEnd) maxPredEnd = pEnd
             }
             else
             {
@@ -153,8 +149,7 @@ Rectangle
         }
 
         var result
-        if (maxPredEnd !== null)
-            result = (daysFromStart(maxPredEnd) + 1) * dayWidth + dayWidth / 2
+        if (maxPredEnd !== null) result = (daysFromStart(maxPredEnd) + 1) * dayWidth + dayWidth / 2
         else if (maxPredNodeX >= 0)
             result = maxPredNodeX + 3 * dayWidth
         else
@@ -248,8 +243,7 @@ Rectangle
                 var isUnapprovedL = !hasDatesL && hasFcL
                 var nodeXL = 0
                 if (!hasDatesL && !isUnapprovedL)
-                    nodeXL = root.nodeXByTaskTarget[tdL.id] !== undefined
-                             ? root.nodeXByTaskTarget[tdL.id] : dayWidth / 2
+                    nodeXL = root.nodeXByTaskTarget[tdL.id] !== undefined ? root.nodeXByTaskTarget[tdL.id] : dayWidth / 2
 
                 items.push({
                     type: "task",
@@ -269,7 +263,9 @@ Rectangle
                     hasForecast: hasFcL,
                     isUnapproved: isUnapprovedL,
                     nodeX: nodeXL,
-                    localGraphState: tdL.localGraphState
+                    localGraphState: tdL.localGraphState,
+                    progressCurrent: tdL.progressCurrent,
+                    progressTotal: tdL.progressTotal
                 })
                 taskCounter++
             }
@@ -305,11 +301,9 @@ Rectangle
                             if (!rowHasDates && !rowIsUnapproved)
                             {
                                 if (kind === "target")
-                                    nodeXVal = root.nodeXByTaskTarget[tasks[j]] !== undefined
-                                               ? root.nodeXByTaskTarget[tasks[j]] : dayWidth / 2
+                                    nodeXVal = root.nodeXByTaskTarget[tasks[j]] !== undefined ? root.nodeXByTaskTarget[tasks[j]] : dayWidth / 2
                                 else
-                                    nodeXVal = root.nodeXByTaskForecast[tasks[j]] !== undefined
-                                               ? root.nodeXByTaskForecast[tasks[j]] : dayWidth / 2
+                                    nodeXVal = root.nodeXByTaskForecast[tasks[j]] !== undefined ? root.nodeXByTaskForecast[tasks[j]] : dayWidth / 2
                             }
 
                             items.push({
@@ -330,7 +324,9 @@ Rectangle
                                 hasForecast: hasFc,
                                 isUnapproved: rowIsUnapproved,
                                 nodeX: nodeXVal,
-                                localGraphState: taskData.localGraphState
+                                localGraphState: taskData.localGraphState,
+                                progressCurrent: taskData.progressCurrent,
+                                progressTotal: taskData.progressTotal
                             })
                             taskCounter++
                         }
@@ -341,8 +337,7 @@ Rectangle
                         }
                         else if (mode === 1)
                         {
-                            if (isCompleted || !hasFc)
-                                pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
+                            if (isCompleted || !hasFc) pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
                             else
                             {
                                 var fHasDates1 = isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
@@ -383,14 +378,12 @@ Rectangle
 
     function updateTaskDates(taskId, newStart, newEnd)
     {
-        if (projectController)
-            projectController.updateTaskDates(taskId, newStart, newEnd)
+        if (projectController) projectController.updateTaskDates(taskId, newStart, newEnd)
     }
 
     function updateForecastDates(taskId, newStart, newEnd)
     {
-        if (projectController)
-            projectController.updateForecastDates(taskId, newStart, newEnd)
+        if (projectController) projectController.updateForecastDates(taskId, newStart, newEnd)
     }
 
     Connections
@@ -597,8 +590,7 @@ Rectangle
             var groupRows = []
             for (var vi = 0; vi < visibleItems.length; vi++)
             {
-                if (visibleItems[vi].type === "group")
-                    groupRows.push(vi)
+                if (visibleItems[vi].type === "group") groupRows.push(vi)
             }
             for (var gi = 0; gi < groupRows.length; gi++)
             {
@@ -638,8 +630,7 @@ Rectangle
             ctx.clearRect(0, 0, width, height)
 
             if (!showDependencies) return
-            if (!projectController || !projectController.projectData || !projectController.projectData.dependencyModel)
-                return
+            if (!projectController || !projectController.projectData || !projectController.projectData.dependencyModel) return
 
             var mode = root.currentViewMode()
             var depModel = projectController.projectData.dependencyModel
@@ -680,8 +671,7 @@ Rectangle
                     if (succRows.forecastRow >= 0)
                     {
                         var predForecastSrc = predCompleted ? predRows.targetRow : predRows.forecastRow
-                        if (predForecastSrc >= 0)
-                            root.drawDependencyLine(ctx, predForecastSrc, succRows.forecastRow)
+                        if (predForecastSrc >= 0) root.drawDependencyLine(ctx, predForecastSrc, succRows.forecastRow)
                     }
                 }
             }
@@ -715,8 +705,7 @@ Rectangle
                 text: modelData ? (modelData.name || "") : ""
                 x:
                 {
-                    if (currentTimeLine && currentTimeLine.visible)
-                        return currentTimeLine.x + 10
+                    if (currentTimeLine && currentTimeLine.visible) return currentTimeLine.x + 10
                     return 10
                 }
                 anchors.verticalCenter: parent.verticalCenter
@@ -814,8 +803,7 @@ Rectangle
 
                 function getBarOpacity()
                 {
-                    if (modelData && modelData.rowKind === "forecast")
-                        return 0.6
+                    if (modelData && modelData.rowKind === "forecast") return 0.6
                     return 1.0
                 }
 
@@ -824,6 +812,40 @@ Rectangle
                 radius: 4
                 border.color: Qt.darker(color, 1.2)
                 border.width: 1
+
+                Rectangle
+                {
+                    id: progressFill
+                    visible: root.showProgress
+                             && modelData
+                             && modelData.progressTotal > 0
+                             && modelData.progressCurrent >= 0
+                             && !modelData.isUnapproved
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    width: parent.width * Math.min(1, modelData.progressCurrent / modelData.progressTotal)
+                    color: (modelData && modelData.rowKind === "forecast") ? Qt.lighter("#32CD32", 1.2) : "#32CD32"
+                    opacity: (modelData && modelData.rowKind === "forecast") ? 0.6 : 1.0
+                    radius: 4
+                    z: 1
+                }
+
+                Text
+                {
+                    id: progressText
+                    visible: root.showProgress
+                             && modelData
+                             && modelData.progressTotal > 0
+                             && modelData.progressCurrent >= 0
+                             && !modelData.isUnapproved
+                             && parent.width > 90
+                    anchors.centerIn: parent
+                    text: modelData ? ("Прогресс: " + modelData.progressCurrent + "/" + modelData.progressTotal) : ""
+                    font.pixelSize: 11
+                    color: "#222222"
+                    z: 2
+                }
 
                 Canvas
                 {
@@ -873,8 +895,7 @@ Rectangle
 
                     if (newStart < newEnd)
                     {
-                        if (modelData && modelData.rowKind === "forecast")
-                            root.updateForecastDates(modelData.taskId, newStart, newEnd)
+                        if (modelData && modelData.rowKind === "forecast") root.updateForecastDates(modelData.taskId, newStart, newEnd)
                         else
                             root.updateTaskDates(modelData.taskId, newStart, newEnd)
                     }
@@ -889,10 +910,7 @@ Rectangle
                         var label = (modelData.rowKind === "forecast") ? "Прогноз: " : ""
                         var duration = Math.floor((new Date(modelData.taskEnd) - new Date(modelData.taskStart)) / (24 * 60 * 60 * 1000)) + 1
                         var commentText = (modelData.taskComment && modelData.taskComment !== "") ? modelData.taskComment : "-"
-                        return label + modelData.taskTitle +
-                               "\nДлительность: " + duration + " дней" +
-                               "\nОтветственный: " + modelData.taskResponsible +
-                               "\nКомментарий: " + commentText
+                        return label + modelData.taskTitle + "\nДлительность: " + duration + " дней" + "\nОтветственный: " + modelData.taskResponsible + "\nКомментарий: " + commentText
                     }
                     delay: 500
                 }
@@ -952,15 +970,13 @@ Rectangle
                             return
                         }
                         drag.target = parent
-                        if (drag.active)
-                            parent.x = Math.round(parent.x / root.dayWidth) * root.dayWidth
+                        if (drag.active) parent.x = Math.round(parent.x / root.dayWidth) * root.dayWidth
                     }
 
                     onReleased:
                     {
                         if (root.externalFlickable) root.externalFlickable.interactive = true
-                        if (drag.active)
-                            parent.updateDates()
+                        if (drag.active) parent.updateDates()
                     }
                 }
 
@@ -1007,8 +1023,7 @@ Rectangle
                                 var delta = currentX - startMouseX
                                 var newWidth = startWidth + delta
                                 newWidth = Math.max(10, Math.round(newWidth / root.dayWidth) * root.dayWidth)
-                                if (newWidth !== ganttBar.width)
-                                    ganttBar.width = newWidth
+                                if (newWidth !== ganttBar.width) ganttBar.width = newWidth
                             }
                         }
 
@@ -1019,31 +1034,31 @@ Rectangle
                         }
                     }
                 }
+            }
 
-                Text
+            // Комментарий — вне ganttBar, чтобы не обрезался его clip: true
+            Text
+            {
+                visible: root.showComments && (modelData && modelData.type === "task")
+                text:
                 {
-                    visible: root.showComments && (modelData && modelData.type === "task")
-                    text:
-                    {
-                        if (!modelData) return ""
-                        var forceUpdate = root.updateCounter
-                        return modelData.taskComment ? modelData.taskComment : ""
-                    }
-                    x: parent.width + 14
-                    y: 4
-                    font.pixelSize: 14
-                    color: "#666666"
-                    elide: Text.ElideRight
-                    width: Math.min(350, rowContainer.width - ganttBar.x - ganttBar.width - 10)
+                    if (!modelData) return ""
+                    var forceUpdate = root.updateCounter
+                    return modelData.taskComment ? modelData.taskComment : ""
                 }
+                x: ganttBar.x + ganttBar.width + 14
+                y: ganttBar.y + 4
+                font.pixelSize: 14
+                color: "#666666"
+                elide: Text.ElideRight
+                width: Math.min(350, rowContainer.width - ganttBar.x - ganttBar.width - 10)
             }
 
             Repeater
             {
                 model:
                 {
-                    if (modelData && modelData.type === "task" && modelData.rowKind === "target"
-                        && modelData.hasDates && root.showTaskHistory)
+                    if (modelData && modelData.type === "task" && modelData.rowKind === "target" && modelData.hasDates && root.showTaskHistory)
                     {
                         var task = projectController?.projectData?.taskModel?.getTask(modelData.taskId)
                         return task && task.dateHistory ? task.dateHistory : []

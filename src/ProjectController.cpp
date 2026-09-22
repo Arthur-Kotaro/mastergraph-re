@@ -6,9 +6,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-ProjectController::ProjectController(QObject *parent): QObject(parent)
-    , m_projectData(nullptr)
-    , m_inEditMode(false)
+ProjectController::ProjectController(QObject *parent): QObject(parent), m_projectData(nullptr), m_inEditMode(false)
 {
     m_projectData = new ProjectData(this);
     m_resourceManager = new ResourceManager(this);
@@ -17,16 +15,14 @@ ProjectController::ProjectController(QObject *parent): QObject(parent)
 
     m_resourceManager->setResourcesPath(m_settingsManager->resourcesPath());
 
-    connect(m_projectData->get_taskModel(), &TaskModel::taskDatesChanged,
-            this, &ProjectController::onTaskDatesChanged);
-    connect(m_projectData->get_taskModel(), &TaskModel::taskForecastDatesChanged,
-            this, &ProjectController::onTaskForecastDatesChanged);
+    connect(m_projectData->get_taskModel(), &TaskModel::taskDatesChanged,           this, &ProjectController::onTaskDatesChanged);
+    connect(m_projectData->get_taskModel(), &TaskModel::taskForecastDatesChanged,   this, &ProjectController::onTaskForecastDatesChanged);
 }
 
-ProjectData* ProjectController::get_projectData() const { return m_projectData; }
-ResourceManager* ProjectController::get_resourceManager() const { return m_resourceManager; }
-SettingsManager* ProjectController::get_settingsManager() const { return m_settingsManager; }
-ExportManager* ProjectController::get_exportManager() const { return m_exportManager; }
+ProjectData*        ProjectController::get_projectData()        const { return m_projectData; }
+ResourceManager*    ProjectController::get_resourceManager()    const { return m_resourceManager; }
+SettingsManager*    ProjectController::get_settingsManager()    const { return m_settingsManager; }
+ExportManager*      ProjectController::get_exportManager()      const { return m_exportManager; }
 
 bool ProjectController::get_inEditMode() const { return m_inEditMode; }
 void ProjectController::set_InEditMode(bool editMode)
@@ -39,8 +35,7 @@ void ProjectController::set_InEditMode(bool editMode)
 }
 
 void ProjectController::createNewProject(const QString& projectName, const QString& projectType,
-                                         const QDate& startDate, const QString& filePath,
-                                         const QStringList& selectedTaskGroups)
+                                         const QDate& startDate, const QString& filePath, const QStringList& selectedTaskGroups)
 {
     m_projectData->clear();
     m_projectData->set_ProjectName(projectName);
@@ -71,8 +66,7 @@ void ProjectController::createNewProject(const QString& projectName, const QStri
     {
         QVariantMap groupMap = groupData.toMap();
         QString groupName = groupMap["name"].toString();
-        if (selectedTaskGroups.isEmpty() || selectedTaskGroups.contains(groupName))
-            m_projectData->get_groupModel()->addGroup(groupName);
+        if (selectedTaskGroups.isEmpty() || selectedTaskGroups.contains(groupName)) m_projectData->get_groupModel()->addGroup(groupName);
     }
 
     m_projectData->recalculateEndDate();
@@ -165,8 +159,7 @@ void ProjectController::exportToPdf(const QString& filePath)
     m_exportManager->exportToPdf(m_projectData, filePath, QDate::currentDate());
 }
 
-void ProjectController::addTask(const QString& groupId, const QString& title,
-                                const QString& responsible, const QDate& startDate, const QDate& endDate)
+void ProjectController::addTask(const QString& groupId, const QString& title, const QString& responsible, const QDate& startDate, const QDate& endDate)
 {
     if (m_settingsManager->editingLocked())
     {
@@ -178,8 +171,7 @@ void ProjectController::addTask(const QString& groupId, const QString& title,
     m_projectData->set_Modified(true);
 }
 
-void ProjectController::addTaskWithoutDates(const QString& groupId, const QString& title,
-                                            const QString& responsible)
+void ProjectController::addTaskWithoutDates(const QString& groupId, const QString& title, const QString& responsible)
 {
     if (m_settingsManager->editingLocked())
     {
@@ -198,6 +190,36 @@ void ProjectController::removeTask(const QString& taskId)
         emit errorOccurred("Редактирование заблокировано");
         return;
     }
+
+    QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
+    if (task.isEmpty()) return;
+
+    int lgs = task["localGraphState"].toInt();
+    if (lgs != static_cast<int>(GanttDefines::LocalGraphState::NotRequired))
+    {
+        emit confirmRemoveTaskWithLocalGraph(taskId);
+        return;
+    }
+
+    m_projectData->get_dependencyModel()->removeDependenciesForTask(taskId);
+    m_projectData->get_taskModel()->removeTask(taskId);
+    m_projectData->recalculateEndDate();
+    m_projectData->set_Modified(true);
+}
+
+void ProjectController::confirmRemoveTask(const QString& taskId)
+{
+    if (m_settingsManager->editingLocked())
+    {
+        emit errorOccurred("Редактирование заблокировано");
+        return;
+    }
+
+    QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
+    if (task.isEmpty()) return;
+
+    // TODO (C4.7): пометить в манифесте taskDeleted: true
+
     m_projectData->get_dependencyModel()->removeDependenciesForTask(taskId);
     m_projectData->get_taskModel()->removeTask(taskId);
     m_projectData->recalculateEndDate();
@@ -348,8 +370,7 @@ void ProjectController::updateDependentTasks(const QString& taskId, const QDate&
         QDate successorStart = successor["startDate"].toDate();
         QDate successorEnd = successor["endDate"].toDate();
 
-        if (!successorStart.isValid() || !successorEnd.isValid())
-            continue;
+        if (!successorStart.isValid() || !successorEnd.isValid()) continue;
 
         int duration = successorStart.daysTo(successorEnd);
 
@@ -367,8 +388,7 @@ void ProjectController::updateDependentTasks(const QString& taskId, const QDate&
 QDate ProjectController::endOfPredecessor(const QVariantMap& predTask) const
 {
     int status = predTask["status"].toInt();
-    if (status == static_cast<int>(GanttDefines::TaskStatus::Completed))
-        return predTask["endDate"].toDate();
+    if (status == static_cast<int>(GanttDefines::TaskStatus::Completed)) return predTask["endDate"].toDate();
     return predTask["forecastEnd"].toDate();
 }
 
@@ -390,8 +410,7 @@ void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QSt
         if (successor.isEmpty()) continue;
 
         int succStatus = successor["status"].toInt();
-        if (succStatus == static_cast<int>(GanttDefines::TaskStatus::Completed))
-            continue;
+        if (succStatus == static_cast<int>(GanttDefines::TaskStatus::Completed)) continue;
 
         QStringList predecessors = m_projectData->get_dependencyModel()->getPredecessors(successorId);
         QDate requiredStart;
@@ -404,8 +423,7 @@ void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QSt
             if (!predEnd.isValid()) continue;
 
             QDate candidate = predEnd.addDays(1);
-            if (!requiredStart.isValid() || candidate > requiredStart)
-                requiredStart = candidate;
+            if (!requiredStart.isValid() || candidate > requiredStart) requiredStart = candidate;
         }
 
         if (!requiredStart.isValid()) continue;
@@ -473,11 +491,9 @@ void ProjectController::markTaskRequiresLocalGraph(const QString& taskId)
     }
 
     int currentState = task["localGraphState"].toInt();
-    if (currentState != static_cast<int>(GanttDefines::LocalGraphState::NotRequired))
-        return;
+    if (currentState != static_cast<int>(GanttDefines::LocalGraphState::NotRequired)) return;
 
-    m_projectData->get_taskModel()->setLocalGraphState(taskId,
-        static_cast<int>(GanttDefines::LocalGraphState::Required));
+    m_projectData->get_taskModel()->setLocalGraphState(taskId, static_cast<int>(GanttDefines::LocalGraphState::Required));
     m_projectData->set_Modified(true);
 }
 
@@ -566,8 +582,7 @@ bool ProjectController::createLocalGraph(const QString& taskId)
         return false;
     }
 
-    m_projectData->get_taskModel()->setLocalGraphState(taskId,
-        static_cast<int>(GanttDefines::LocalGraphState::Attached));
+    m_projectData->get_taskModel()->setLocalGraphState(taskId, static_cast<int>(GanttDefines::LocalGraphState::Attached));
     m_projectData->set_Modified(true);
     return true;
 }
@@ -643,8 +658,7 @@ bool ProjectController::createLocalGraphOverwrite(const QString& taskId)
         return false;
     }
 
-    m_projectData->get_taskModel()->setLocalGraphState(taskId,
-        static_cast<int>(GanttDefines::LocalGraphState::Attached));
+    m_projectData->get_taskModel()->setLocalGraphState(taskId, static_cast<int>(GanttDefines::LocalGraphState::Attached));
     m_projectData->set_Modified(true);
     return true;
 }
@@ -677,8 +691,7 @@ bool ProjectController::attachExistingLocalGraph(const QString& taskId)
         return false;
     }
 
-    m_projectData->get_taskModel()->setLocalGraphState(taskId,
-        static_cast<int>(GanttDefines::LocalGraphState::Attached));
+    m_projectData->get_taskModel()->setLocalGraphState(taskId, static_cast<int>(GanttDefines::LocalGraphState::Attached));
     m_projectData->set_Modified(true);
     return true;
 }
@@ -690,8 +703,7 @@ void ProjectController::refreshLocalGraphForecast(const QString& taskId, const Q
     QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
     if (task.isEmpty()) return;
 
-    if (task["status"].toInt() == static_cast<int>(GanttDefines::TaskStatus::Completed))
-        return;
+    if (task["status"].toInt() == static_cast<int>(GanttDefines::TaskStatus::Completed)) return;
 
     QFile file(localGraphPath);
     if (!file.open(QIODevice::ReadOnly)) return;
@@ -718,12 +730,11 @@ void ProjectController::refreshLocalGraphForecast(const QString& taskId, const Q
         QDate e = QDate::fromString(ltm["endDate"].toString(), "dd.MM.yyyy");
         int status = ltm["status"].toInt();
 
-        if (s.isValid() && (!minStart.isValid() || s < minStart))
-            minStart = s;
-        if (e.isValid() && (!maxEnd.isValid() || e > maxEnd))
-            maxEnd = e;
-        if (status == static_cast<int>(GanttDefines::TaskStatus::Completed))
-            completedCount++;
+        if (s.isValid() && (!minStart.isValid() || s < minStart)) minStart = s;
+
+        if (e.isValid() && (!maxEnd.isValid() || e > maxEnd)) maxEnd = e;
+
+        if (status == static_cast<int>(GanttDefines::TaskStatus::Completed)) completedCount++;
     }
 
     if (!minStart.isValid() || !maxEnd.isValid()) return;
@@ -732,15 +743,12 @@ void ProjectController::refreshLocalGraphForecast(const QString& taskId, const Q
     m_projectData->get_taskModel()->setTaskProgress(taskId, completedCount, localTasks.size());
 
     if (completedCount == localTasks.size() && localTasks.size() > 0)
-        m_projectData->get_taskModel()->setTaskStatus(taskId,
-                                                      GanttDefines::TaskStatus::Completed);
+        m_projectData->get_taskModel()->setTaskStatus(taskId, GanttDefines::TaskStatus::Completed);
 
         m_projectData->recalculateEndDate();
-    if (markModified)
-        m_projectData->set_Modified(true);
+    if (markModified) m_projectData->set_Modified(true);
 
-    qDebug() << "refreshLocalGraphForecast:" << taskId
-    << "forecast" << minStart.toString("dd.MM.yyyy") << "-" << maxEnd.toString("dd.MM.yyyy")
+    qDebug() << "refreshLocalGraphForecast:" << taskId << "forecast" << minStart.toString("dd.MM.yyyy") << "-" << maxEnd.toString("dd.MM.yyyy")
     << "progress" << completedCount << "/" << localTasks.size();
 }
 
@@ -755,21 +763,17 @@ void ProjectController::refreshAllLocalGraphForecasts()
         QString taskId = task["id"].toString();
         int lgs = task["localGraphState"].toInt();
 
-        if (lgs != static_cast<int>(GanttDefines::LocalGraphState::Attached)
-            && lgs != static_cast<int>(GanttDefines::LocalGraphState::Missing))
-            continue;
+        if (lgs != static_cast<int>(GanttDefines::LocalGraphState::Attached) && lgs != static_cast<int>(GanttDefines::LocalGraphState::Missing)) continue;
 
         QString path = getLocalGraphPath(taskId);
         if (path.isEmpty() || !QFile::exists(path))
         {
-            m_projectData->get_taskModel()->setLocalGraphState(taskId,
-                                                               static_cast<int>(GanttDefines::LocalGraphState::Missing));
+            m_projectData->get_taskModel()->setLocalGraphState(taskId, static_cast<int>(GanttDefines::LocalGraphState::Missing));
             continue;
         }
 
         refreshLocalGraphForecast(taskId, path, false);
-        m_projectData->get_taskModel()->setLocalGraphState(taskId,
-                                                           static_cast<int>(GanttDefines::LocalGraphState::Attached));
+        m_projectData->get_taskModel()->setLocalGraphState(taskId, static_cast<int>(GanttDefines::LocalGraphState::Attached));
     }
 }
 
@@ -785,8 +789,7 @@ void ProjectController::detachLocalGraph(const QString& taskId, bool deleteFile)
     if (task.isEmpty()) return;
 
     int lgs = task["localGraphState"].toInt();
-    if (lgs == static_cast<int>(GanttDefines::LocalGraphState::NotRequired))
-        return;
+    if (lgs == static_cast<int>(GanttDefines::LocalGraphState::NotRequired)) return;
 
     QString path = getLocalGraphPath(taskId);
 
@@ -799,9 +802,36 @@ void ProjectController::detachLocalGraph(const QString& taskId, bool deleteFile)
         }
     }
 
-    m_projectData->get_taskModel()->setLocalGraphState(taskId,
-                                                       static_cast<int>(GanttDefines::LocalGraphState::NotRequired));
+    m_projectData->get_taskModel()->setLocalGraphState(taskId, static_cast<int>(GanttDefines::LocalGraphState::NotRequired));
     m_projectData->set_Modified(true);
 
     qDebug() << "detachLocalGraph:" << taskId << "deleteFile:" << deleteFile;
+}
+
+void ProjectController::setTaskProgress(const QString& taskId, int current, int total)
+{
+    if (m_settingsManager->editingLocked())
+    {
+        emit errorOccurred("Редактирование заблокировано");
+        return;
+    }
+
+    QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
+    if (task.isEmpty()) return;
+
+    if (task["status"].toInt() == static_cast<int>(GanttDefines::TaskStatus::Completed))
+    {
+        emit errorOccurred("Нельзя изменить прогресс завершённой задачи");
+        return;
+    }
+
+    int lgs = task["localGraphState"].toInt();
+    if (lgs == static_cast<int>(GanttDefines::LocalGraphState::Attached) || lgs == static_cast<int>(GanttDefines::LocalGraphState::Missing))
+    {
+        emit errorOccurred("Прогресс задачи с ЛГ транслируется из ЛГ");
+        return;
+    }
+
+    m_projectData->get_taskModel()->setTaskProgress(taskId, current, total);
+    m_projectData->set_Modified(true);
 }

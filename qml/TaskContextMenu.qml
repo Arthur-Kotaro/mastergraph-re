@@ -11,6 +11,7 @@ Menu
 
     property bool canAcceptForecast: false
     property bool canEditForecast: true
+    property bool canSetProgress: false
     property int localGraphState: 0
     property bool isTaskCompleted: false
 
@@ -20,6 +21,7 @@ Menu
     {
         canAcceptForecast = false
         canEditForecast = true
+        canSetProgress = false
         localGraphState = 0
         isTaskCompleted = false
 
@@ -33,6 +35,9 @@ Menu
 
         // Прогноз редактируется вручную только если у задачи нет ЛГ
         canEditForecast = !(localGraphState === 2 || localGraphState === 3)
+
+        // Прогресс задаётся вручную только если у задачи нет ЛГ и она не завершена
+        canSetProgress = !isTaskCompleted && (localGraphState === 0)
 
         if (projectController.settingsManager.editingLocked) return
         if (isTaskCompleted) return
@@ -116,6 +121,17 @@ Menu
         {
             if (root.taskId && projectController)
                 projectController.acceptForecastAsTarget(root.taskId)
+        }
+    }
+
+    MenuItem
+    {
+        text: "Установить прогресс"
+        enabled: root.canSetProgress
+        onTriggered:
+        {
+            if (root.taskId && mainWindow && mainWindow.setProgressDialog)
+                mainWindow.setProgressDialog.openForTask(root.taskId)
         }
     }
 
@@ -204,8 +220,8 @@ Menu
         {
             text: "Отвязать локальный график"
             enabled: root.localGraphState === 1
-            || root.localGraphState === 2
-            || root.localGraphState === 3
+                     || root.localGraphState === 2
+                     || root.localGraphState === 3
             onTriggered:
             {
                 if (root.taskId && mainWindow && mainWindow.detachLocalGraphDialog)

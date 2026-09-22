@@ -133,6 +133,17 @@ Rectangle
 
         Button
         {
+            text: "Прогресс"
+            visible: !appToolBar.isLocalMode
+            checked: mainWindow.gridArea ? mainWindow.gridArea.showProgress : true
+            checkable: true
+            Layout.preferredWidth: 95
+            onCheckedChanged: { if(mainWindow && mainWindow.gridArea) mainWindow.gridArea.showProgress = checked }
+            font.pixelSize: 12
+        }
+
+        Button
+        {
             text: "Зависимости"
             checked: mainWindow.gridArea ? mainWindow.gridArea.showDependencies : true
             checkable: true

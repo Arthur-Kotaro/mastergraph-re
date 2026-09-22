@@ -28,9 +28,7 @@ public:
     bool get_inEditMode() const;
     void set_InEditMode(bool editMode);
 
-    Q_INVOKABLE void createNewProject(const QString& projectName, const QString& projectType,
-                                      const QDate& startDate, const QString& filePath,
-                                      const QStringList& selectedTaskGroups);
+    Q_INVOKABLE void createNewProject(const QString& projectName, const QString& projectType, const QDate& startDate, const QString& filePath, const QStringList& selectedTaskGroups);
     Q_INVOKABLE void openProject(const QString& filePath);
     Q_INVOKABLE bool openLocalGraphFile(const QString& filePath);
     Q_INVOKABLE void saveProject();
@@ -38,10 +36,8 @@ public:
     Q_INVOKABLE void exportToPng(const QString& filePath, int width, int height);
     Q_INVOKABLE void exportToPdf(const QString& filePath);
 
-    Q_INVOKABLE void addTask(const QString& groupId, const QString& title,
-                             const QString& responsible, const QDate& startDate, const QDate& endDate);
-    Q_INVOKABLE void addTaskWithoutDates(const QString& groupId, const QString& title,
-                                         const QString& responsible);
+    Q_INVOKABLE void addTask(const QString& groupId, const QString& title, const QString& responsible, const QDate& startDate, const QDate& endDate);
+    Q_INVOKABLE void addTaskWithoutDates(const QString& groupId, const QString& title, const QString& responsible);
     Q_INVOKABLE void removeTask(const QString& taskId);
     Q_INVOKABLE void updateTaskDates(const QString& taskId, const QDate& newStart, const QDate& newEnd);
     Q_INVOKABLE void updateForecastDates(const QString& taskId, const QDate& newForecastStart, const QDate& newForecastEnd);
@@ -57,6 +53,8 @@ public:
     Q_INVOKABLE bool localGraphFileExists(const QString& taskId) const;
     Q_INVOKABLE void detachLocalGraph(const QString& taskId, bool deleteFile);
     Q_INVOKABLE void refreshLocalGraphForecast(const QString& taskId, const QString& localGraphPath, bool markModified);
+    Q_INVOKABLE void confirmRemoveTask(const QString& taskId);
+    Q_INVOKABLE void setTaskProgress(const QString& taskId, int current, int total);
 
 signals:
     void inEditModeChanged();
@@ -65,6 +63,7 @@ signals:
     void errorOccurred(const QString& message);
     void cascadeUpdateRequired(const QString& taskId);
     void projectDataChanged();
+    void confirmRemoveTaskWithLocalGraph(const QString& taskId);
 
 private slots:
     void onTaskDatesChanged(const QString& taskId);

@@ -22,19 +22,18 @@ ApplicationWindow
     {
         if (projectController && projectController.projectData && projectController.projectData.projectName)
         {
-            if (isLocalWindow)
-                return "Мастерграфик: re. Локальный график: " + projectController.projectData.projectName
+            if (isLocalWindow) return "Мастерграфик: re. Локальный график: " + projectController.projectData.projectName
             return "Мастерграфик: re. Проект: " + projectController.projectData.projectName
         }
         return "Мастерграфик: re"
     }
 
-    onClosing: {
+    onClosing:
+    {
         if (isLocalWindow && sessionManager && projectController)
         {
             var tId = projectController.projectData.getLinkedMasterTaskId()
-            if (tId !== "")
-                sessionManager.notifyWindowClosed(tId)
+            if (tId !== "") sessionManager.notifyWindowClosed(tId)
         }
     }
 
@@ -45,10 +44,7 @@ ApplicationWindow
     {
         var item = activeFocusItem
         if (!item) return false
-        return (item instanceof TextInput
-                || item instanceof TextField
-                || item instanceof TextArea
-                || item instanceof TextEdit)
+        return (item instanceof TextInput || item instanceof TextField || item instanceof TextArea || item instanceof TextEdit)
     }
 
     property alias gridArea: gridArea
@@ -72,6 +68,8 @@ ApplicationWindow
     property alias leftPanel: leftPanel
     property alias calendarHeader: calendarHeader
     property alias detachLocalGraphDialog: detachLocalGraphDialog
+    property alias confirmRemoveTaskDialog: confirmRemoveTaskDialog
+    property alias setProgressDialog: setProgressDialog
 
 
 
@@ -112,9 +110,9 @@ ApplicationWindow
     Shortcut {
         sequence: "Ctrl+H"
         enabled: inEditMode && !editingText
-        onActivated: {
-            if (mainWindow.gridArea)
-                mainWindow.gridArea.showTaskHistory = !mainWindow.gridArea.showTaskHistory
+        onActivated:
+        {
+            if (mainWindow.gridArea) mainWindow.gridArea.showTaskHistory = !mainWindow.gridArea.showTaskHistory
         }
     }
     Shortcut {
@@ -127,7 +125,8 @@ ApplicationWindow
     Shortcut {
         sequence: "Home"
         enabled: inEditMode && !editingText
-        onActivated: {
+        onActivated:
+        {
             if (!flickableRight) return
             flickableRight.contentX = 0
             flickableRight.contentY = 0
@@ -136,7 +135,8 @@ ApplicationWindow
     Shortcut {
         sequence: "End"
         enabled: inEditMode && !editingText
-        onActivated: {
+        onActivated:
+        {
             if (!flickableRight) return
             flickableRight.contentX = Math.max(0, flickableRight.contentWidth - flickableRight.width)
             flickableRight.contentY = Math.max(0, flickableRight.contentHeight - flickableRight.height)
@@ -167,9 +167,7 @@ ApplicationWindow
     {
         if (!flickableRight) return
         var step = Math.max(40, flickableRight.height - 40)
-        flickableRight.contentY = Math.min(
-            flickableRight.contentY + step,
-            Math.max(0, flickableRight.contentHeight - flickableRight.height))
+        flickableRight.contentY = Math.min(flickableRight.contentY + step, Math.max(0, flickableRight.contentHeight - flickableRight.height))
     }
 
     function scrollPageUp()
@@ -200,8 +198,7 @@ ApplicationWindow
         }
         function onErrorOccurred(message)
         {
-            if (typeof toast !== "undefined" && toast)
-                toast.show(message)
+            if (typeof toast !== "undefined" && toast) toast.show(message)
         }
     }
 
@@ -212,6 +209,15 @@ ApplicationWindow
         function onLocalGraphSaved(taskId, filePath)
         {
             if (projectController) projectController.refreshLocalGraphForecast(taskId, filePath, true)
+        }
+    }
+
+    Connections
+    {
+        target: projectController
+        function onConfirmRemoveTaskWithLocalGraph(taskId)
+        {
+            if (mainWindow.confirmRemoveTaskDialog) mainWindow.confirmRemoveTaskDialog.openForTask(taskId)
         }
     }
 
@@ -267,8 +273,7 @@ ApplicationWindow
 
                     onPositionChanged:
                     {
-                        if (drag.active)
-                            leftPanelWidth = splitter.x
+                        if (drag.active) leftPanelWidth = splitter.x
                     }
                 }
             }
@@ -335,15 +340,11 @@ ApplicationWindow
 
             if (wheel.modifiers & Qt.ShiftModifier)
             {
-                flick.contentX = Math.max(0,
-                    Math.min(flick.contentX - wheel.angleDelta.y,
-                             flick.contentWidth - flick.width))
+                flick.contentX = Math.max(0, Math.min(flick.contentX - wheel.angleDelta.y, flick.contentWidth - flick.width))
             }
             else
             {
-                flick.contentY = Math.max(0,
-                    Math.min(flick.contentY - wheel.angleDelta.y,
-                             flick.contentHeight - flick.height))
+                flick.contentY = Math.max(0, Math.min(flick.contentY - wheel.angleDelta.y, flick.contentHeight - flick.height))
             }
             wheel.accepted = true
         }
@@ -425,6 +426,8 @@ ApplicationWindow
     RenameTaskDialog { id: renameTaskDialog }
     LocalGraphExistsDialog { id: localGraphExistsDialog }
     DetachLocalGraphDialog { id: detachLocalGraphDialog }
+    ConfirmRemoveTaskDialog { id: confirmRemoveTaskDialog }
+    SetProgressDialog { id: setProgressDialog }
 
     Labs.FileDialog
     {

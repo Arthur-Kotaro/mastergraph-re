@@ -34,6 +34,8 @@
         <file>qml/TaskContextMenu.qml</file>
         <file>qml/CurrentTimeLine.qml</file>
         <file>qml/DetachLocalGraphDialog.qml</file>
+        <file>qml/ConfirmRemoveTaskDialog.qml</file>
+        <file>qml/SetProgressDialog.qml</file>
         <file alias="default_typologies.json">resources/default_typologies.json</file>
         <file alias="default_tasks.json">resources/default_tasks.json</file>
     </qresource>
