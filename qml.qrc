@@ -7,6 +7,9 @@
         <file>qml/LeftPanel.qml</file>
         <file>qml/LocalTaskList.qml</file>
         <file>qml/GridArea.qml</file>
+        <file>qml/BackgroundCanvas.qml</file>
+        <file>qml/DependencyCanvas.qml</file>
+        <file>qml/TaskRow.qml</file>
         <file>qml/CalendarHeader.qml</file>
         <file>qml/WelcomeScreen.qml</file>
         <file>qml/NewProjectDialog.qml</file>
@@ -31,11 +34,11 @@
         <file>qml/ResponsibleDialog.qml</file>
         <file>qml/RenameTaskDialog.qml</file>
         <file>qml/LocalGraphExistsDialog.qml</file>
-        <file>qml/TaskContextMenu.qml</file>
-        <file>qml/CurrentTimeLine.qml</file>
         <file>qml/DetachLocalGraphDialog.qml</file>
         <file>qml/ConfirmRemoveTaskDialog.qml</file>
         <file>qml/SetProgressDialog.qml</file>
+        <file>qml/TaskContextMenu.qml</file>
+        <file>qml/CurrentTimeLine.qml</file>
         <file alias="default_typologies.json">resources/default_typologies.json</file>
         <file alias="default_tasks.json">resources/default_tasks.json</file>
     </qresource>

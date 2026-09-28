@@ -36,11 +36,11 @@ Flickable
 
     Connections
     {
-        target: projectController?.projectData?.taskModel
+        target: projectController?.projectData?.taskModel ?? null
         function onCountChanged() { refreshTasks() }
-        function onRowsInserted() { refreshTasks() }
-        function onRowsRemoved() { refreshTasks() }
-        function onDataChanged() { refreshTasks() }
+        function onRowsInserted(parent, first, last) { refreshTasks() }
+        function onRowsRemoved(parent, first, last) { refreshTasks() }
+        function onDataChanged(topLeft, bottomRight, roles) { refreshTasks() }
         function onModelReset() { refreshTasks() }
     }
 

@@ -135,32 +135,32 @@ Rectangle
         {
             text: "Прогресс"
             visible: !appToolBar.isLocalMode
-            checked: mainWindow.gridArea ? mainWindow.gridArea.showProgress : true
+            checked: mainWindow.hasGridArea() ? mainWindow.gridArea.showProgress : true
             checkable: true
             Layout.preferredWidth: 95
-            onCheckedChanged: { if(mainWindow && mainWindow.gridArea) mainWindow.gridArea.showProgress = checked }
+            onCheckedChanged: { if(mainWindow.hasGridArea()) mainWindow.gridArea.showProgress = checked }
             font.pixelSize: 12
         }
 
         Button
         {
             text: "Зависимости"
-            checked: mainWindow.gridArea ? mainWindow.gridArea.showDependencies : true
+            checked: mainWindow.hasGridArea() ? mainWindow.gridArea.showDependencies : true
             checkable: true
             Layout.preferredWidth: 110
-            onCheckedChanged: { if(mainWindow && mainWindow.gridArea) mainWindow.gridArea.showDependencies = checked }
+            onCheckedChanged: { if(mainWindow.hasGridArea()) mainWindow.gridArea.showDependencies = checked }
             font.pixelSize: 12
         }
 
         Button
         {
             text: "Переносы"
-            checked: mainWindow.gridArea ? mainWindow.gridArea.showTaskHistory : true
+            checked: mainWindow.hasGridArea() ? mainWindow.gridArea.showTaskHistory : true
             checkable: true
             Layout.preferredWidth: 95
             onCheckedChanged:
             {
-                if (mainWindow && mainWindow.gridArea)
+                if (mainWindow.hasGridArea())
                     mainWindow.gridArea.showTaskHistory = checked
             }
             font.pixelSize: 12
@@ -169,10 +169,10 @@ Rectangle
         Button
         {
             text: "Комментарии"
-            checked: mainWindow.gridArea ? mainWindow.gridArea.showComments : true
+            checked: mainWindow.hasGridArea() ? mainWindow.gridArea.showComments : true
             checkable: true
             Layout.preferredWidth: 115
-            onCheckedChanged: { if(mainWindow && mainWindow.gridArea) mainWindow.gridArea.showComments = checked }
+            onCheckedChanged: { if(mainWindow.hasGridArea()) mainWindow.gridArea.showComments = checked }
             font.pixelSize: 12
         }
 
@@ -183,7 +183,7 @@ Rectangle
             font.pixelSize: 18
             onClicked:
             {
-                if (mainWindow && mainWindow.gridArea)
+                if (mainWindow.hasGridArea())
                     mainWindow.gridArea.updateData()
             }
         }

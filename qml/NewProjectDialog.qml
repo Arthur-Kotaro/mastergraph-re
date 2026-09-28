@@ -166,7 +166,6 @@ Dialog
                                     id: dateField
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: 40
-                                    text: Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
                                     font.pixelSize: 13
                                     placeholderText: "ДД.ММ.ГГГГ"
                                     inputMethodHints: Qt.ImhDate
@@ -174,7 +173,7 @@ Dialog
                                     {
                                         regularExpression: /^\d{2}\.\d{2}\.\d{4}$/
                                     }
-                                    onTextChanged:
+                                    onEditingFinished:
                                     {
                                         var parts = text.split(".")
                                         if (parts.length === 3)
@@ -183,7 +182,16 @@ Dialog
                                             if (!isNaN(newDate.getTime()))
                                             {
                                                 root.startDate = newDate
+                                                text = Qt.formatDateTime(newDate, "dd.MM.yyyy")
                                             }
+                                            else
+                                            {
+                                                text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
+                                            }
+                                        }
+                                        else
+                                        {
+                                            text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
                                         }
                                     }
                                 }
@@ -207,6 +215,13 @@ Dialog
                                 y: 45
                                 modal: true
                                 focus: true
+
+                                onOpened:
+                                {
+                                    calendarYear = root.startDate.getFullYear()
+                                    calendarMonth = root.startDate.getMonth()
+                                    updateCalendarModel()
+                                }
 
                                 Rectangle
                                 {
@@ -517,6 +532,7 @@ Dialog
 
     Component.onCompleted:
     {
+        dateField.text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
         updateCalendarModel()
         nameField.forceActiveFocus()
     }

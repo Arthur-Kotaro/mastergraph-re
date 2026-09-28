@@ -173,26 +173,24 @@ Rectangle
 
     Connections
     {
-        target: projectController?.projectData
+        target: projectController?.projectData ?? null
         function onGraphKindChanged() { refresh() }
         function onDataCleared() { refresh() }
     }
 
     Connections
     {
-        target: projectController?.projectData?.milestoneModel
-        enabled: target !== null
+        target: projectController?.projectData?.milestoneModel ?? null
         function onMilestonesChanged() { refresh() }
         function onModelReset() { refresh() }
     }
 
     Connections
     {
-        target: projectController?.projectData?.taskModel
-        enabled: target !== null
-        function onRowsInserted() { refresh() }
-        function onRowsRemoved() { refresh() }
-        function onDataChanged() { refresh() }
+        target: projectController?.projectData?.taskModel ?? null
+        function onRowsInserted(parent, first, last) { refresh() }
+        function onRowsRemoved(parent, first, last) { refresh() }
+        function onDataChanged(topLeft, bottomRight, roles) { refresh() }
     }
 
     onDisplayStartChanged: rebuildData()

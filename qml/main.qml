@@ -7,9 +7,9 @@ import GanttProject 1.0
 ApplicationWindow
 {
     id: mainWindow
-    width: 1400
+    width: 1580
     height: 750
-    minimumWidth: 1400
+    minimumWidth: 1580
     minimumHeight: 750
     visible: true
 
@@ -47,6 +47,11 @@ ApplicationWindow
         return (item instanceof TextInput || item instanceof TextField || item instanceof TextArea || item instanceof TextEdit)
     }
 
+    function hasGridArea()
+    {
+        return typeof mainWindow.gridArea !== "undefined" && mainWindow.gridArea !== null
+    }
+
     property alias gridArea: gridArea
     property alias editTaskDialog: editTaskDialog
     property alias editForecastDatesDialog: editForecastDatesDialog
@@ -70,8 +75,6 @@ ApplicationWindow
     property alias detachLocalGraphDialog: detachLocalGraphDialog
     property alias confirmRemoveTaskDialog: confirmRemoveTaskDialog
     property alias setProgressDialog: setProgressDialog
-
-
 
     // --- Файл ---
     Shortcut { sequence: "Ctrl+N"; enabled: !isLocalWindow; onActivated: if (projectController && !isLocalWindow) { newProjectDialog.refreshData(); newProjectDialog.open() } }
@@ -105,20 +108,29 @@ ApplicationWindow
     Shortcut {
         sequence: "Ctrl+D"
         enabled: inEditMode && !editingText
-        onActivated: if (mainWindow.gridArea) mainWindow.gridArea.showDependencies = !mainWindow.gridArea.showDependencies
+        onActivated:
+        {
+            if (mainWindow.hasGridArea())
+                mainWindow.gridArea.showDependencies = !mainWindow.gridArea.showDependencies
+        }
     }
     Shortcut {
         sequence: "Ctrl+H"
         enabled: inEditMode && !editingText
         onActivated:
         {
-            if (mainWindow.gridArea) mainWindow.gridArea.showTaskHistory = !mainWindow.gridArea.showTaskHistory
+            if (mainWindow.hasGridArea())
+                mainWindow.gridArea.showTaskHistory = !mainWindow.gridArea.showTaskHistory
         }
     }
     Shortcut {
         sequence: "Ctrl+/"
         enabled: inEditMode && !editingText
-        onActivated: if (mainWindow.gridArea) mainWindow.gridArea.showComments = !mainWindow.gridArea.showComments
+        onActivated:
+        {
+            if (mainWindow.hasGridArea())
+                mainWindow.gridArea.showComments = !mainWindow.gridArea.showComments
+        }
     }
 
     // --- Навигация ---
@@ -188,12 +200,12 @@ ApplicationWindow
         target: projectController
         function onProjectLoaded()
         {
-            if (gridArea) gridArea.updateData()
+            if (mainWindow.hasGridArea()) mainWindow.gridArea.updateData()
             if (calendarHeader) calendarHeader.refresh()
         }
         function onProjectDataChanged()
         {
-            if (gridArea) gridArea.updateData()
+            if (mainWindow.hasGridArea()) mainWindow.gridArea.updateData()
             if (calendarHeader) calendarHeader.refresh()
         }
         function onErrorOccurred(message)
