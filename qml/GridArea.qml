@@ -25,6 +25,9 @@ Rectangle
     property var nodeXByTaskTarget: ({})
     property var nodeXByTaskForecast: ({})
     property var taskContextMenu: null
+    // Ссылка на элемент красной линии — чтобы её можно было прокинуть в делегаты,
+    // не затеняя id currentTimeLine.
+    property var timeLineRef: currentTimeLine
 
     onShowDependenciesChanged: dependencyCanvas.refresh()
     onDayWidthChanged:
@@ -474,7 +477,7 @@ Rectangle
             showProgress: root.showProgress
             showComments: root.showComments
             showTaskHistory: root.showTaskHistory
-            currentTimeLine: currentTimeLine
+            timeLineRef: root.timeLineRef
             updateCounter: root.updateCounter
             externalFlickable: root.externalFlickable
             taskContextMenu: root.taskContextMenu

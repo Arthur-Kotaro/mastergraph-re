@@ -14,7 +14,7 @@ Rectangle
     property bool showProgress: true
     property bool showComments: true
     property bool showTaskHistory: true
-    property var currentTimeLine: null
+    property var timeLineRef: null
     property int updateCounter: 0
     property var externalFlickable: null
     property var taskContextMenu: null
@@ -38,7 +38,13 @@ Rectangle
     {
         visible: rowData && rowData.type === "group"
         text: rowData ? (rowData.name || "") : ""
-        x: 10
+        x:
+        {
+            var _ = root.updateCounter
+            if (root.timeLineRef)
+                return Math.max(10, root.timeLineRef.x + 10)
+            return 10
+        }
         anchors.verticalCenter: parent.verticalCenter
         font.bold: true
         font.pixelSize: 14
@@ -357,7 +363,6 @@ Rectangle
             color: Qt.darker(parent.color, 1.5)
             radius: 2
             visible: moveArea.containsMouse && !root.isForecastLocked()
-            // enabled оставляем без isCompleted — чтобы onPressed срабатывал и мы могли показать сообщение
             enabled: !root.isForecastLocked()
 
             MouseArea
