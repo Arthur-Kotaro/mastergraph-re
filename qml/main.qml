@@ -313,7 +313,6 @@ ApplicationWindow
                     id: calendarHeader
                     x: -flickableRight.contentX
                     width: calendarHeader.contentWidth
-                    height: 240
                 }
 
                 Flickable

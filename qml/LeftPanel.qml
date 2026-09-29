@@ -11,18 +11,18 @@ Rectangle
     property int rowHeight: 40
     property var flickableRight: null
 
-    readonly property bool isLocalMode: {
-        return projectController && projectController.projectData
-               && projectController.projectData.graphKind === 1
+    readonly property bool isLocalMode:
+    {
+        return projectController && projectController.projectData && projectController.projectData.graphKind === 1
     }
 
-    // Высота грида (для синхронизации жирной линии слева и справа)
     readonly property real gridContentHeight:
     {
-        if (mainWindow && mainWindow.hasGridArea && mainWindow.hasGridArea())
-            return mainWindow.gridArea.contentHeight
+        if (mainWindow && mainWindow.hasGridArea && mainWindow.hasGridArea()) return mainWindow.gridArea.contentHeight
         return 0
     }
+
+    readonly property int topBlockHeight: rowHeight * (isLocalMode ? 4 : 5)
 
     Column
     {
@@ -32,7 +32,7 @@ Rectangle
         Row
         {
             width: parent.width
-            height: 200
+            height: topBlockHeight
 
             Rectangle
             {
@@ -111,10 +111,11 @@ Rectangle
                         border.width: 1
                         Text { text: "День"; anchors.centerIn: parent; font.bold: true; font.pixelSize: 12 }
                     }
+                    // Строка вех — только в МГ, в ЛГ не занимает места
                     Rectangle
                     {
                         width: parent.width
-                        height: rowHeight
+                        height: root.isLocalMode ? 0 : rowHeight
                         border.color: "#cccccc"
                         border.width: 1
                         visible: !root.isLocalMode
@@ -201,7 +202,6 @@ Rectangle
             width: parent.width
             height: parent.height - 240
 
-            // Плоский список задач (ЛГ)
             LocalTaskList
             {
                 visible: root.isLocalMode
@@ -210,7 +210,6 @@ Rectangle
                 flickableRight: root.flickableRight
             }
 
-            // Список групп (МГ)
             Flickable
             {
                 id: groupsFlickable

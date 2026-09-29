@@ -7,7 +7,11 @@ Rectangle
     property alias milestoneBar: milestoneBar
     color: "#f8f8f8"
     width: parent?.width || 1000
-    height: 240
+
+    property int rowHeight: 40
+
+    // Высота по содержимому Column (MilestoneBar в ЛГ даёт 0)
+    height: columnContent.height
 
     property date firstMilestoneDate: new Date()
     property date lastMilestoneDate: new Date()
@@ -44,7 +48,6 @@ Rectangle
         return d
     }
 
-    // Та же логика, что и в GridArea.computeLocalDisplayRange()
     function computeLocalDisplayRange(linkedStart, linkedEnd, earliest, latest)
     {
         var s = new Date(linkedStart)
@@ -130,7 +133,6 @@ Rectangle
     property int totalDays: Math.max(1, Math.floor((displayEnd - displayStart) / 86400000) + 1)
     property real contentWidth: totalDays * dayWidth
 
-    property int rowHeight: 40
     property var yearData: []
     property var monthData: []
     property var weekData: []
@@ -237,6 +239,7 @@ Rectangle
 
     Column
     {
+        id: columnContent
         spacing: 0
 
         Rectangle
@@ -279,7 +282,8 @@ Rectangle
         {
             id: milestoneBar
             visible: !root.isLocalMode
-            width: contentWidth; height: rowHeight
+            width: contentWidth
+            height: root.isLocalMode ? 0 : root.rowHeight
             milestonesModel: projectController?.projectData?.milestoneModel
             startDate: displayStart; dayWidth: dayWidth
         }
