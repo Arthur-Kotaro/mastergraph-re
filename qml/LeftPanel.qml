@@ -16,6 +16,14 @@ Rectangle
                && projectController.projectData.graphKind === 1
     }
 
+    // Высота грида (для синхронизации жирной линии слева и справа)
+    readonly property real gridContentHeight:
+    {
+        if (mainWindow && mainWindow.hasGridArea && mainWindow.hasGridArea())
+            return mainWindow.gridArea.contentHeight
+        return 0
+    }
+
     Column
     {
         anchors.fill: parent
@@ -186,46 +194,70 @@ Rectangle
             }
         }
 
-        // Локальный режим: плоский список задач
-        LocalTaskList
+        // Область задач/групп + жирная нижняя линия
+        Item
         {
-            visible: root.isLocalMode
+            id: tasksArea
             width: parent.width
             height: parent.height - 240
-            flickableRight: root.flickableRight
-        }
 
-        // Мастерграфик: список групп
-        Flickable
-        {
-            id: groupsFlickable
-            visible: !root.isLocalMode
-            width: parent.width
-            height: parent.height - 240
-            clip: true
-            contentWidth: width
-            contentHeight: groupsColumn.height
-            boundsBehavior: Flickable.StopAtBounds
-
-            interactive: false
-
-            contentY: root.flickableRight ? root.flickableRight.contentY : 0
-
-            Column
+            // Плоский список задач (ЛГ)
+            LocalTaskList
             {
-                id: groupsColumn
+                visible: root.isLocalMode
                 width: parent.width
-                spacing: 0
+                height: parent.height
+                flickableRight: root.flickableRight
+            }
 
-                Repeater
+            // Список групп (МГ)
+            Flickable
+            {
+                id: groupsFlickable
+                visible: !root.isLocalMode
+                width: parent.width
+                height: parent.height
+                clip: true
+                contentWidth: width
+                contentHeight: groupsColumn.height
+                boundsBehavior: Flickable.StopAtBounds
+                interactive: false
+                contentY: root.flickableRight ? root.flickableRight.contentY : 0
+
+                Column
                 {
-                    model: (projectController && projectController.projectData) ? projectController.projectData.groupModel : null
+                    id: groupsColumn
+                    width: parent.width
+                    spacing: 0
 
-                    delegate: GroupDelegate
+                    Repeater
                     {
-                        width: groupsColumn.width
-                        flickableRight: root.flickableRight
+                        model: (projectController && projectController.projectData) ? projectController.projectData.groupModel : null
+
+                        delegate: GroupDelegate
+                        {
+                            width: groupsColumn.width
+                            flickableRight: root.flickableRight
+                        }
                     }
+                }
+            }
+
+            // Жирная нижняя линия, синхронизированная с гридом справа
+            Rectangle
+            {
+                id: bottomLine
+                width: parent.width
+                height: 3
+                color: "#666666"
+                z: 100
+
+                visible: root.gridContentHeight > 0 && y >= 0 && y <= tasksArea.height
+
+                y:
+                {
+                    if (!root.flickableRight) return root.gridContentHeight
+                    return root.gridContentHeight - root.flickableRight.contentY
                 }
             }
         }

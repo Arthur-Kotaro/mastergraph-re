@@ -27,6 +27,15 @@ Rectangle
     property var taskContextMenu: null
     property var timeLineRef: currentTimeLine
 
+    property bool showTargetStartLine: false
+    property bool showTargetEndLine: false
+    property real targetStartLineX: 0
+    property real targetEndLineX: 0
+    property bool targetStartLineArrows: true
+    property bool targetEndLineArrows: true
+
+    property int effectiveRows: totalRows
+
     onShowDependenciesChanged: dependencyCanvas.refresh()
     onDayWidthChanged:
     {
@@ -47,6 +56,24 @@ Rectangle
         id: currentTimeLine
         displayStart: root.displayStart
         dayWidth: root.dayWidth
+    }
+
+    TargetDatesLine
+    {
+        id: targetStartLine
+        visible: root.isLocalMode && root.showTargetStartLine
+        x: root.targetStartLineX
+        showArrows: root.targetStartLineArrows
+        arrowDirection: "right"
+    }
+
+    TargetDatesLine
+    {
+        id: targetEndLine
+        visible: root.isLocalMode && root.showTargetEndLine
+        x: root.targetEndLineX
+        showArrows: root.targetEndLineArrows
+        arrowDirection: "left"
     }
 
     Connections
@@ -94,6 +121,12 @@ Rectangle
         return Math.floor((new Date(dateValue) - root.displayStart) / 86400000)
     }
 
+    function dateToX(dateValue)
+    {
+        if (!isValidDate(dateValue)) return -1
+        return daysFromStart(dateValue) * dayWidth
+    }
+
     function computeNodePositions(allTasks)
     {
         var taskById = {}
@@ -135,9 +168,7 @@ Rectangle
 
             if (kind === "target")
             {
-                // Целевые сроки предшественника — приоритет
                 if (hasTaskDates(predTask)) pEnd = new Date(predTask.endDate)
-                // Если целевых нет, но есть прогноз (например, после создания ЛГ) — берём прогноз
                 else if (hasTaskForecast(predTask)) pEnd = new Date(predTask.forecastEnd)
             }
             else
@@ -170,6 +201,70 @@ Rectangle
         return result
     }
 
+    function updateTargetDateLines()
+    {
+        showTargetStartLine = false
+        showTargetEndLine = false
+        targetStartLineX = 0
+        targetEndLineX = 0
+        targetStartLineArrows = true
+        targetEndLineArrows = true
+
+        if (!isLocalMode) return
+        if (!projectController || !projectController.projectData) return
+
+        var linkedStart = projectController.projectData.getLinkedTargetStart()
+        var linkedEnd = projectController.projectData.getLinkedTargetEnd()
+
+        if (isValidDate(linkedStart) && isValidDate(linkedEnd))
+        {
+            var xs = dateToX(linkedStart)
+            var xe = dateToX(linkedEnd)
+            if (xs >= 0) { targetStartLineX = xs; showTargetStartLine = true }
+            if (xe >= 0) { targetEndLineX = xe; showTargetEndLine = true }
+        }
+    }
+
+    function computeLocalDisplayRange(linkedStart, linkedEnd, earliest, latest)
+    {
+        // Базовая точка — целевые сроки задачи
+        var s = new Date(linkedStart)
+        var e = new Date(linkedEnd)
+
+        // Если целевой срок меньше месяца — расширяем до целого месяца целевого срока
+        var durationDays = Math.floor((e - s) / 86400000) + 1
+        if (durationDays < 30)
+        {
+            // Начало: 1-е число месяца linkedStart минус 14 дней
+            var ms = new Date(s.getFullYear(), s.getMonth(), 1)
+            ms.setDate(ms.getDate() - 14)
+            ms.setHours(0, 0, 0, 0)
+            // Конец: последнее число месяца linkedEnd плюс 14 дней
+            var me = new Date(e.getFullYear(), e.getMonth() + 1, 0)
+            me.setDate(me.getDate() + 14)
+            me.setHours(23, 59, 59, 999)
+            s = ms
+            e = me
+        }
+        else
+        {
+            // Стандартные ±14 дней
+            s.setDate(s.getDate() - 14)
+            s.setHours(0, 0, 0, 0)
+            e.setDate(e.getDate() + 14)
+            e.setHours(23, 59, 59, 999)
+        }
+
+        // Расширяем по фактическому содержимому ЛГ
+        if (isValidDate(earliest) && earliest < s) s = new Date(earliest)
+        if (isValidDate(latest) && latest > e) e = new Date(latest)
+
+        // Выравнивание по понедельнику
+        while (s.getDay() !== 1) s.setDate(s.getDate() - 1)
+
+        return { start: s, end: e }
+    }
+
     function updateData()
     {
         if (!projectController || !projectController.projectData) return
@@ -188,25 +283,21 @@ Rectangle
 
             if (isValidDate(linkedStart) && isValidDate(linkedEnd))
             {
-                s = new Date(linkedStart)
-                e = new Date(linkedEnd)
+                var range = computeLocalDisplayRange(linkedStart, linkedEnd, earliest, latest)
+                s = range.start
+                e = range.end
             }
             else
             {
                 var now = new Date()
                 s = new Date(now.getFullYear(), now.getMonth() - 1, 1)
                 e = new Date(now.getFullYear(), now.getMonth() + 2, 0)
+                s.setHours(0, 0, 0, 0)
+                e.setHours(23, 59, 59, 999)
+                if (isValidDate(earliest) && earliest < s) s = new Date(earliest)
+                if (isValidDate(latest) && latest > e) e = new Date(latest)
+                while (s.getDay() !== 1) s.setDate(s.getDate() - 1)
             }
-
-            if (isValidDate(earliest) && earliest < s) s = new Date(earliest)
-            if (isValidDate(latest) && latest > e) e = new Date(latest)
-
-            s.setDate(s.getDate() - 14)
-            s.setHours(0, 0, 0, 0)
-            e.setDate(e.getDate() + 14)
-            e.setHours(23, 59, 59, 999)
-
-            while (s.getDay() !== 1) s.setDate(s.getDate() - 1)
 
             displayStart = s
             displayEnd = e
@@ -380,13 +471,16 @@ Rectangle
         visibleItems = items
         updateCounter++
         totalRows = visibleItems.length
-        var minH = root.externalFlickable ? root.externalFlickable.height : (rowHeight * 5)
-        contentHeight = Math.max(minH, totalRows * rowHeight)
+
+        var rowsForHeight = (localMode) ? Math.max(totalRows, 5) : totalRows
+        effectiveRows = rowsForHeight
+        contentHeight = rowsForHeight * rowHeight
 
         root.width = gridWidth
         root.height = contentHeight
 
         tasksRepeater.model = visibleItems
+        updateTargetDateLines()
         backgroundCanvas.refresh()
         dependencyCanvas.refresh()
         if (currentTimeLine) currentTimeLine.updateLinePosition()
@@ -495,5 +589,17 @@ Rectangle
             onTaskDatesChanged: function(taskId, newStart, newEnd) { root.updateTaskDates(taskId, newStart, newEnd) }
             onForecastDatesChanged: function(taskId, newStart, newEnd) { root.updateForecastDates(taskId, newStart, newEnd) }
         }
+    }
+
+    // Жирная нижняя линия — как Rectangle, идентично линии в левой панели
+    Rectangle
+    {
+        id: bottomLine
+        width: parent.width
+        height: 3
+        y: parent.height - height
+        color: "#666666"
+        z: 50
+        visible: root.contentHeight > 0
     }
 }

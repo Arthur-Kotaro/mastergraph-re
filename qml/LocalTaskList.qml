@@ -11,8 +11,17 @@ Flickable
     interactive: false
 
     property var flickableRight: null
+    property int rowHeight: 40
 
     contentY: flickableRight ? flickableRight.contentY : 0
+
+    // Высота грида справа (для синхронизации линий и MouseArea)
+    readonly property real gridHeight:
+    {
+        if (mainWindow && mainWindow.hasGridArea && mainWindow.hasGridArea())
+            return mainWindow.gridArea.contentHeight
+        return 0
+    }
 
     function taskIds()
     {
@@ -57,10 +66,12 @@ Flickable
         width: root.width
         height: Math.max(root.height, tasksColumn.height)
 
+        // MouseArea только в области задач (не ниже жирной линии)
         MouseArea
         {
             id: emptyArea
-            anchors.fill: parent
+            width: parent.width
+            height: Math.min(root.gridHeight > 0 ? root.gridHeight : parent.height, parent.height)
             acceptedButtons: Qt.RightButton
             onClicked: function(mouse)
             {

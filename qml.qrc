@@ -39,6 +39,7 @@
         <file>qml/SetProgressDialog.qml</file>
         <file>qml/TaskContextMenu.qml</file>
         <file>qml/CurrentTimeLine.qml</file>
+        <file>qml/TargetDatesLine.qml</file>
         <file alias="default_typologies.json">resources/default_typologies.json</file>
         <file alias="default_tasks.json">resources/default_tasks.json</file>
     </qresource>

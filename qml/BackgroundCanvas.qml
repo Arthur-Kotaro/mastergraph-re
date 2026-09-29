@@ -123,17 +123,5 @@ Canvas
             }
         }
         ctx.stroke()
-
-        // 7. Финальная толстая линия внизу
-        ctx.beginPath()
-        ctx.lineWidth = 3
-        ctx.strokeStyle = "#666666"
-        var lastY = totalRows * rowHeight
-        if (lastY <= height && lastY > 0)
-        {
-            ctx.moveTo(0, lastY)
-            ctx.lineTo(width, lastY)
-        }
-        ctx.stroke()
     }
 }
