@@ -108,12 +108,22 @@ void SessionManager::notifyWindowClosed(const QString& taskId)
     if (!m_localSessions.contains(taskId)) return;
 
     LocalSession session = m_localSessions.take(taskId);
-    if (session.window)
-        session.window->deleteLater();
-    if (session.controller)
-        session.controller->deleteLater();
-    if (session.engine)
-        session.engine->deleteLater();
+
+    // Обновляем прогноз в мастер-графике по актуальному файлу ЛГ
+    // (файл уже сохранён — либо при создании, либо вручную пользователем)
+    if (m_masterController && !taskId.isEmpty())
+    {
+        QString path = m_masterController->getLocalGraphPath(taskId);
+        if (!path.isEmpty() && QFile::exists(path))
+        {
+            m_masterController->refreshLocalGraphForecast(taskId, path, true);
+            emit localGraphSaved(taskId, path);
+        }
+    }
+
+    if (session.window) session.window->deleteLater();
+    if (session.controller) session.controller->deleteLater();
+    if (session.engine) session.engine->deleteLater();
 
     emit localGraphSessionClosed(taskId);
 }

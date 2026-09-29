@@ -221,7 +221,17 @@ ApplicationWindow
         enabled: !mainWindow.isLocalWindow
         function onLocalGraphSaved(taskId, filePath)
         {
-            if (projectController) projectController.refreshLocalGraphForecast(taskId, filePath, true)
+            if (projectController)
+            {
+                projectController.refreshLocalGraphForecast(taskId, filePath, true)
+                console.log("=== refreshLocalGraphForecast done")
+                if (mainWindow.hasGridArea())
+                {
+                    mainWindow.gridArea.updateData()
+                    console.log("=== gridArea.updateData done")
+                }
+                if (calendarHeader) calendarHeader.refresh()
+            }
         }
     }
 

@@ -135,7 +135,10 @@ Rectangle
 
             if (kind === "target")
             {
+                // Целевые сроки предшественника — приоритет
                 if (hasTaskDates(predTask)) pEnd = new Date(predTask.endDate)
+                // Если целевых нет, но есть прогноз (например, после создания ЛГ) — берём прогноз
+                else if (hasTaskForecast(predTask)) pEnd = new Date(predTask.forecastEnd)
             }
             else
             {

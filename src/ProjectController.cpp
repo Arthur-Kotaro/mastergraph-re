@@ -407,7 +407,6 @@ void ProjectController::onTaskForecastDatesChanged(const QString& taskId)
     QSet<QString> visited;
     updateDependentForecasts(taskId, visited);
 }
-
 void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QString>& visited)
 {
     if (visited.contains(taskId)) return;
@@ -436,12 +435,18 @@ void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QSt
             if (!requiredStart.isValid() || candidate > requiredStart) requiredStart = candidate;
         }
 
-        if (!requiredStart.isValid()) continue;
-
+        // Последователь без сроков — это узел.
+        // Даты ему не назначаем, но идём по цепочке дальше,
+        // чтобы обновить прогнозы у более дальних последователей с датами.
         QDate succStart = successor["forecastStart"].toDate();
         QDate succEnd = successor["forecastEnd"].toDate();
-        if (!succStart.isValid() || !succEnd.isValid()) continue;
+        if (!succStart.isValid() || !succEnd.isValid())
+        {
+            updateDependentForecasts(successorId, visited);
+            continue;
+        }
 
+        if (!requiredStart.isValid()) continue;
         if (succStart >= requiredStart) continue;
 
         int duration = succStart.daysTo(succEnd);
@@ -452,7 +457,6 @@ void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QSt
         updateDependentForecasts(successorId, visited);
     }
 }
-
 // ---------------- Локальные графики ----------------
 
 QString ProjectController::localGraphDirectory() const
@@ -757,7 +761,6 @@ void ProjectController::refreshLocalGraphForecast(const QString& taskId, const Q
 
         m_projectData->recalculateEndDate();
     if (markModified) m_projectData->set_Modified(true);
-
     qDebug() << "refreshLocalGraphForecast:" << taskId << "forecast" << minStart.toString("dd.MM.yyyy") << "-" << maxEnd.toString("dd.MM.yyyy")
     << "progress" << completedCount << "/" << localTasks.size();
 }
