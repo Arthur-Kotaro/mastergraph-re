@@ -15,28 +15,46 @@ Menu
     property int localGraphState: 0
     property bool isTaskCompleted: false
 
-    onOpened: updateState()
+    onOpened:
+    {
+        console.log("DIAG TaskContextMenu onOpened, taskId=", taskId, " visible=", visible, " parent=", parent)
+        updateState()
+    }
+
+    onClosed:
+    {
+        console.log("DIAG TaskContextMenu onClosed, taskId=", taskId)
+    }
 
     function updateState()
     {
+        console.log("DIAG TaskContextMenu updateState, taskId=", taskId)
+
         canAcceptForecast = false
         canEditForecast = true
         canSetProgress = false
         localGraphState = 0
         isTaskCompleted = false
 
-        if (!taskId || !projectController || !projectController.projectData) return
+        if (!taskId || !projectController || !projectController.projectData)
+        {
+            console.log("DIAG updateState early return: no taskId or no projectController")
+            return
+        }
 
         var task = projectController.projectData.taskModel.getTask(taskId)
-        if (!task) return
+        if (!task)
+        {
+            console.log("DIAG updateState early return: no task found for taskId=", taskId)
+            return
+        }
+
+        console.log("DIAG updateState found task:", task.title, " status=", task.status, " lgs=", task.localGraphState)
 
         isTaskCompleted = (task.status === 1)
         localGraphState = task.localGraphState !== undefined ? task.localGraphState : 0
 
-        // Прогноз редактируется вручную только если у задачи нет ЛГ
         canEditForecast = !(localGraphState === 2 || localGraphState === 3)
-
-        // Прогресс задаётся вручную только если у задачи нет ЛГ и она не завершена
         canSetProgress = !isTaskCompleted && (localGraphState === 0)
 
         if (projectController.settingsManager.editingLocked) return
