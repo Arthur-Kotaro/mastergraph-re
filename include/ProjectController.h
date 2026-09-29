@@ -28,6 +28,9 @@ public:
     bool get_inEditMode() const;
     void set_InEditMode(bool editMode);
 
+    Q_INVOKABLE void notifyEditingLocked();
+    Q_INVOKABLE void notifyTaskCompleted();
+
     Q_INVOKABLE void createNewProject(const QString& projectName, const QString& projectType, const QDate& startDate, const QString& filePath, const QStringList& selectedTaskGroups);
     Q_INVOKABLE void openProject(const QString& filePath);
     Q_INVOKABLE bool openLocalGraphFile(const QString& filePath);

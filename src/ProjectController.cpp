@@ -34,6 +34,16 @@ void ProjectController::set_InEditMode(bool editMode)
     }
 }
 
+void ProjectController::notifyEditingLocked()
+{
+    emit errorOccurred("Редактирование заблокировано");
+}
+
+void ProjectController::notifyTaskCompleted()
+{
+    emit errorOccurred("Редактирование завершённых задач запрещено");
+}
+
 void ProjectController::createNewProject(const QString& projectName, const QString& projectType,
                                          const QDate& startDate, const QString& filePath, const QStringList& selectedTaskGroups)
 {

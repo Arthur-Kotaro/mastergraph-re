@@ -19,7 +19,6 @@ Rectangle
     property var externalFlickable: null
     property var taskContextMenu: null
 
-    // Поднимаем слой строки, пока виден тултип — иначе соседние TaskRow его перекрывают
     property bool tooltipVisible: false
     z: tooltipVisible ? 50 : 0
 
@@ -287,12 +286,14 @@ Rectangle
 
                 if (projectController && projectController.settingsManager.editingLocked)
                 {
+                    projectController.notifyEditingLocked()
                     drag.target = null
                     return
                 }
 
                 if (rowData && rowData.isCompleted)
                 {
+                    if (projectController) projectController.notifyTaskCompleted()
                     drag.target = null
                     return
                 }
@@ -356,12 +357,13 @@ Rectangle
             color: Qt.darker(parent.color, 1.5)
             radius: 2
             visible: moveArea.containsMouse && !root.isForecastLocked()
-            enabled: !(rowData && rowData.isCompleted) && !root.isForecastLocked()
+            // enabled оставляем без isCompleted — чтобы onPressed срабатывал и мы могли показать сообщение
+            enabled: !root.isForecastLocked()
 
             MouseArea
             {
                 id: resizeArea
-                enabled: !(rowData && rowData.isCompleted) && !root.isForecastLocked()
+                enabled: !root.isForecastLocked()
                 anchors.fill: parent
                 cursorShape: root.isForecastLocked() ? Qt.ArrowCursor : Qt.SizeHorCursor
 
@@ -371,8 +373,18 @@ Rectangle
                 onPressed:
                 {
                     if (root.isForecastLocked()) return
-                    if (projectController && projectController.settingsManager.editingLocked) return
-                    if (rowData && rowData.isCompleted) return
+
+                    if (projectController && projectController.settingsManager.editingLocked)
+                    {
+                        projectController.notifyEditingLocked()
+                        return
+                    }
+
+                    if (rowData && rowData.isCompleted)
+                    {
+                        if (projectController) projectController.notifyTaskCompleted()
+                        return
+                    }
 
                     if (root.externalFlickable) root.externalFlickable.interactive = false
                     startWidth = ganttBar.width
@@ -398,6 +410,8 @@ Rectangle
                 onReleased:
                 {
                     if (root.externalFlickable) root.externalFlickable.interactive = true
+                    if (projectController && projectController.settingsManager.editingLocked) return
+                    if (rowData && rowData.isCompleted) return
                     ganttBar.updateDates()
                 }
             }
@@ -470,7 +484,7 @@ Rectangle
         }
     }
 
-    // ---------- Кастомный ToolTip, привязанный к курсору мыши ----------
+    // ---------- Кастомный ToolTip ----------
     Rectangle
     {
         id: barTooltip
@@ -510,15 +524,12 @@ Rectangle
 
                 var lines = []
 
-                // Заголовок
                 var label = (rowData.rowKind === "forecast") ? "Прогноз: " : ""
                 lines.push(label + rowData.taskTitle)
 
-                // Ответственный
                 var resp = rowData.taskResponsible && rowData.taskResponsible !== "" ? rowData.taskResponsible : "—"
                 lines.push("Ответственный: " + resp)
 
-                // Целевые сроки
                 if (rowData.hasDates === true)
                 {
                     var s = Qt.formatDateTime(new Date(rowData.taskStart), "dd.MM.yyyy")
@@ -527,7 +538,6 @@ Rectangle
                     lines.push("Целевые сроки: " + s + " — " + e + " (" + dur + " дн.)")
                 }
 
-                // Прогноз
                 if (rowData.hasForecast === true
                     && (rowData.rowKind === "forecast" || rowData.isUnapproved === true))
                 {
@@ -536,7 +546,6 @@ Rectangle
                     lines.push("Прогноз: " + fs + " — " + fe)
                 }
 
-                // Статус
                 var statusText = "Запланировано"
                 switch (rowData.taskStatus)
                 {
@@ -547,11 +556,9 @@ Rectangle
                 }
                 lines.push("Статус: " + statusText)
 
-                // Прогресс
                 if ((rowData.progressTotal || 0) > 0 && (rowData.progressCurrent || 0) >= 0)
                     lines.push("Прогресс: " + rowData.progressCurrent + " / " + rowData.progressTotal)
 
-                // Локальный график
                 var lgs = rowData.localGraphState !== undefined ? rowData.localGraphState : 0
                 var lgsText = ""
                 switch (lgs)
@@ -562,7 +569,6 @@ Rectangle
                 }
                 if (lgsText !== "") lines.push("Локальный график: " + lgsText)
 
-                // Комментарий
                 if (rowData.taskComment && rowData.taskComment !== "")
                     lines.push("Комментарий: " + rowData.taskComment)
 
