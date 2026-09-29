@@ -75,6 +75,7 @@ ApplicationWindow
     property alias detachLocalGraphDialog: detachLocalGraphDialog
     property alias confirmRemoveTaskDialog: confirmRemoveTaskDialog
     property alias setProgressDialog: setProgressDialog
+    property alias taskContextMenu: taskContextMenu
 
     // --- Файл ---
     Shortcut { sequence: "Ctrl+N"; enabled: !isLocalWindow; onActivated: if (projectController && !isLocalWindow) { newProjectDialog.refreshData(); newProjectDialog.open() } }
@@ -324,6 +325,7 @@ ApplicationWindow
                         id: gridArea
                         externalFlickable: flickableRight
                         width: calendarHeader.contentWidth
+                        taskContextMenu: mainWindow.taskContextMenu
                     }
                 }
             }
@@ -440,6 +442,11 @@ ApplicationWindow
     DetachLocalGraphDialog { id: detachLocalGraphDialog }
     ConfirmRemoveTaskDialog { id: confirmRemoveTaskDialog }
     SetProgressDialog { id: setProgressDialog }
+
+    TaskContextMenu
+    {
+        id: taskContextMenu
+    }
 
     Labs.FileDialog
     {

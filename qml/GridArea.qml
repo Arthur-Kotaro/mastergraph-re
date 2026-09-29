@@ -24,6 +24,7 @@ Rectangle
     property int updateCounter: 0
     property var nodeXByTaskTarget: ({})
     property var nodeXByTaskForecast: ({})
+    property var taskContextMenu: null
 
     onShowDependenciesChanged: dependencyCanvas.refresh()
     onDayWidthChanged:
@@ -476,15 +477,10 @@ Rectangle
             currentTimeLine: currentTimeLine
             updateCounter: root.updateCounter
             externalFlickable: root.externalFlickable
-            taskContextMenu: taskContextMenu
+            taskContextMenu: root.taskContextMenu
 
             onTaskDatesChanged: function(taskId, newStart, newEnd) { root.updateTaskDates(taskId, newStart, newEnd) }
             onForecastDatesChanged: function(taskId, newStart, newEnd) { root.updateForecastDates(taskId, newStart, newEnd) }
         }
-    }
-
-    TaskContextMenu
-    {
-        id: taskContextMenu
     }
 }

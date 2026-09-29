@@ -19,6 +19,10 @@ Rectangle
     property var externalFlickable: null
     property var taskContextMenu: null
 
+    // Поднимаем слой строки, пока виден тултип — иначе соседние TaskRow его перекрывают
+    property bool tooltipVisible: false
+    z: tooltipVisible ? 50 : 0
+
     signal taskDatesChanged(string taskId, date newStart, date newEnd)
     signal forecastDatesChanged(string taskId, date newStart, date newEnd)
 
@@ -35,12 +39,7 @@ Rectangle
     {
         visible: rowData && rowData.type === "group"
         text: rowData ? (rowData.name || "") : ""
-        x:
-        {
-            if (currentTimeLine && currentTimeLine.visible)
-                return currentTimeLine.x + 10
-            return 10
-        }
+        x: 10
         anchors.verticalCenter: parent.verticalCenter
         font.bold: true
         font.pixelSize: 14
@@ -75,9 +74,11 @@ Rectangle
 
         MouseArea
         {
+            id: nodeArea
             anchors.fill: parent
             acceptedButtons: Qt.RightButton
             hoverEnabled: true
+
             onClicked: function(mouse)
             {
                 if (mouse.button === Qt.RightButton && rowData && root.taskContextMenu)
@@ -117,7 +118,6 @@ Rectangle
 
         height: parent.height - 8
         y: 4
-        clip: true
 
         function getStatusColor()
         {
@@ -148,8 +148,6 @@ Rectangle
         color: getBarColor()
         opacity: getBarOpacity()
         radius: 4
-        border.color: Qt.darker(color, 1.2)
-        border.width: 1
 
         Rectangle
         {
@@ -242,85 +240,111 @@ Rectangle
             }
         }
 
-        ToolTip
-        {
-            visible: moveArea.containsMouse
-            text:
-            {
-                if (!rowData) return ""
-                var label = (rowData.rowKind === "forecast") ? "Прогноз: " : ""
-                var duration = Math.floor((new Date(rowData.taskEnd) - new Date(rowData.taskStart)) / (24 * 60 * 60 * 1000)) + 1
-                var commentText = (rowData.taskComment && rowData.taskComment !== "") ? rowData.taskComment : "-"
-                return label + rowData.taskTitle + "\nДлительность: " + duration + " дней" + "\nОтветственный: " + rowData.taskResponsible + "\nКомментарий: " + commentText
-            }
-            delay: 500
-        }
-
         MouseArea
         {
             id: moveArea
             anchors.fill: parent
             hoverEnabled: true
-            drag.target: parent
-            drag.axis: Drag.XAxis
-            drag.minimumX: 0
-            drag.maximumX: root.width - parent.width
             acceptedButtons: Qt.LeftButton | Qt.RightButton
+
+            property bool suppressClick: false
+            property bool showTooltip: false
+
+            Timer
+            {
+                id: tooltipDelay
+                interval: 500
+                repeat: false
+                onTriggered:
+                {
+                    moveArea.showTooltip = true
+                    root.tooltipVisible = true
+                }
+            }
+
+            onEntered: tooltipDelay.restart()
+            onExited:
+            {
+                tooltipDelay.stop()
+                moveArea.showTooltip = false
+                root.tooltipVisible = false
+            }
 
             onPressed: function(mouse)
             {
                 if (mouse.button === Qt.RightButton)
+                {
+                    drag.target = null
+                    suppressClick = false
+                    return
+                }
+
+                if (root.isForecastLocked())
+                {
+                    drag.target = null
+                    return
+                }
+
+                if (projectController && projectController.settingsManager.editingLocked)
+                {
+                    drag.target = null
+                    return
+                }
+
+                if (rowData && rowData.isCompleted)
+                {
+                    drag.target = null
+                    return
+                }
+
+                drag.target = parent
+                drag.minimumX = 0
+                drag.maximumX = root.width - parent.width
+                if (root.externalFlickable) root.externalFlickable.interactive = false
+            }
+
+            onPositionChanged:
+            {
+                if (!drag.active) return
+
+                if (root.isForecastLocked())
+                {
+                    drag.target = null
+                    return
+                }
+                if (projectController && projectController.settingsManager.editingLocked)
+                {
+                    drag.target = null
+                    return
+                }
+
+                if (drag.target !== null && drag.target !== undefined)
+                {
+                    suppressClick = true
+                    parent.x = Math.round(parent.x / root.dayWidth) * root.dayWidth
+                }
+            }
+
+            onReleased:
+            {
+                if (root.externalFlickable) root.externalFlickable.interactive = true
+                if (drag.active)
+                {
+                    drag.target = null
+                    parent.updateDates()
+                }
+            }
+
+            onClicked: function(mouse)
+            {
+                if (mouse.button === Qt.RightButton && !suppressClick)
                 {
                     if (rowData && root.taskContextMenu)
                     {
                         root.taskContextMenu.taskId = rowData.taskId
                         root.taskContextMenu.popup()
                     }
-                    return
                 }
-
-                if (root.isForecastLocked())
-                {
-                    drag.target = null
-                    return
-                }
-
-                if (projectController && projectController.settingsManager.editingLocked)
-                {
-                    drag.target = null
-                    return
-                }
-                drag.target = parent
-
-                if (rowData && rowData.isCompleted)
-                {
-                    mouse.accepted = false
-                    return
-                }
-
-                if (root.externalFlickable) root.externalFlickable.interactive = false
-            }
-
-            onPositionChanged:
-            {
-                if (root.isForecastLocked())
-                {
-                    drag.target = null
-                    return
-                }
-                if (projectController && projectController.settingsManager.editingLocked)
-                {
-                    drag.target = null
-                    return
-                }
-                drag.target = parent
-                if (drag.active) parent.x = Math.round(parent.x / root.dayWidth) * root.dayWidth
-            }
-
-            onReleased:
-            {
-                if (root.externalFlickable) root.externalFlickable.interactive = true
-                if (drag.active) parent.updateDates()
             }
         }
 
@@ -440,7 +464,110 @@ Rectangle
             color: "#cccccc"
             opacity: 0.7
             radius: 4
+            border.color: "#888888"
+            border.width: 1
             z: -1
+        }
+    }
+
+    // ---------- Кастомный ToolTip, привязанный к курсору мыши ----------
+    Rectangle
+    {
+        id: barTooltip
+        visible: moveArea.showTooltip && rowData && rowData.type === "task"
+        color: "#333333"
+        radius: 4
+        opacity: 0.95
+        z: 100
+
+        x: ganttBar.x + moveArea.mouseX + 16
+        y: ganttBar.y + moveArea.mouseY + 12
+
+        states: State
+        {
+            name: "left"
+            when: (ganttBar.x + moveArea.mouseX + 16 + barTooltip.width) > root.width
+            PropertyChanges
+            {
+                target: barTooltip
+                x: ganttBar.x + moveArea.mouseX - barTooltip.width - 16
+            }
+        }
+
+        width: tooltipText.implicitWidth + 24
+        height: tooltipText.implicitHeight + 20
+
+        Text
+        {
+            id: tooltipText
+            anchors.centerIn: parent
+            color: "white"
+            font.pixelSize: 14
+            lineHeight: 1.2
+            text:
+            {
+                if (!rowData) return ""
+
+                var lines = []
+
+                // Заголовок
+                var label = (rowData.rowKind === "forecast") ? "Прогноз: " : ""
+                lines.push(label + rowData.taskTitle)
+
+                // Ответственный
+                var resp = rowData.taskResponsible && rowData.taskResponsible !== "" ? rowData.taskResponsible : "—"
+                lines.push("Ответственный: " + resp)
+
+                // Целевые сроки
+                if (rowData.hasDates === true)
+                {
+                    var s = Qt.formatDateTime(new Date(rowData.taskStart), "dd.MM.yyyy")
+                    var e = Qt.formatDateTime(new Date(rowData.taskEnd), "dd.MM.yyyy")
+                    var dur = Math.floor((new Date(rowData.taskEnd) - new Date(rowData.taskStart)) / 86400000) + 1
+                    lines.push("Целевые сроки: " + s + " — " + e + " (" + dur + " дн.)")
+                }
+
+                // Прогноз
+                if (rowData.hasForecast === true
+                    && (rowData.rowKind === "forecast" || rowData.isUnapproved === true))
+                {
+                    var fs = Qt.formatDateTime(new Date(rowData.forecastStart), "dd.MM.yyyy")
+                    var fe = Qt.formatDateTime(new Date(rowData.forecastEnd), "dd.MM.yyyy")
+                    lines.push("Прогноз: " + fs + " — " + fe)
+                }
+
+                // Статус
+                var statusText = "Запланировано"
+                switch (rowData.taskStatus)
+                {
+                    case 0: statusText = "Запланировано"; break
+                    case 1: statusText = "Выполнено"; break
+                    case 2: statusText = "Имеются риски"; break
+                    case 3: statusText = "Блокировано"; break
+                }
+                lines.push("Статус: " + statusText)
+
+                // Прогресс
+                if ((rowData.progressTotal || 0) > 0 && (rowData.progressCurrent || 0) >= 0)
+                    lines.push("Прогресс: " + rowData.progressCurrent + " / " + rowData.progressTotal)
+
+                // Локальный график
+                var lgs = rowData.localGraphState !== undefined ? rowData.localGraphState : 0
+                var lgsText = ""
+                switch (lgs)
+                {
+                    case 1: lgsText = "требуется"; break
+                    case 2: lgsText = "привязан"; break
+                    case 3: lgsText = "отсутствует"; break
+                }
+                if (lgsText !== "") lines.push("Локальный график: " + lgsText)
+
+                // Комментарий
+                if (rowData.taskComment && rowData.taskComment !== "")
+                    lines.push("Комментарий: " + rowData.taskComment)
+
+                return lines.join("\n")
+            }
         }
     }
 }
