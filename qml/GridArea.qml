@@ -25,8 +25,6 @@ Rectangle
     property var nodeXByTaskTarget: ({})
     property var nodeXByTaskForecast: ({})
     property var taskContextMenu: null
-    // Ссылка на элемент красной линии — чтобы её можно было прокинуть в делегаты,
-    // не затеняя id currentTimeLine.
     property var timeLineRef: currentTimeLine
 
     onShowDependenciesChanged: dependencyCanvas.refresh()
@@ -180,23 +178,32 @@ Rectangle
             var linkedStart = projectController.projectData.getLinkedTargetStart()
             var linkedEnd = projectController.projectData.getLinkedTargetEnd()
 
+            var earliest = projectController.projectData.getEarliestDate()
+            var latest = projectController.projectData.getLatestDate()
+
             var s, e
+
             if (isValidDate(linkedStart) && isValidDate(linkedEnd))
             {
                 s = new Date(linkedStart)
-                s.setDate(s.getDate() - 14)
-                s.setHours(0, 0, 0, 0)
                 e = new Date(linkedEnd)
-                e.setDate(e.getDate() + 14)
-                e.setHours(23, 59, 59, 999)
             }
             else
             {
                 var now = new Date()
                 s = new Date(now.getFullYear(), now.getMonth() - 1, 1)
                 e = new Date(now.getFullYear(), now.getMonth() + 2, 0)
-                e.setHours(23, 59, 59, 999)
             }
+
+            if (isValidDate(earliest) && earliest < s) s = new Date(earliest)
+            if (isValidDate(latest) && latest > e) e = new Date(latest)
+
+            s.setDate(s.getDate() - 14)
+            s.setHours(0, 0, 0, 0)
+            e.setDate(e.getDate() + 14)
+            e.setHours(23, 59, 59, 999)
+
+            while (s.getDay() !== 1) s.setDate(s.getDate() - 1)
 
             displayStart = s
             displayEnd = e

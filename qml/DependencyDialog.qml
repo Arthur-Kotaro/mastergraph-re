@@ -22,41 +22,89 @@ Dialog
     function loadTasks()
     {
         taskList = []
-        groupList = projectController.projectData.groupModel.getGroupIds()
+        targetTaskId = ""
+
+        if (!projectController || !projectController.projectData) {
+            taskListView.model = []
+            return
+        }
+
         var depModel = projectController.projectData.dependencyModel
-        for (var g = 0; g < groupList.length; g++)
+        var isLocal = (projectController.projectData.graphKind === 1)
+
+        if (isLocal)
         {
-            var groupId = groupList[g]
-            var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
-            for (var t = 0; t < tasks.length; t++)
+            // Локальный график: групп нет, берём все задачи напрямую
+            var allTasks = projectController.projectData.taskModel.getAllTasks()
+            for (var t = 0; t < allTasks.length; t++)
             {
-                if (tasks[t] !== sourceTaskId)
+                var tId = allTasks[t].id
+                if (tId === sourceTaskId) continue
+
+                var alreadyDepL = false
+                for (var dd = 0; dd < depModel.rowCount(); dd++)
                 {
-                    var alreadyDep = false
-                    for (var dd = 0; dd < depModel.rowCount(); dd++)
+                    var idxL = depModel.index(dd, 0)
+                    var predL = depModel.data(idxL, Qt.UserRole + 2)
+                    var succL = depModel.data(idxL, Qt.UserRole + 3)
+                    if ((predL === sourceTaskId && succL === tId) ||
+                        (predL === tId && succL === sourceTaskId))
                     {
-                        var idx = depModel.index(dd, 0)
+                        alreadyDepL = true
+                        break
+                    }
+                }
+
+                if (!alreadyDepL)
+                {
+                    taskList.push({
+                        taskId: tId,
+                        groupId: "",
+                        title: allTasks[t].title,
+                        groupName: ""
+                    })
+                }
+            }
+        }
+        else
+        {
+            // Мастерграфик: перебираем группы
+            groupList = projectController.projectData.groupModel.getGroupIds()
+            for (var g = 0; g < groupList.length; g++)
+            {
+                var groupId = groupList[g]
+                var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
+                for (var i = 0; i < tasks.length; i++)
+                {
+                    if (tasks[i] === sourceTaskId) continue
+
+                    var alreadyDep = false
+                    for (var d = 0; d < depModel.rowCount(); d++)
+                    {
+                        var idx = depModel.index(d, 0)
                         var pred = depModel.data(idx, Qt.UserRole + 2)
                         var succ = depModel.data(idx, Qt.UserRole + 3)
-                        if ((pred === sourceTaskId && succ === tasks[t]) ||
-                            (pred === tasks[t] && succ === sourceTaskId))
+                        if ((pred === sourceTaskId && succ === tasks[i]) ||
+                            (pred === tasks[i] && succ === sourceTaskId))
                         {
                             alreadyDep = true
                             break
                         }
                     }
+
                     if (!alreadyDep)
                     {
                         taskList.push({
-                            taskId: tasks[t],
+                            taskId: tasks[i],
                             groupId: groupId,
-                            title: projectController.projectData.taskModel.getTask(tasks[t]).title,
+                            title: projectController.projectData.taskModel.getTask(tasks[i]).title,
                             groupName: projectController.projectData.groupModel.getGroup(groupId).name
                         })
                     }
                 }
             }
         }
+
         taskListView.model = taskList
     }
 
@@ -97,7 +145,13 @@ Dialog
 
             Text
             {
-                text: modelData.title + " (" + modelData.groupName + ")"
+                text:
+                {
+                    var suffix = (modelData.groupName && modelData.groupName !== "")
+                               ? " (" + modelData.groupName + ")"
+                               : ""
+                    return modelData.title + suffix
+                }
                 anchors.left: parent.left
                 anchors.leftMargin: 10
                 anchors.verticalCenter: parent.verticalCenter

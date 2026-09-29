@@ -305,6 +305,7 @@ Rectangle
                 }
 
                 drag.target = parent
+                drag.axis = Drag.XAxis
                 drag.minimumX = 0
                 drag.maximumX = root.width - parent.width
                 if (root.externalFlickable) root.externalFlickable.interactive = false
