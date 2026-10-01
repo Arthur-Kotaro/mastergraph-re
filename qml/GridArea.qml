@@ -222,24 +222,34 @@ Rectangle
             var xe = dateToX(linkedEnd)
             if (xs >= 0) { targetStartLineX = xs; showTargetStartLine = true }
             if (xe >= 0) { targetEndLineX = xe; showTargetEndLine = true }
+            return
+        }
+
+        // Целевых сроков нет. Если есть дата завершения предшественника — одна левая линия.
+        var predEnd = projectController.projectData.getLinkedPredecessorEndDate()
+        if (isValidDate(predEnd))
+        {
+            var xp = dateToX(predEnd)
+            if (xp >= 0)
+            {
+                targetStartLineX = xp
+                showTargetStartLine = true
+                targetStartLineArrows = true
+            }
         }
     }
 
     function computeLocalDisplayRange(linkedStart, linkedEnd, earliest, latest)
     {
-        // Базовая точка — целевые сроки задачи
         var s = new Date(linkedStart)
         var e = new Date(linkedEnd)
 
-        // Если целевой срок меньше месяца — расширяем до целого месяца целевого срока
         var durationDays = Math.floor((e - s) / 86400000) + 1
         if (durationDays < 30)
         {
-            // Начало: 1-е число месяца linkedStart минус 14 дней
             var ms = new Date(s.getFullYear(), s.getMonth(), 1)
             ms.setDate(ms.getDate() - 14)
             ms.setHours(0, 0, 0, 0)
-            // Конец: последнее число месяца linkedEnd плюс 14 дней
             var me = new Date(e.getFullYear(), e.getMonth() + 1, 0)
             me.setDate(me.getDate() + 14)
             me.setHours(23, 59, 59, 999)
@@ -248,18 +258,15 @@ Rectangle
         }
         else
         {
-            // Стандартные ±14 дней
             s.setDate(s.getDate() - 14)
             s.setHours(0, 0, 0, 0)
             e.setDate(e.getDate() + 14)
             e.setHours(23, 59, 59, 999)
         }
 
-        // Расширяем по фактическому содержимому ЛГ
         if (isValidDate(earliest) && earliest < s) s = new Date(earliest)
         if (isValidDate(latest) && latest > e) e = new Date(latest)
 
-        // Выравнивание по понедельнику
         while (s.getDay() !== 1) s.setDate(s.getDate() - 1)
 
         return { start: s, end: e }
@@ -591,7 +598,6 @@ Rectangle
         }
     }
 
-    // Жирная нижняя линия — как Rectangle, идентично линии в левой панели
     Rectangle
     {
         id: bottomLine

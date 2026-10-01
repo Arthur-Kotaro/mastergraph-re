@@ -198,7 +198,14 @@ void TaskModel::updateTaskDates(const QString& taskId, const QDate& newStart, co
         task.startDate = newStart;
         task.endDate = newEnd;
 
-        if (task.status == GanttDefines::TaskStatus::Completed)
+        bool hasLocalGraph = (task.localGraphState == GanttDefines::LocalGraphState::Attached
+                              || task.localGraphState == GanttDefines::LocalGraphState::Missing);
+
+        // Прогноз = целевым:
+        // - для завершённых задач всегда,
+        // - для задач без ЛГ (пока не привязан ЛГ, прогноз совпадает с целевым).
+        if (task.status == GanttDefines::TaskStatus::Completed
+            || !hasLocalGraph)
         {
             task.forecastStart = newStart;
             task.forecastEnd = newEnd;
@@ -207,6 +214,14 @@ void TaskModel::updateTaskDates(const QString& taskId, const QDate& newStart, co
         QModelIndex modelIndex = createIndex(index, 0);
         emit dataChanged(modelIndex, modelIndex);
         emit taskDatesChanged(taskId);
+
+        // Если прогноз изменился вместе с целевым — эмитим и сигнал прогноза,
+        // чтобы пересчитались зависимые задачи.
+        if (task.status == GanttDefines::TaskStatus::Completed
+            || !hasLocalGraph)
+        {
+            emit taskForecastDatesChanged(taskId);
+        }
     }
 }
 
@@ -281,7 +296,6 @@ void TaskModel::setTaskProgress(const QString& taskId, int current, int total)
     emit dataChanged(modelIndex, modelIndex, {GanttDefines::ProgressCurrentRole, GanttDefines::ProgressTotalRole});
     emit taskProgressChanged(taskId);
 
-    // Если прогресс достиг n/n и задача не завершена — переводим в Completed
     if (progressValid
         && task.progressCurrent == task.progressTotal
         && task.status != GanttDefines::TaskStatus::Completed)

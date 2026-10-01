@@ -133,6 +133,17 @@ QDate ProjectData::getLinkedTargetEnd() const { return m_linkedTargetEnd; }
 void ProjectData::set_LinkedTargetStart(const QDate& date) { m_linkedTargetStart = date; }
 void ProjectData::set_LinkedTargetEnd(const QDate& date) { m_linkedTargetEnd = date; }
 
+QDate ProjectData::getLinkedPredecessorEndDate() const { return m_linkedPredecessorEndDate; }
+
+void ProjectData::set_LinkedPredecessorEndDate(const QDate& date)
+{
+    if (m_linkedPredecessorEndDate != date)
+    {
+        m_linkedPredecessorEndDate = date;
+        emit linkedPredecessorEndDateChanged();
+    }
+}
+
 QString ProjectData::getLinkedMasterTaskId() const { return m_linkedMasterTaskId; }
 void ProjectData::set_LinkedMasterTaskId(const QString& taskId) { m_linkedMasterTaskId = taskId; }
 
@@ -177,6 +188,7 @@ void ProjectData::clear()
     m_linkedTargetStart = QDate();
     m_linkedTargetEnd = QDate();
     m_linkedMasterTaskId.clear();
+    m_linkedPredecessorEndDate = QDate();
 
     set_Modified(false);
     emit dataCleared();
@@ -198,6 +210,8 @@ QVariantMap ProjectData::toJson() const
         result["linkedTargetStart"] = m_linkedTargetStart.toString("dd.MM.yyyy");
     if (m_linkedTargetEnd.isValid())
         result["linkedTargetEnd"] = m_linkedTargetEnd.toString("dd.MM.yyyy");
+    if (m_linkedPredecessorEndDate.isValid())
+        result["linkedPredecessorEndDate"] = m_linkedPredecessorEndDate.toString("dd.MM.yyyy");
     if (!m_linkedMasterTaskId.isEmpty())
         result["linkedMasterTaskId"] = m_linkedMasterTaskId;
 
@@ -310,6 +324,7 @@ bool ProjectData::fromJson(const QVariantMap& json)
 
     m_linkedTargetStart = QDate::fromString(json["linkedTargetStart"].toString(), "dd.MM.yyyy");
     m_linkedTargetEnd = QDate::fromString(json["linkedTargetEnd"].toString(), "dd.MM.yyyy");
+    m_linkedPredecessorEndDate = QDate::fromString(json["linkedPredecessorEndDate"].toString(), "dd.MM.yyyy");
     m_linkedMasterTaskId = json["linkedMasterTaskId"].toString();
 
     if (m_graphKind == GanttDefines::GraphKind::Local)

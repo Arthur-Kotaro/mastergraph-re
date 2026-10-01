@@ -28,6 +28,8 @@ class ProjectData : public QObject
     Q_PROPERTY(QDateTime lastModifiedDateTime READ get_lastModifiedDateTime WRITE set_LastModifiedDateTime NOTIFY lastModifiedDateTimeChanged)
     Q_PROPERTY(int graphKind READ get_graphKindInt WRITE set_GraphKindInt NOTIFY graphKindChanged)
 
+    Q_PROPERTY(QDate linkedPredecessorEndDate READ getLinkedPredecessorEndDate WRITE set_LinkedPredecessorEndDate NOTIFY linkedPredecessorEndDateChanged)
+
 public:
     explicit ProjectData(QObject *parent = nullptr);
 
@@ -66,6 +68,9 @@ public:
     void set_LinkedTargetStart(const QDate& date);
     void set_LinkedTargetEnd(const QDate& date);
 
+    Q_INVOKABLE QDate getLinkedPredecessorEndDate() const;
+    void set_LinkedPredecessorEndDate(const QDate& date);
+
     Q_INVOKABLE QString getLinkedMasterTaskId() const;
     void set_LinkedMasterTaskId(const QString& taskId);
 
@@ -95,6 +100,7 @@ signals:
     void creationDateTimeChanged();
     void lastModifiedDateTimeChanged();
     void graphKindChanged();
+    void linkedPredecessorEndDateChanged();
 
 private:
     QString m_projectName;
@@ -109,6 +115,7 @@ private:
     QDate m_linkedTargetStart;
     QDate m_linkedTargetEnd;
     QString m_linkedMasterTaskId;
+    QDate m_linkedPredecessorEndDate;
 
     TaskModel* m_taskModel;
     GroupModel* m_groupModel;

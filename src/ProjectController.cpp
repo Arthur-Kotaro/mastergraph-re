@@ -228,8 +228,6 @@ void ProjectController::confirmRemoveTask(const QString& taskId)
     QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
     if (task.isEmpty()) return;
 
-    // TODO (C4.7): пометить в манифесте taskDeleted: true
-
     m_projectData->get_dependencyModel()->removeDependenciesForTask(taskId);
     m_projectData->get_taskModel()->removeTask(taskId);
     m_projectData->recalculateEndDate();
@@ -407,6 +405,7 @@ void ProjectController::onTaskForecastDatesChanged(const QString& taskId)
     QSet<QString> visited;
     updateDependentForecasts(taskId, visited);
 }
+
 void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QString>& visited)
 {
     if (visited.contains(taskId)) return;
@@ -435,9 +434,6 @@ void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QSt
             if (!requiredStart.isValid() || candidate > requiredStart) requiredStart = candidate;
         }
 
-        // Последователь без сроков — это узел.
-        // Даты ему не назначаем, но идём по цепочке дальше,
-        // чтобы обновить прогнозы у более дальних последователей с датами.
         QDate succStart = successor["forecastStart"].toDate();
         QDate succEnd = successor["forecastEnd"].toDate();
         if (!succStart.isValid() || !succEnd.isValid())
@@ -457,6 +453,8 @@ void ProjectController::updateDependentForecasts(const QString& taskId, QSet<QSt
         updateDependentForecasts(successorId, visited);
     }
 }
+
+
 // ---------------- Локальные графики ----------------
 
 QString ProjectController::localGraphDirectory() const
@@ -584,6 +582,25 @@ bool ProjectController::createLocalGraph(const QString& taskId)
         localDoc["linkedTargetEnd"] = targetEnd.toString("dd.MM.yyyy");
     }
 
+    // Дата завершения предшественника: приоритет — целевая (endDate),
+    // если её нет — прогнозная (forecastEnd).
+    QStringList predIds = m_projectData->get_dependencyModel()->getPredecessors(taskId);
+    QDate maxPredEnd;
+    for (const QString& pid : predIds)
+    {
+        QVariantMap pt = m_projectData->get_taskModel()->getTask(pid);
+        if (pt.isEmpty()) continue;
+
+        QDate peTarget = pt["endDate"].toDate();
+        QDate peForecast = pt["forecastEnd"].toDate();
+
+        QDate pe = peTarget.isValid() ? peTarget : peForecast;
+        if (pe.isValid() && (!maxPredEnd.isValid() || pe > maxPredEnd))
+            maxPredEnd = pe;
+    }
+    if (maxPredEnd.isValid())
+        localDoc["linkedPredecessorEndDate"] = maxPredEnd.toString("dd.MM.yyyy");
+
     QDateTime now = QDateTime::currentDateTime();
     localDoc["creationDateTime"] = now.toString("dd.MM.yyyy hh:mm:ss");
     localDoc["lastModifiedDateTime"] = now.toString("dd.MM.yyyy hh:mm:ss");
@@ -659,6 +676,25 @@ bool ProjectController::createLocalGraphOverwrite(const QString& taskId)
         localDoc["linkedTargetStart"] = targetStart.toString("dd.MM.yyyy");
         localDoc["linkedTargetEnd"] = targetEnd.toString("dd.MM.yyyy");
     }
+
+    // Дата завершения предшественника: приоритет — целевая (endDate),
+    // если её нет — прогнозная (forecastEnd).
+    QStringList predIds = m_projectData->get_dependencyModel()->getPredecessors(taskId);
+    QDate maxPredEnd;
+    for (const QString& pid : predIds)
+    {
+        QVariantMap pt = m_projectData->get_taskModel()->getTask(pid);
+        if (pt.isEmpty()) continue;
+
+        QDate peTarget = pt["endDate"].toDate();
+        QDate peForecast = pt["forecastEnd"].toDate();
+
+        QDate pe = peTarget.isValid() ? peTarget : peForecast;
+        if (pe.isValid() && (!maxPredEnd.isValid() || pe > maxPredEnd))
+            maxPredEnd = pe;
+    }
+    if (maxPredEnd.isValid())
+        localDoc["linkedPredecessorEndDate"] = maxPredEnd.toString("dd.MM.yyyy");
 
     QDateTime now = QDateTime::currentDateTime();
     localDoc["creationDateTime"] = now.toString("dd.MM.yyyy hh:mm:ss");
@@ -759,8 +795,9 @@ void ProjectController::refreshLocalGraphForecast(const QString& taskId, const Q
     if (completedCount == localTasks.size() && localTasks.size() > 0)
         m_projectData->get_taskModel()->setTaskStatus(taskId, GanttDefines::TaskStatus::Completed);
 
-        m_projectData->recalculateEndDate();
+    m_projectData->recalculateEndDate();
     if (markModified) m_projectData->set_Modified(true);
+
     qDebug() << "refreshLocalGraphForecast:" << taskId << "forecast" << minStart.toString("dd.MM.yyyy") << "-" << maxEnd.toString("dd.MM.yyyy")
     << "progress" << completedCount << "/" << localTasks.size();
 }
