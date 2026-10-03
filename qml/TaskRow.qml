@@ -154,6 +154,8 @@ Rectangle
         opacity: getBarOpacity()
         radius: 4
 
+        // ---------- Прогресс ----------
+        // Уменьшенная высота (75% от высоты полосы), по центру.
         Rectangle
         {
             id: progressFill
@@ -163,13 +165,17 @@ Rectangle
                      && (rowData.progressTotal || 0) > 0
                      && (rowData.progressCurrent || 0) >= 0
                      && rowData.isUnapproved !== true
+
             anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            width: parent.width * Math.min(1, rowData.progressCurrent / rowData.progressTotal)
+            anchors.leftMargin: 3
+            anchors.verticalCenter: parent.verticalCenter
+
+            height: Math.max(8, parent.height * 0.75)
+            width: Math.max(0, (parent.width - 6) * Math.min(1, rowData.progressCurrent / rowData.progressTotal))
+
             color: (rowData && rowData.rowKind === "forecast") ? Qt.lighter("#32CD32", 1.2) : "#32CD32"
             opacity: (rowData && rowData.rowKind === "forecast") ? 0.6 : 1.0
-            radius: 4
+            radius: height / 2
             z: 1
         }
 
