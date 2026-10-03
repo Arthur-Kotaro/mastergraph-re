@@ -59,6 +59,7 @@ target_link_libraries(${PROJECT_NAME}
 set(RESOURCE_FILES
     resources/default_typologies.json
     resources/default_tasks.json
+    resources/default_holidays.json
 )
 
 foreach(RES_FILE ${RESOURCE_FILES})

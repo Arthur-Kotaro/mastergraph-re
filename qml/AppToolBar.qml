@@ -178,6 +178,24 @@ Rectangle
 
         Button
         {
+            text: "Праздники"
+            checked: projectController ? projectController.settingsManager.showHolidays : false
+            checkable: true
+            Layout.preferredWidth: 100
+            font.pixelSize: 12
+            onCheckedChanged:
+            {
+                if (projectController)
+                    projectController.settingsManager.showHolidays = checked
+                if (mainWindow.hasGridArea())
+                    mainWindow.gridArea.updateData()
+                if (mainWindow.calendarHeader)
+                    mainWindow.calendarHeader.refresh()
+            }
+        }
+
+        Button
+        {
             text: "🔄"
             Layout.preferredWidth: 50
             font.pixelSize: 18

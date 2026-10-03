@@ -24,6 +24,10 @@ Canvas
         var ctx = getContext("2d")
         ctx.clearRect(0, 0, width, height)
 
+        var showHolidays = (typeof projectController !== "undefined" && projectController
+                            && projectController.settingsManager
+                            && projectController.settingsManager.showHolidays)
+
         // 1. Розовая заливка выходных
         for (var d = 0; d < totalDays; d++)
         {
@@ -34,6 +38,22 @@ Canvas
             {
                 ctx.fillStyle = "#ffe0e0"
                 ctx.fillRect(d * dayWidth, 0, dayWidth, height)
+            }
+        }
+
+        // 1b. Голубая заливка праздников (перекрывает выходные)
+        if (showHolidays)
+        {
+            for (var hd = 0; hd < totalDays; hd++)
+            {
+                var hDate = new Date(displayStart)
+                hDate.setDate(hDate.getDate() + hd)
+
+                if (projectController.settingsManager.isHoliday(hDate))
+                {
+                    ctx.fillStyle = "#cce5ff"
+                    ctx.fillRect(hd * dayWidth, 0, dayWidth, height)
+                }
             }
         }
 

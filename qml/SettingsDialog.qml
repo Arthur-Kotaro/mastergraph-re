@@ -7,13 +7,14 @@ Dialog
 {
     id: root
     title: "Настройки"
-    width: 700
-    height: 380
+    width: 750
+    height: 480
     modal: true
     standardButtons: Dialog.NoButton
 
     property string typologiesPath: projectController.settingsManager.resourcesPath
     property string taskGroupsPath: projectController.settingsManager.resourcesPath
+    property string holidaysPath: projectController.settingsManager.holidaysPath
 
     ColumnLayout
     {
@@ -107,11 +108,54 @@ Dialog
             }
         }
 
+        Label
+        {
+            text: "Путь к файлу праздников:"
+            font.bold: true
+            font.pixelSize: 14
+        }
+
+        RowLayout
+        {
+            Layout.fillWidth: true
+            spacing: 10
+
+            Rectangle
+            {
+                Layout.fillWidth: true
+                height: 40
+                border.color: "#999999"
+                border.width: 1
+                radius: 4
+                color: "#ffffff"
+
+                TextInput
+                {
+                    id: holidaysField
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    text: root.holidaysPath
+                    font.pixelSize: 14
+                    clip: true
+                    verticalAlignment: Text.AlignVCenter
+                    onTextChanged: root.holidaysPath = text
+                }
+            }
+
+            Button
+            {
+                text: "Обзор..."
+                Layout.preferredHeight: 40
+                font.pixelSize: 14
+                onClicked: folderDialogHolidays.open()
+            }
+        }
+
         Item { Layout.fillHeight: true }
 
         Label
         {
-            text: "Примечание: ресурсные файлы (типологии, шаблоны задач, вехи) загружаются из указанных директорий"
+            text: "Примечание: ресурсные файлы загружаются из указанных директорий"
             wrapMode: Text.WordWrap
             font.pixelSize: 12
             color: "#666666"
@@ -133,6 +177,7 @@ Dialog
                 {
                     projectController.settingsManager.resourcesPath = root.typologiesPath
                     projectController.resourceManager.resourcesPath = root.typologiesPath
+                    projectController.settingsManager.holidaysPath = root.holidaysPath
                     root.close()
                 }
             }
@@ -160,9 +205,16 @@ Dialog
         onAccepted: taskGroupsField.text = folder
     }
 
+    Labs.FolderDialog
+    {
+        id: folderDialogHolidays
+        onAccepted: holidaysField.text = folder
+    }
+
     onOpened:
     {
         root.typologiesPath = projectController.settingsManager.resourcesPath
         root.taskGroupsPath = projectController.settingsManager.resourcesPath
+        root.holidaysPath = projectController.settingsManager.holidaysPath
     }
 }

@@ -9,8 +9,6 @@ Rectangle
     width: parent?.width || 1000
 
     property int rowHeight: 40
-
-    // Высота по содержимому Column (MilestoneBar в ЛГ даёт 0)
     height: columnContent.height
 
     property date firstMilestoneDate: new Date()
@@ -24,9 +22,21 @@ Rectangle
                && projectController.projectData.graphKind === 1
     }
 
+    readonly property bool showHolidays: {
+        return projectController && projectController.settingsManager
+               && projectController.settingsManager.showHolidays
+    }
+
     function isValidDate(d)
     {
         return d !== undefined && d !== null && !isNaN(new Date(d).getTime())
+    }
+
+    function isHolidayDate(date)
+    {
+        if (!showHolidays) return false
+        if (!projectController || !projectController.settingsManager) return false
+        return projectController.settingsManager.isHoliday(date)
     }
 
     function getSecondSundayAfter(date)
@@ -214,6 +224,13 @@ Rectangle
 
     Connections
     {
+        target: projectController?.settingsManager ?? null
+        function onShowHolidaysChanged() { refresh() }
+        function onHolidaysChanged() { refresh() }
+    }
+
+    Connections
+    {
         target: projectController?.projectData ?? null
         function onGraphKindChanged() { refresh() }
         function onDataCleared() { refresh() }
@@ -269,13 +286,82 @@ Rectangle
         Rectangle
         {
             width: contentWidth; height: rowHeight; color: "#f8f8f8"; border.color: "#aaaaaa"; border.width: 1
-            Row { Repeater { model: totalDays
-                Rectangle { x: index * dayWidth; width: dayWidth; height: rowHeight; border.color: "#aaaaaa"; border.width: 1;
-                    color: { var dow = ((displayStart.getDay() + index) % 7 + 6) % 7; return (dow === 5 || dow === 6) ? "#ffe0e0" : (index % 2 === 0 ? "#ffffff" : "#f8f8f8") }
-                    Column { anchors.centerIn: parent; spacing: 2
-                        visible: root.dayWidth >= 15
-                        Text { text: ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"][((displayStart.getDay() + index) % 7 + 6) % 7]; anchors.horizontalCenter: parent.horizontalCenter; font.pixelSize: 10; font.bold: true }
-                        Text { text: root.dayNumbers[index] || ""; anchors.horizontalCenter: parent.horizontalCenter; font.pixelSize: 11 } } } } }
+            Row
+            {
+                Repeater
+                {
+                    model: totalDays
+
+                    delegate: Rectangle
+                    {
+                        x: index * dayWidth
+                        width: dayWidth
+                        height: rowHeight
+                        border.color: "#aaaaaa"
+                        border.width: 1
+
+                        property date cellDate: {
+                            var d = new Date(displayStart)
+                            d.setDate(d.getDate() + index)
+                            return d
+                        }
+                        property bool cellIsHoliday: root.isHolidayDate(cellDate)
+                        property bool cellIsWeekend: {
+                            var dow = ((displayStart.getDay() + index) % 7 + 6) % 7
+                            return (dow === 5 || dow === 6)
+                        }
+
+                        color: {
+                            if (cellIsHoliday) return "#cce5ff"
+                            if (cellIsWeekend) return "#ffe0e0"
+                            return (index % 2 === 0 ? "#ffffff" : "#f8f8f8")
+                        }
+
+                        MouseArea
+                        {
+                            id: dayMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            acceptedButtons: Qt.NoButton
+                        }
+
+                        ToolTip
+                        {
+                            visible: dayMouseArea.containsMouse && parent.cellIsHoliday
+                            delay: 400
+                            text: {
+                                if (!parent.cellIsHoliday) return ""
+                                if (!projectController || !projectController.settingsManager) return ""
+                                return projectController.settingsManager.holidaysTooltip(parent.cellDate)
+                            }
+                        }
+
+                        Column
+                        {
+                            anchors.centerIn: parent
+                            spacing: 2
+                            visible: root.dayWidth >= 15
+
+                            Text
+                            {
+                                text: ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"][((displayStart.getDay() + index) % 7 + 6) % 7]
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                font.pixelSize: 10
+                                font.bold: true
+                                color: parent.parent.cellIsHoliday ? "#cc0000" : "#000000"
+                            }
+                            Text
+                            {
+                                text: root.dayNumbers[index] || ""
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                font.pixelSize: 11
+                                font.bold: parent.parent.cellIsHoliday
+                                color: parent.parent.cellIsHoliday ? "#cc0000" : "#000000"
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         MilestoneBar
