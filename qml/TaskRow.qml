@@ -84,6 +84,28 @@ Rectangle
             acceptedButtons: Qt.RightButton
             hoverEnabled: true
 
+            property bool showTooltip: false
+
+            Timer
+            {
+                id: nodeTooltipDelay
+                interval: 500
+                repeat: false
+                onTriggered:
+                {
+                    nodeArea.showTooltip = true
+                    root.tooltipVisible = true
+                }
+            }
+
+            onEntered: nodeTooltipDelay.restart()
+            onExited:
+            {
+                nodeTooltipDelay.stop()
+                nodeArea.showTooltip = false
+                root.tooltipVisible = false
+            }
+
             onClicked: function(mouse)
             {
                 if (mouse.button === Qt.RightButton && rowData && root.taskContextMenu)
@@ -155,7 +177,6 @@ Rectangle
         radius: 4
 
         // ---------- Прогресс ----------
-        // Уменьшенная высота (75% от высоты полосы), по центру.
         Rectangle
         {
             id: progressFill
@@ -433,6 +454,7 @@ Rectangle
     // ---------- Комментарий ----------
     Text
     {
+        id: commentText
         visible: root.showComments && (rowData && rowData.type === "task")
         text:
         {
@@ -440,12 +462,25 @@ Rectangle
             var forceUpdate = root.updateCounter
             return rowData.taskComment ? rowData.taskComment : ""
         }
-        x: ganttBar.x + ganttBar.width + 14
-        y: ganttBar.y + 4
+
+        readonly property bool onNode:
+            rowData && rowData.type === "task"
+            && rowData.hasDates !== true
+            && rowData.isUnapproved !== true
+
+        x: onNode ? (nodeCircle.x + nodeCircle.width + 14)
+                  : (ganttBar.x + ganttBar.width + 14)
+        y: onNode ? (nodeCircle.y + nodeCircle.height / 2 - height / 2)
+                  : (ganttBar.y + 4)
         font.pixelSize: 14
         color: "#666666"
         elide: Text.ElideRight
-        width: Math.min(350, root.width - ganttBar.x - ganttBar.width - 10)
+        width:
+        {
+            var baseX = onNode ? (nodeCircle.x + nodeCircle.width)
+                               : (ganttBar.x + ganttBar.width)
+            return Math.max(40, Math.min(350, root.width - baseX - 14))
+        }
     }
 
     // ---------- История переносов ----------
@@ -500,23 +535,47 @@ Rectangle
     Rectangle
     {
         id: barTooltip
-        visible: moveArea.showTooltip && rowData && rowData.type === "task"
+        visible: (moveArea.showTooltip || nodeArea.showTooltip)
+                 && rowData && rowData.type === "task"
         color: "#333333"
         radius: 4
         opacity: 0.95
         z: 100
 
-        x: ganttBar.x + moveArea.mouseX + 16
-        y: ganttBar.y + moveArea.mouseY + 12
+        readonly property bool fromNode: nodeArea.showTooltip
+
+        x:
+        {
+            if (fromNode)
+                return nodeCircle.x + nodeCircle.width + 16
+            return ganttBar.x + moveArea.mouseX + 16
+        }
+        y:
+        {
+            if (fromNode)
+                return nodeCircle.y + 8
+            return ganttBar.y + moveArea.mouseY + 12
+        }
 
         states: State
         {
             name: "left"
-            when: (ganttBar.x + moveArea.mouseX + 16 + barTooltip.width) > root.width
+            when:
+            {
+                var baseX = barTooltip.fromNode
+                          ? (nodeCircle.x + nodeCircle.width + 16)
+                          : (ganttBar.x + moveArea.mouseX + 16)
+                return (baseX + barTooltip.width) > root.width
+            }
             PropertyChanges
             {
                 target: barTooltip
-                x: ganttBar.x + moveArea.mouseX - barTooltip.width - 16
+                x:
+                {
+                    if (barTooltip.fromNode)
+                        return nodeCircle.x - barTooltip.width - 16
+                    return ganttBar.x + moveArea.mouseX - barTooltip.width - 16
+                }
             }
         }
 

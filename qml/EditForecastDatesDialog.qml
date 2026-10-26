@@ -21,8 +21,25 @@ Dialog
         var task = projectController?.projectData?.taskModel?.getTask(taskId)
         if (task)
         {
-            forecastStart = task.forecastStart
-            forecastEnd = task.forecastEnd
+            var fs = task.forecastStart
+            var fe = task.forecastEnd
+            var fsValid = fs && !isNaN(new Date(fs).getTime())
+            var feValid = fe && !isNaN(new Date(fe).getTime())
+
+            if (!fsValid)
+            {
+                fs = new Date()
+                fs.setHours(0, 0, 0, 0)
+            }
+            if (!feValid)
+            {
+                fe = new Date(fs)
+                fe.setDate(fe.getDate() + 5)
+                fe.setHours(0, 0, 0, 0)
+            }
+
+            forecastStart = fs
+            forecastEnd = fe
             errorLabel.visible = false
             startField.text = Qt.formatDateTime(forecastStart, "dd.MM.yyyy")
             endField.text = Qt.formatDateTime(forecastEnd, "dd.MM.yyyy")
@@ -37,7 +54,6 @@ Dialog
         var task = projectController?.projectData?.taskModel?.getTask(tId)
         if (task && task.status === 1)
         {
-            // Не открываем для завершённых задач
             return
         }
         root.taskId = tId

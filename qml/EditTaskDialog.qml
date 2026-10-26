@@ -28,8 +28,25 @@ Dialog
         var task = projectController?.projectData?.taskModel?.getTask(taskId)
         if (task)
         {
-            startDate = task.startDate
-            endDate = task.endDate
+            var s = task.startDate
+            var e = task.endDate
+            var sValid = s && !isNaN(new Date(s).getTime())
+            var eValid = e && !isNaN(new Date(e).getTime())
+
+            if (!sValid)
+            {
+                s = new Date()
+                s.setHours(0, 0, 0, 0)
+            }
+            if (!eValid)
+            {
+                e = new Date(s)
+                e.setDate(e.getDate() + 5)
+                e.setHours(0, 0, 0, 0)
+            }
+
+            startDate = s
+            endDate = e
             errorLabel.visible = false
             startDateField.text = Qt.formatDateTime(startDate, "dd.MM.yyyy")
             endDateField.text = Qt.formatDateTime(endDate, "dd.MM.yyyy")
@@ -588,11 +605,6 @@ Dialog
                     if (startDate <= endDate)
                     {
                         projectController.updateTaskDates(taskId, startDate, endDate)
-                        //console.log("EditTaskDialog: updateTaskDates called, taskId:", taskId, "start:", startDate, "end:", endDate)
-                        // if (typeof mainWindow !== "undefined" && mainWindow && mainWindow.gridArea)
-                        // {
-                        //     mainWindow.gridArea.updateData()
-                        // }
                         root.close()
                     }
                     else
