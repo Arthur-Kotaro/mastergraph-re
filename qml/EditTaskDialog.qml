@@ -602,8 +602,29 @@ Dialog
                 font.pixelSize: 13
                 onClicked:
                 {
+                    errorLabel.text = "Дата завершения не может быть раньше даты начала"
+
                     if (startDate <= endDate)
                     {
+                        // ЛГ: проверка красной границы (дата завершения предшественника).
+                        if (projectController && projectController.projectData
+                            && projectController.projectData.graphKind === 1)
+                        {
+                            var predEnd = projectController.projectData.getLinkedPredecessorEndDate()
+                            if (predEnd && !isNaN(new Date(predEnd).getTime()))
+                            {
+                                var minStart = new Date(predEnd)
+                                minStart.setDate(minStart.getDate() + 1)
+                                if (new Date(startDate) < minStart)
+                                {
+                                    errorLabel.text = "Дата начала не может быть раньше даты завершения предшественника ("
+                                    + Qt.formatDateTime(new Date(predEnd), "dd.MM.yyyy") + ")"
+                                    errorLabel.visible = true
+                                    return
+                                }
+                            }
+                        }
+
                         projectController.updateTaskDates(taskId, startDate, endDate)
                         root.close()
                     }

@@ -33,6 +33,7 @@ Rectangle
     property real targetEndLineX: 0
     property bool targetStartLineArrows: true
     property bool targetEndLineArrows: true
+    property bool targetStartLineIsPredecessor: false
 
     property int effectiveRows: totalRows
 
@@ -65,6 +66,7 @@ Rectangle
         x: root.targetStartLineX
         showArrows: root.targetStartLineArrows
         arrowDirection: "right"
+        lineColor: root.targetStartLineIsPredecessor ? "#FF4444" : "#2266cc"
     }
 
     TargetDatesLine
@@ -209,34 +211,37 @@ Rectangle
         targetEndLineX = 0
         targetStartLineArrows = true
         targetEndLineArrows = true
+        targetStartLineIsPredecessor = false
 
         if (!isLocalMode) return
-        if (!projectController || !projectController.projectData) return
+            if (!projectController || !projectController.projectData) return
 
-        var linkedStart = projectController.projectData.getLinkedTargetStart()
-        var linkedEnd = projectController.projectData.getLinkedTargetEnd()
+                var linkedStart = projectController.projectData.getLinkedTargetStart()
+                var linkedEnd = projectController.projectData.getLinkedTargetEnd()
+                var predEnd = projectController.projectData.getLinkedPredecessorEndDate()
 
-        if (isValidDate(linkedStart) && isValidDate(linkedEnd))
-        {
-            var xs = dateToX(linkedStart)
-            var xe = dateToX(linkedEnd)
-            if (xs >= 0) { targetStartLineX = xs; showTargetStartLine = true }
-            if (xe >= 0) { targetEndLineX = xe; showTargetEndLine = true }
-            return
-        }
+                if (isValidDate(linkedStart) && isValidDate(linkedEnd))
+                {
+                    var xs = dateToX(linkedStart)
+                    var xe = dateToX(linkedEnd)
+                    if (xs >= 0) { targetStartLineX = xs; showTargetStartLine = true; targetStartLineIsPredecessor = false }
+                    if (xe >= 0) { targetEndLineX = xe; showTargetEndLine = true }
+                }
 
-        // Целевых сроков нет. Если есть дата завершения предшественника — одна левая линия.
-        var predEnd = projectController.projectData.getLinkedPredecessorEndDate()
-        if (isValidDate(predEnd))
-        {
-            var xp = dateToX(predEnd)
-            if (xp >= 0)
-            {
-                targetStartLineX = xp
-                showTargetStartLine = true
-                targetStartLineArrows = true
-            }
-        }
+                // Красная левая граница — дата завершения непосредственного предшественника.
+                // Линия ставится на конец дня predEnd (начало следующего дня), т.к. задача-последователь
+                // может начаться не раньше, чем на следующий день.
+                if (isValidDate(predEnd))
+                {
+                    var xp = dateToX(predEnd)
+                    if (xp >= 0)
+                    {
+                        targetStartLineX = xp + root.dayWidth
+                        showTargetStartLine = true
+                        targetStartLineArrows = true
+                        targetStartLineIsPredecessor = true
+                    }
+                }
     }
 
     function computeLocalDisplayRange(linkedStart, linkedEnd, earliest, latest)

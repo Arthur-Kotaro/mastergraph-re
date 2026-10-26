@@ -327,13 +327,26 @@ Rectangle
                 if (rowData && rowData.isCompleted)
                 {
                     if (projectController) projectController.notifyTaskCompleted()
-                    drag.target = null
-                    return
+                        drag.target = null
+                        return
+                }
+
+                var minDragX = 0
+                // ЛГ: не даём утащить полосу левее красной границы (дата завершения предшественника).
+                if (projectController && projectController.projectData
+                    && projectController.projectData.graphKind === 1)
+                {
+                    var predEnd = projectController.projectData.getLinkedPredecessorEndDate()
+                    if (predEnd && !isNaN(new Date(predEnd).getTime()))
+                    {
+                        var predX = Math.floor((new Date(predEnd) - root.displayStart) / 86400000) * root.dayWidth
+                        minDragX = Math.max(0, predX + root.dayWidth)  // следующий день после predEnd
+                    }
                 }
 
                 drag.target = parent
                 drag.axis = Drag.XAxis
-                drag.minimumX = 0
+                drag.minimumX = minDragX
                 drag.maximumX = root.width - parent.width
                 if (root.externalFlickable) root.externalFlickable.interactive = false
             }

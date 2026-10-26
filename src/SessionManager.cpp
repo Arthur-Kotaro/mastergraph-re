@@ -58,6 +58,44 @@ bool SessionManager::openLocalGraphSession(const QString& taskId)
         return false;
     }
 
+    // Путь A: при каждом открытии ЛГ передаём актуальные границы из МГ.
+    if (m_masterController && m_masterController->get_projectData())
+    {
+        ProjectData* master = m_masterController->get_projectData();
+        QVariantMap masterTask = master->get_taskModel()->getTask(taskId);
+
+        if (!masterTask.isEmpty())
+        {
+            QDate targetStart = masterTask["startDate"].toDate();
+            QDate targetEnd   = masterTask["endDate"].toDate();
+
+            if (targetStart.isValid())
+                controller->get_projectData()->set_LinkedTargetStart(targetStart);
+            if (targetEnd.isValid())
+                controller->get_projectData()->set_LinkedTargetEnd(targetEnd);
+
+            // Прогнозная дата завершения непосредственного предшественника (fallback — целевая).
+            QStringList predIds = master->get_dependencyModel()->getPredecessors(taskId);
+            QDate maxPredEnd;
+            for (const QString& pid : predIds)
+            {
+                QVariantMap pt = master->get_taskModel()->getTask(pid);
+                if (pt.isEmpty()) continue;
+
+                QDate peForecast = pt["forecastEnd"].toDate();
+                QDate peTarget   = pt["endDate"].toDate();
+                QDate pe = peForecast.isValid() ? peForecast : peTarget;
+
+                if (pe.isValid() && (!maxPredEnd.isValid() || pe > maxPredEnd))
+                    maxPredEnd = pe;
+            }
+            controller->get_projectData()->set_LinkedPredecessorEndDate(maxPredEnd);
+
+            // Сохраняем ЛГ-файл, чтобы границы были актуальны и при следующем открытии.
+            controller->saveProject();
+        }
+    }
+
     engine->rootContext()->setContextProperty("projectController", controller);
     engine->rootContext()->setContextProperty("sessionManager", this);
 
@@ -110,7 +148,6 @@ void SessionManager::notifyWindowClosed(const QString& taskId)
     LocalSession session = m_localSessions.take(taskId);
 
     // Обновляем прогноз в мастер-графике по актуальному файлу ЛГ
-    // (файл уже сохранён — либо при создании, либо вручную пользователем)
     if (m_masterController && !taskId.isEmpty())
     {
         QString path = m_masterController->getLocalGraphPath(taskId);

@@ -176,7 +176,29 @@ void ProjectController::addTask(const QString& groupId, const QString& title, co
         emit errorOccurred("Редактирование заблокировано");
         return;
     }
-    m_projectData->get_taskModel()->addTask(groupId, title, responsible, startDate, endDate);
+
+    QDate actualStart = startDate;
+    QDate actualEnd = endDate;
+
+    // ЛГ: не даём создать задачу раньше красной границы (дата завершения предшественника).
+    if (m_projectData->get_graphKind() == GanttDefines::GraphKind::Local)
+    {
+        QDate predEnd = m_projectData->getLinkedPredecessorEndDate();
+        if (predEnd.isValid())
+        {
+            QDate minStart = predEnd.addDays(1);
+            if (actualStart.isValid() && actualStart < minStart)
+            {
+                int duration = actualStart.daysTo(actualEnd);
+                actualStart = minStart;
+                actualEnd = actualStart.addDays(duration);
+                emit errorOccurred("Дата начала скорректирована: не раньше завершения предшественника ("
+                                   + predEnd.toString("dd.MM.yyyy") + ")");
+            }
+        }
+    }
+
+    m_projectData->get_taskModel()->addTask(groupId, title, responsible, actualStart, actualEnd);
     m_projectData->recalculateEndDate();
     m_projectData->set_Modified(true);
 }
@@ -248,11 +270,29 @@ void ProjectController::updateTaskDates(const QString& taskId, const QDate& newS
         emit errorOccurred("Нельзя редактировать выполненную задачу");
         return;
     }
+
+    if (m_projectData->get_graphKind() == GanttDefines::GraphKind::Local)
+    {
+        QDate predEnd = m_projectData->getLinkedPredecessorEndDate();
+        if (predEnd.isValid())
+        {
+            QDate minStart = predEnd.addDays(1);
+            if (newStart.isValid() && newStart < minStart)
+            {
+                emit errorOccurred("Дата начала не может быть раньше даты завершения предшественника ("
+                                   + predEnd.toString("dd.MM.yyyy") + ")");
+                return;
+            }
+        }
+    }
+
     if (newStart > newEnd)
     {
         emit errorOccurred("Дата завершения не может быть раньше даты начала");
         return;
     }
+
+    // ... остальной код без изменений ...
 
     m_projectData->get_taskModel()->updateTaskDates(taskId, newStart, newEnd, true);
     m_projectData->recalculateEndDate();
@@ -582,25 +622,22 @@ bool ProjectController::createLocalGraph(const QString& taskId)
         localDoc["linkedTargetEnd"] = targetEnd.toString("dd.MM.yyyy");
     }
 
-    // Дата завершения предшественника: приоритет — целевая (endDate),
-    // если её нет — прогнозная (forecastEnd).
-    QStringList predIds = m_projectData->get_dependencyModel()->getPredecessors(taskId);
+        QStringList predIds = m_projectData->get_dependencyModel()->getPredecessors(taskId);
     QDate maxPredEnd;
     for (const QString& pid : predIds)
     {
         QVariantMap pt = m_projectData->get_taskModel()->getTask(pid);
         if (pt.isEmpty()) continue;
 
-        QDate peTarget = pt["endDate"].toDate();
         QDate peForecast = pt["forecastEnd"].toDate();
+        QDate peTarget = pt["endDate"].toDate();
 
-        QDate pe = peTarget.isValid() ? peTarget : peForecast;
-        if (pe.isValid() && (!maxPredEnd.isValid() || pe > maxPredEnd))
-            maxPredEnd = pe;
+        // Приоритет — прогнозная дата завершения предшественника (из МГ),
+        // fallback — целевая, если прогноза нет.
+        QDate pe = peForecast.isValid() ? peForecast : peTarget;
+        if (pe.isValid() && (!maxPredEnd.isValid() || pe > maxPredEnd)) maxPredEnd = pe;
     }
-    if (maxPredEnd.isValid())
-        localDoc["linkedPredecessorEndDate"] = maxPredEnd.toString("dd.MM.yyyy");
-
+    if (maxPredEnd.isValid()) localDoc["linkedPredecessorEndDate"] = maxPredEnd.toString("dd.MM.yyyy");
     QDateTime now = QDateTime::currentDateTime();
     localDoc["creationDateTime"] = now.toString("dd.MM.yyyy hh:mm:ss");
     localDoc["lastModifiedDateTime"] = now.toString("dd.MM.yyyy hh:mm:ss");
@@ -677,8 +714,8 @@ bool ProjectController::createLocalGraphOverwrite(const QString& taskId)
         localDoc["linkedTargetEnd"] = targetEnd.toString("dd.MM.yyyy");
     }
 
-    // Дата завершения предшественника: приоритет — целевая (endDate),
-    // если её нет — прогнозная (forecastEnd).
+    // Дата завершения предшественника: приоритет — прогнозная (forecastEnd),
+    // fallback — целевая (endDate), если прогноза нет.
     QStringList predIds = m_projectData->get_dependencyModel()->getPredecessors(taskId);
     QDate maxPredEnd;
     for (const QString& pid : predIds)
@@ -686,10 +723,10 @@ bool ProjectController::createLocalGraphOverwrite(const QString& taskId)
         QVariantMap pt = m_projectData->get_taskModel()->getTask(pid);
         if (pt.isEmpty()) continue;
 
-        QDate peTarget = pt["endDate"].toDate();
         QDate peForecast = pt["forecastEnd"].toDate();
+        QDate peTarget = pt["endDate"].toDate();
 
-        QDate pe = peTarget.isValid() ? peTarget : peForecast;
+        QDate pe = peForecast.isValid() ? peForecast : peTarget;
         if (pe.isValid() && (!maxPredEnd.isValid() || pe > maxPredEnd))
             maxPredEnd = pe;
     }
