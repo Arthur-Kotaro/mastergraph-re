@@ -7,7 +7,7 @@ Dialog
     id: root
     title: "Создание новой задачи"
     width: 500
-    height: 540
+    height: 600
     modal: true
     standardButtons: Dialog.Ok | Dialog.Cancel
     anchors.centerIn: Overlay.overlay

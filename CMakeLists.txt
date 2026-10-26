@@ -1,11 +1,27 @@
 cmake_minimum_required(VERSION 3.20)
-project(GanttProject VERSION 1.0.0)
+project(GanttProject VERSION 1.0.0 LANGUAGES CXX)
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+    message(STATUS "CMAKE_BUILD_TYPE not set, defaulting to Release")
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
+
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT IPO_SUPPORTED OUTPUT IPO_ERROR)
+if(IPO_SUPPORTED)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+    message(STATUS "LTO enabled for Release build")
+else()
+    message(STATUS "LTO not supported: ${IPO_ERROR}")
+endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Core Qml Quick QuickControls2 Widgets OpenGL Svg PrintSupport)
 
@@ -46,6 +62,11 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    $<$<CONFIG:Release>:QT_NO_DEBUG_OUTPUT>
+    $<$<CONFIG:Release>:QT_NO_WARNING_OUTPUT>
+)
+
 target_link_libraries(${PROJECT_NAME}
     Qt6::Core
     Qt6::Quick
@@ -69,6 +90,7 @@ foreach(RES_FILE ${RESOURCE_FILES})
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${CMAKE_CURRENT_SOURCE_DIR}/${RES_FILE}
             $<TARGET_FILE_DIR:${PROJECT_NAME}>/${RES_NAME}
+        COMMENT "Copying ${RES_NAME} to build directory"
     )
 endforeach()
 

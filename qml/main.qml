@@ -7,9 +7,9 @@ import GanttProject 1.0
 ApplicationWindow
 {
     id: mainWindow
-    width: 1580
+    width: 1700
     height: 750
-    minimumWidth: 1580
+    minimumWidth: 1700
     minimumHeight: 750
     visible: true
 
