@@ -89,6 +89,9 @@ public:
 
     Q_INVOKABLE QVariantMap getTaskStatistics() const;
 
+    Q_INVOKABLE int getConflictCount() const;
+    Q_INVOKABLE QVariantList getConflictingTaskIds() const;
+
 signals:
     void projectNameChanged();
     void projectTypeChanged();

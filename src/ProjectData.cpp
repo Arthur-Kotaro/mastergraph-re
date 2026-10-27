@@ -573,3 +573,29 @@ QVariantMap ProjectData::getTaskStatistics() const
     result["total"] = total;
     return result;
 }
+
+QVariantList ProjectData::getConflictingTaskIds() const
+{
+    QVariantList result;
+
+    if (m_graphKind != GanttDefines::GraphKind::Local) return result;
+    if (!m_linkedPredecessorEndDate.isValid()) return result;
+
+    QDate minStart = m_linkedPredecessorEndDate.addDays(1);
+
+    for (int i = 0; i < m_taskModel->rowCount(); ++i)
+    {
+        QModelIndex idx = m_taskModel->index(i);
+        QDate startDate = idx.data(GanttDefines::StartDateRole).toDate();
+        if (!startDate.isValid()) continue;
+        if (startDate < minStart)
+            result.append(idx.data(GanttDefines::IdRole).toString());
+    }
+
+    return result;
+}
+
+int ProjectData::getConflictCount() const
+{
+    return getConflictingTaskIds().size();
+}

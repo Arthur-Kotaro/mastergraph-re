@@ -175,6 +175,8 @@ Rectangle
         color: getBarColor()
         opacity: getBarOpacity()
         radius: 4
+        border.color: (rowData && rowData.hasConflict === true) ? "#FF4444" : "transparent"
+        border.width: (rowData && rowData.hasConflict === true) ? 2 : 0
 
         // ---------- Прогресс ----------
         Rectangle
@@ -464,6 +466,31 @@ Rectangle
         }
     }
 
+    // ---------- Маркер конфликта с границей предшественника ----------
+    Rectangle
+    {
+        id: conflictMarker
+        visible: rowData && rowData.type === "task"
+        && rowData.hasConflict === true
+        && rowData.hasDates === true
+        x: ganttBar.x - 22
+        y: ganttBar.y + (ganttBar.height - 16) / 2
+        width: 16
+        height: 16
+        radius: 8
+        color: "#FF4444"
+        z: 6
+
+        Text
+        {
+            anchors.centerIn: parent
+            text: "!"
+            color: "white"
+            font.pixelSize: 12
+            font.bold: true
+        }
+    }
+
     // ---------- Комментарий ----------
     Text
     {
@@ -639,6 +666,13 @@ Rectangle
                     case 3: statusText = "Блокировано"; break
                 }
                 lines.push("Статус: " + statusText)
+                if (rowData.hasConflict === true)
+                {
+                    var predEndTooltip = projectController?.projectData?.getLinkedPredecessorEndDate()
+                    if (predEndTooltip && !isNaN(new Date(predEndTooltip).getTime()))
+                        lines.push("⚠ План нарушает границу предшественника (завершение "
+                        + Qt.formatDateTime(new Date(predEndTooltip), "dd.MM.yyyy") + ")")
+                }
 
                 if ((rowData.progressTotal || 0) > 0 && (rowData.progressCurrent || 0) >= 0)
                     lines.push("Прогресс: " + rowData.progressCurrent + " / " + rowData.progressTotal)

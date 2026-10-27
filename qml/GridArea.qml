@@ -95,6 +95,7 @@ Rectangle
     {
         target: projectController?.projectData ?? null
         function onGraphKindChanged() { updateData() }
+        function onLinkedPredecessorEndDateChanged() { updateData() }
     }
 
     function currentViewMode()
@@ -214,34 +215,34 @@ Rectangle
         targetStartLineIsPredecessor = false
 
         if (!isLocalMode) return
-            if (!projectController || !projectController.projectData) return
+        if (!projectController || !projectController.projectData) return
 
-                var linkedStart = projectController.projectData.getLinkedTargetStart()
-                var linkedEnd = projectController.projectData.getLinkedTargetEnd()
-                var predEnd = projectController.projectData.getLinkedPredecessorEndDate()
+        var linkedStart = projectController.projectData.getLinkedTargetStart()
+        var linkedEnd = projectController.projectData.getLinkedTargetEnd()
+        var predEnd = projectController.projectData.getLinkedPredecessorEndDate()
 
-                if (isValidDate(linkedStart) && isValidDate(linkedEnd))
-                {
-                    var xs = dateToX(linkedStart)
-                    var xe = dateToX(linkedEnd)
-                    if (xs >= 0) { targetStartLineX = xs; showTargetStartLine = true; targetStartLineIsPredecessor = false }
-                    if (xe >= 0) { targetEndLineX = xe; showTargetEndLine = true }
-                }
+        if (isValidDate(linkedStart) && isValidDate(linkedEnd))
+        {
+            var xs = dateToX(linkedStart)
+            var xe = dateToX(linkedEnd)
+            if (xs >= 0) { targetStartLineX = xs; showTargetStartLine = true; targetStartLineIsPredecessor = false }
+            if (xe >= 0) { targetEndLineX = xe; showTargetEndLine = true }
+        }
 
-                // Красная левая граница — дата завершения непосредственного предшественника.
-                // Линия ставится на конец дня predEnd (начало следующего дня), т.к. задача-последователь
-                // может начаться не раньше, чем на следующий день.
-                if (isValidDate(predEnd))
-                {
-                    var xp = dateToX(predEnd)
-                    if (xp >= 0)
-                    {
-                        targetStartLineX = xp + root.dayWidth
-                        showTargetStartLine = true
-                        targetStartLineArrows = true
-                        targetStartLineIsPredecessor = true
-                    }
-                }
+        // Красная левая граница — дата завершения непосредственного предшественника.
+        // Линия ставится на конец дня predEnd (начало следующего дня), т.к. задача-последователь
+        // может начаться не раньше, чем на следующий день.
+        if (isValidDate(predEnd))
+        {
+            var xp = dateToX(predEnd)
+            if (xp >= 0)
+            {
+                targetStartLineX = xp + root.dayWidth
+                showTargetStartLine = true
+                targetStartLineArrows = true
+                targetStartLineIsPredecessor = true
+            }
+        }
     }
 
     function computeLocalDisplayRange(linkedStart, linkedEnd, earliest, latest)
@@ -282,6 +283,14 @@ Rectangle
         if (!projectController || !projectController.projectData) return
 
         var localMode = (projectController.projectData.graphKind === 1)
+
+        var conflictSet = {}
+        if (localMode)
+        {
+            var conflictIds = projectController.projectData.getConflictingTaskIds()
+            for (var ci = 0; ci < conflictIds.length; ci++)
+                conflictSet[conflictIds[ci]] = true
+        }
 
         if (localMode)
         {
@@ -387,7 +396,8 @@ Rectangle
                     nodeX: nodeXL,
                     localGraphState: tdL.localGraphState,
                     progressCurrent: tdL.progressCurrent,
-                    progressTotal: tdL.progressTotal
+                    progressTotal: tdL.progressTotal,
+                    hasConflict: conflictSet[tdL.id] === true
                 })
                 taskCounter++
             }
@@ -448,7 +458,8 @@ Rectangle
                                 nodeX: nodeXVal,
                                 localGraphState: taskData.localGraphState,
                                 progressCurrent: taskData.progressCurrent,
-                                progressTotal: taskData.progressTotal
+                                progressTotal: taskData.progressTotal,
+                                hasConflict: conflictSet[tasks[j]] === true
                             })
                             taskCounter++
                         }
