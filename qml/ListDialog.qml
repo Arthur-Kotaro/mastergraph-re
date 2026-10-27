@@ -16,6 +16,15 @@ Dialog
     property var listModel: []
     property bool createWithoutDates: false
 
+    function groupNames()
+    {
+        if (!projectController || !projectController.projectData) return []
+        return projectController.projectData.groupModel.getGroupIds().map(function(id)
+        {
+            return projectController.projectData.groupModel.getGroup(id).name
+        })
+    }
+
     function buildList()
     {
         listModel = []
@@ -122,10 +131,7 @@ Dialog
                         ComboBox
                         {
                             Layout.preferredWidth: 300
-                            model: projectController.projectData.groupModel.getGroupIds().map(function(id)
-                            {
-                                return projectController.projectData.groupModel.getGroup(id).name
-                            })
+                            model: root.groupNames()
                             onCurrentIndexChanged:
                             {
                                 if (listModel[index]) listModel[index].groupIndex = currentIndex

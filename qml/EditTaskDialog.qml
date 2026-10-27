@@ -48,6 +48,7 @@ Dialog
             startDate = s
             endDate = e
             errorLabel.visible = false
+            errorLabel.text = "Дата завершения не может быть раньше даты начала"
             startDateField.text = Qt.formatDateTime(startDate, "dd.MM.yyyy")
             endDateField.text = Qt.formatDateTime(endDate, "dd.MM.yyyy")
             return true
@@ -132,197 +133,14 @@ Dialog
                     onClicked: startCalendarPopup.open()
                 }
 
-                Popup
+                CalendarPopup
                 {
                     id: startCalendarPopup
-                    width: 380
-                    height: 360
-                    modal: true
-                    focus: true
-                    anchors.centerIn: Overlay.overlay
-
-                    property int calendarYear: root.startDate.getFullYear()
-                    property int calendarMonth: root.startDate.getMonth()
-                    property var calendarModel: []
-
-                    function updateCalendarModel()
+                    selectedDate: root.startDate
+                    onDateSelected: function(d)
                     {
-                        var firstDay = new Date(calendarYear, calendarMonth, 1)
-                        var startWeekday = firstDay.getDay()
-                        var startIndex = (startWeekday === 0) ? 6 : startWeekday - 1
-                        var daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate()
-                        var result = []
-                        for (var i = 0; i < startIndex; i++) result.push("")
-                        for (var i = 1; i <= daysInMonth; i++) result.push(i)
-                        var remaining = (7 - (result.length % 7)) % 7
-                        for (var i = 0; i < remaining; i++) result.push("")
-                        calendarModel = result
-                    }
-
-                    Component.onCompleted: updateCalendarModel()
-
-                    Rectangle
-                    {
-                        anchors.fill: parent
-                        color: "white"
-                        border.color: "#cccccc"
-                        radius: 4
-
-                        ColumnLayout
-                        {
-                            anchors.fill: parent
-                            anchors.margins: 10
-                            spacing: 10
-
-                            RowLayout
-                            {
-                                Layout.fillWidth: true
-                                Button
-                                {
-                                    text: "<<"
-                                    font.pixelSize: 14
-                                    Layout.preferredWidth: 45
-                                    onClicked:
-                                    {
-                                        startCalendarPopup.calendarYear -= 1
-                                        startCalendarPopup.updateCalendarModel()
-                                    }
-                                }
-                                Button
-                                {
-                                    text: "<"
-                                    font.pixelSize: 14
-                                    Layout.preferredWidth: 40
-                                    onClicked:
-                                    {
-                                        if (startCalendarPopup.calendarMonth === 0)
-                                        {
-                                            startCalendarPopup.calendarMonth = 11
-                                            startCalendarPopup.calendarYear -= 1
-                                        }
-                                        else
-                                        {
-                                            startCalendarPopup.calendarMonth -= 1
-                                        }
-                                        startCalendarPopup.updateCalendarModel()
-                                    }
-                                }
-                                Label
-                                {
-                                    Layout.fillWidth: true
-                                    horizontalAlignment: Text.AlignHCenter
-                                    font.pixelSize: 16
-                                    font.bold: true
-                                    text:
-                                    {
-                                        var months = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-                                                     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
-                                        return months[startCalendarPopup.calendarMonth] + " " + startCalendarPopup.calendarYear
-                                    }
-                                }
-                                Button
-                                {
-                                    text: ">"
-                                    font.pixelSize: 14
-                                    Layout.preferredWidth: 40
-                                    onClicked:
-                                    {
-                                        if (startCalendarPopup.calendarMonth === 11)
-                                        {
-                                            startCalendarPopup.calendarMonth = 0
-                                            startCalendarPopup.calendarYear += 1
-                                        }
-                                        else
-                                        {
-                                            startCalendarPopup.calendarMonth += 1
-                                        }
-                                        startCalendarPopup.updateCalendarModel()
-                                    }
-                                }
-                                Button
-                                {
-                                    text: ">>"
-                                    font.pixelSize: 14
-                                    Layout.preferredWidth: 45
-                                    onClicked:
-                                    {
-                                        startCalendarPopup.calendarYear += 1
-                                        startCalendarPopup.updateCalendarModel()
-                                    }
-                                }
-                            }
-
-                            Rectangle
-                            {
-                                Layout.fillWidth: true
-                                height: 25
-                                color: "#f0f0f0"
-                                Row
-                                {
-                                    spacing: 2
-                                    Repeater
-                                    {
-                                        model: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
-                                        Label
-                                        {
-                                            width: 46
-                                            height: 25
-                                            text: modelData
-                                            font.pixelSize: 13
-                                            font.bold: true
-                                            horizontalAlignment: Text.AlignHCenter
-                                            verticalAlignment: Text.AlignVCenter
-                                        }
-                                    }
-                                }
-                            }
-
-                            GridView
-                            {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                cellWidth: 48
-                                cellHeight: 40
-
-                                model: startCalendarPopup.calendarModel
-                                delegate: Rectangle
-                                {
-                                    width: 46
-                                    height: 38
-                                    color:
-                                    {
-                                        if (modelData === "") return "transparent"
-                                        var cellDate = new Date(startCalendarPopup.calendarYear, startCalendarPopup.calendarMonth, modelData)
-                                        if (cellDate.toDateString() === root.startDate.toDateString()) return "#0078d7"
-                                        return "transparent"
-                                    }
-                                    radius: 3
-
-                                    Text
-                                    {
-                                        anchors.centerIn: parent
-                                        text: modelData
-                                        color: parent.color === "#0078d7" ? "white" : "black"
-                                        font.pixelSize: 14
-                                    }
-
-                                    MouseArea
-                                    {
-                                        anchors.fill: parent
-                                        onClicked:
-                                        {
-                                            if (modelData !== "")
-                                            {
-                                                var newDate = new Date(startCalendarPopup.calendarYear, startCalendarPopup.calendarMonth, modelData)
-                                                root.startDate = newDate
-                                                startDateField.text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
-                                                startCalendarPopup.close()
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        root.startDate = d
+                        startDateField.text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
                     }
                 }
             }
@@ -381,197 +199,14 @@ Dialog
                     onClicked: endCalendarPopup.open()
                 }
 
-                Popup
+                CalendarPopup
                 {
                     id: endCalendarPopup
-                    width: 380
-                    height: 360
-                    modal: true
-                    focus: true
-                    anchors.centerIn: Overlay.overlay
-
-                    property int calendarYear: root.endDate.getFullYear()
-                    property int calendarMonth: root.endDate.getMonth()
-                    property var calendarModel: []
-
-                    function updateCalendarModel()
+                    selectedDate: root.endDate
+                    onDateSelected: function(d)
                     {
-                        var firstDay = new Date(calendarYear, calendarMonth, 1)
-                        var startWeekday = firstDay.getDay()
-                        var startIndex = (startWeekday === 0) ? 6 : startWeekday - 1
-                        var daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate()
-                        var result = []
-                        for (var i = 0; i < startIndex; i++) result.push("")
-                        for (var i = 1; i <= daysInMonth; i++) result.push(i)
-                        var remaining = (7 - (result.length % 7)) % 7
-                        for (var i = 0; i < remaining; i++) result.push("")
-                        calendarModel = result
-                    }
-
-                    Component.onCompleted: updateCalendarModel()
-
-                    Rectangle
-                    {
-                        anchors.fill: parent
-                        color: "white"
-                        border.color: "#cccccc"
-                        radius: 4
-
-                        ColumnLayout
-                        {
-                            anchors.fill: parent
-                            anchors.margins: 10
-                            spacing: 10
-
-                            RowLayout
-                            {
-                                Layout.fillWidth: true
-                                Button
-                                {
-                                    text: "<<"
-                                    font.pixelSize: 14
-                                    Layout.preferredWidth: 45
-                                    onClicked:
-                                    {
-                                        endCalendarPopup.calendarYear -= 1
-                                        endCalendarPopup.updateCalendarModel()
-                                    }
-                                }
-                                Button
-                                {
-                                    text: "<"
-                                    font.pixelSize: 14
-                                    Layout.preferredWidth: 40
-                                    onClicked:
-                                    {
-                                        if (endCalendarPopup.calendarMonth === 0)
-                                        {
-                                            endCalendarPopup.calendarMonth = 11
-                                            endCalendarPopup.calendarYear -= 1
-                                        }
-                                        else
-                                        {
-                                            endCalendarPopup.calendarMonth -= 1
-                                        }
-                                        endCalendarPopup.updateCalendarModel()
-                                    }
-                                }
-                                Label
-                                {
-                                    Layout.fillWidth: true
-                                    horizontalAlignment: Text.AlignHCenter
-                                    font.pixelSize: 16
-                                    font.bold: true
-                                    text:
-                                    {
-                                        var months = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-                                                     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
-                                        return months[endCalendarPopup.calendarMonth] + " " + endCalendarPopup.calendarYear
-                                    }
-                                }
-                                Button
-                                {
-                                    text: ">"
-                                    font.pixelSize: 14
-                                    Layout.preferredWidth: 40
-                                    onClicked:
-                                    {
-                                        if (endCalendarPopup.calendarMonth === 11)
-                                        {
-                                            endCalendarPopup.calendarMonth = 0
-                                            endCalendarPopup.calendarYear += 1
-                                        }
-                                        else
-                                        {
-                                            endCalendarPopup.calendarMonth += 1
-                                        }
-                                        endCalendarPopup.updateCalendarModel()
-                                    }
-                                }
-                                Button
-                                {
-                                    text: ">>"
-                                    font.pixelSize: 14
-                                    Layout.preferredWidth: 45
-                                    onClicked:
-                                    {
-                                        endCalendarPopup.calendarYear += 1
-                                        endCalendarPopup.updateCalendarModel()
-                                    }
-                                }
-                            }
-
-                            Rectangle
-                            {
-                                Layout.fillWidth: true
-                                height: 25
-                                color: "#f0f0f0"
-                                Row
-                                {
-                                    spacing: 2
-                                    Repeater
-                                    {
-                                        model: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
-                                        Label
-                                        {
-                                            width: 46
-                                            height: 25
-                                            text: modelData
-                                            font.pixelSize: 13
-                                            font.bold: true
-                                            horizontalAlignment: Text.AlignHCenter
-                                            verticalAlignment: Text.AlignVCenter
-                                        }
-                                    }
-                                }
-                            }
-
-                            GridView
-                            {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                cellWidth: 48
-                                cellHeight: 40
-
-                                model: endCalendarPopup.calendarModel
-                                delegate: Rectangle
-                                {
-                                    width: 46
-                                    height: 38
-                                    color:
-                                    {
-                                        if (modelData === "") return "transparent"
-                                        var cellDate = new Date(endCalendarPopup.calendarYear, endCalendarPopup.calendarMonth, modelData)
-                                        if (cellDate.toDateString() === root.endDate.toDateString()) return "#0078d7"
-                                        return "transparent"
-                                    }
-                                    radius: 3
-
-                                    Text
-                                    {
-                                        anchors.centerIn: parent
-                                        text: modelData
-                                        color: parent.color === "#0078d7" ? "white" : "black"
-                                        font.pixelSize: 14
-                                    }
-
-                                    MouseArea
-                                    {
-                                        anchors.fill: parent
-                                        onClicked:
-                                        {
-                                            if (modelData !== "")
-                                            {
-                                                var newDate = new Date(endCalendarPopup.calendarYear, endCalendarPopup.calendarMonth, modelData)
-                                                root.endDate = newDate
-                                                endDateField.text = Qt.formatDateTime(root.endDate, "dd.MM.yyyy")
-                                                endCalendarPopup.close()
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        root.endDate = d
+                        endDateField.text = Qt.formatDateTime(root.endDate, "dd.MM.yyyy")
                     }
                 }
             }
@@ -606,7 +241,6 @@ Dialog
 
                     if (startDate <= endDate)
                     {
-                        // ЛГ: проверка красной границы (дата завершения предшественника).
                         if (projectController && projectController.projectData
                             && projectController.projectData.graphKind === 1)
                         {
@@ -618,7 +252,7 @@ Dialog
                                 if (new Date(startDate) < minStart)
                                 {
                                     errorLabel.text = "Дата начала не может быть раньше даты завершения предшественника ("
-                                    + Qt.formatDateTime(new Date(predEnd), "dd.MM.yyyy") + ")"
+                                                      + Qt.formatDateTime(new Date(predEnd), "dd.MM.yyyy") + ")"
                                     errorLabel.visible = true
                                     return
                                 }

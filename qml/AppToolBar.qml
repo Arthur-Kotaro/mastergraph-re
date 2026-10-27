@@ -14,6 +14,24 @@ Rectangle
                && projectController.projectData.graphKind === 1
     }
 
+    function collapseAll()
+    {
+        if (!projectController || !projectController.projectData) return
+        var gm = projectController.projectData.groupModel
+        var ids = gm.getGroupIds()
+        for (var i = 0; i < ids.length; i++)
+            gm.setGroupExpanded(ids[i], false)
+    }
+
+    function expandAll()
+    {
+        if (!projectController || !projectController.projectData) return
+        var gm = projectController.projectData.groupModel
+        var ids = gm.getGroupIds()
+        for (var i = 0; i < ids.length; i++)
+            gm.setGroupExpanded(ids[i], true)
+    }
+
     RowLayout
     {
         anchors.fill: parent
@@ -49,44 +67,12 @@ Rectangle
 
         Button
         {
-            text: "Вид"
-            Layout.preferredWidth: 55
-            onClicked: viewMenu.popup()
-            Menu
-            {
-                id: viewMenu
-                MenuItem
-                {
-                    text: mainWindow.visibility === Window.FullScreen ? "В окне" : "Весь экран"
-                    onTriggered:
-                    {
-                        if (mainWindow.visibility === Window.FullScreen)
-                            mainWindow.showNormal()
-                        else
-                            mainWindow.showFullScreen()
-                    }
-                }
-                MenuSeparator {}
-                MenuItem
-                {
-                    text: projectController && projectController.settingsManager.zoomLevel === 0 ? "Масштаб: Неделя" : "Масштаб: День"
-                    onTriggered:
-                    {
-                        if(projectController)
-                            projectController.settingsManager.setZoomLevel(projectController.settingsManager.zoomLevel === 0 ? 1 : 0)
-                    }
-                }
-            }
-        }
-
-        Button
-        {
             text: "Настройки"
             Layout.preferredWidth: 95
             onClicked: mainWindow.settingsDialog.open()
         }
 
-        Item { Layout.fillWidth: true; Layout.minimumWidth: 5 }
+        ToolSeparator {}
 
         Button
         {
@@ -104,7 +90,7 @@ Rectangle
             onClicked: mainWindow.listDialog.open()
         }
 
-        Item { Layout.fillWidth: true; Layout.minimumWidth: 5 }
+        ToolSeparator {}
 
         Button
         {
@@ -115,6 +101,8 @@ Rectangle
             Layout.preferredWidth: 105
             font.pixelSize: 12
         }
+
+        ToolSeparator {}
 
         ComboBox
         {
@@ -129,7 +117,68 @@ Rectangle
                 if (projectController)
                     projectController.settingsManager.setViewMode(currentIndex)
             }
+
+            Connections
+            {
+                target: projectController ? projectController.settingsManager : null
+                function onViewModeChanged()
+                {
+                    if (projectController)
+                        viewModeCombo.currentIndex = projectController.settingsManager.viewMode
+                }
+            }
         }
+
+        ComboBox
+        {
+            id: zoomCombo
+            Layout.preferredWidth: 110
+            font.pixelSize: 12
+            model: ["День", "Неделя"]
+            currentIndex: projectController ? projectController.settingsManager.zoomLevel : 0
+            onActivated:
+            {
+                if (projectController)
+                    projectController.settingsManager.setZoomLevel(currentIndex)
+            }
+
+            Connections
+            {
+                target: projectController ? projectController.settingsManager : null
+                function onZoomLevelChanged()
+                {
+                    if (projectController)
+                        zoomCombo.currentIndex = projectController.settingsManager.zoomLevel
+                }
+            }
+        }
+
+        ComboBox
+        {
+            id: screenCombo
+            Layout.preferredWidth: 130
+            font.pixelSize: 12
+            model: ["В окне", "Весь экран"]
+            currentIndex: mainWindow.visibility === Window.FullScreen ? 1 : 0
+            onActivated:
+            {
+                if (currentIndex === 1)
+                    mainWindow.showFullScreen()
+                else
+                    mainWindow.showNormal()
+            }
+
+            Connections
+            {
+                target: mainWindow
+                function onVisibilityChanged()
+                {
+                    screenCombo.currentIndex = (mainWindow.visibility === Window.FullScreen) ? 1 : 0
+                }
+            }
+        }
+
+        ToolSeparator {}
 
         Button
         {
@@ -192,6 +241,28 @@ Rectangle
                 if (mainWindow.calendarHeader)
                     mainWindow.calendarHeader.refresh()
             }
+        }
+
+        ToolButton
+        {
+            text: "⊟"
+            font.pixelSize: 16
+            Layout.preferredWidth: 30
+            ToolTip.visible: hovered
+            ToolTip.delay: 400
+            ToolTip.text: "Свернуть все группы"
+            onClicked: appToolBar.collapseAll()
+        }
+
+        ToolButton
+        {
+            text: "⊞"
+            font.pixelSize: 16
+            Layout.preferredWidth: 30
+            ToolTip.visible: hovered
+            ToolTip.delay: 400
+            ToolTip.text: "Развернуть все группы"
+            onClicked: appToolBar.expandAll()
         }
 
         Button

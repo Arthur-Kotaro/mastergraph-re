@@ -15,21 +15,17 @@ Menu
     property int localGraphState: 0
     property bool isTaskCompleted: false
 
+    readonly property bool isLocalGraph:
+        projectController && projectController.projectData
+        && projectController.projectData.graphKind === 1
+
     onOpened:
     {
-        console.log("DIAG TaskContextMenu onOpened, taskId=", taskId, " visible=", visible, " parent=", parent)
         updateState()
-    }
-
-    onClosed:
-    {
-        console.log("DIAG TaskContextMenu onClosed, taskId=", taskId)
     }
 
     function updateState()
     {
-        console.log("DIAG TaskContextMenu updateState, taskId=", taskId)
-
         canAcceptForecast = false
         canEditForecast = true
         canSetProgress = false
@@ -37,19 +33,11 @@ Menu
         isTaskCompleted = false
 
         if (!taskId || !projectController || !projectController.projectData)
-        {
-            console.log("DIAG updateState early return: no taskId or no projectController")
             return
-        }
 
         var task = projectController.projectData.taskModel.getTask(taskId)
         if (!task)
-        {
-            console.log("DIAG updateState early return: no task found for taskId=", taskId)
             return
-        }
-
-        console.log("DIAG updateState found task:", task.title, " status=", task.status, " lgs=", task.localGraphState)
 
         isTaskCompleted = (task.status === 1)
         localGraphState = task.localGraphState !== undefined ? task.localGraphState : 0
@@ -123,6 +111,7 @@ Menu
     MenuItem
     {
         text: "Изменить прогнозные сроки"
+        visible: !root.isLocalGraph
         enabled: root.canEditForecast && !root.isTaskCompleted
         onTriggered:
         {
@@ -134,6 +123,7 @@ Menu
     MenuItem
     {
         text: "Утвердить прогноз"
+        visible: !root.isLocalGraph
         enabled: root.canAcceptForecast
         onTriggered:
         {

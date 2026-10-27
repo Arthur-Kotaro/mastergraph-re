@@ -2,6 +2,8 @@ import QtQuick 6.0
 import QtQuick.Controls 6.0
 import QtQuick.Layouts 6.0
 
+import "utils/RowBuilder.js" as RowBuilder
+
 Item
 {
     id: root
@@ -29,34 +31,7 @@ Item
 
         var mode = currentViewMode()
         var taskIds = projectController.projectData.taskModel.getTasksForGroup(groupId)
-        var rows = []
-
-        for (var i = 0; i < taskIds.length; i++)
-        {
-            var taskData = projectController.projectData.taskModel.getTask(taskIds[i])
-            if (!taskData) continue
-            var isCompleted = (taskData.status === 1)
-
-            if (mode === 0)
-            {
-                rows.push({taskId: taskIds[i], rowKind: "target", data: taskData, isCompleted: isCompleted})
-            }
-            else if (mode === 1)
-            {
-                if (isCompleted)
-                    rows.push({taskId: taskIds[i], rowKind: "target", data: taskData, isCompleted: true})
-                else
-                    rows.push({taskId: taskIds[i], rowKind: "forecast", data: taskData, isCompleted: false})
-            }
-            else
-            {
-                rows.push({taskId: taskIds[i], rowKind: "target", data: taskData, isCompleted: isCompleted})
-                if (!isCompleted)
-                    rows.push({taskId: taskIds[i], rowKind: "forecast", data: taskData, isCompleted: false})
-            }
-        }
-
-        rowsModel = rows
+        rowsModel = RowBuilder.buildGroupRows(projectController.projectData.taskModel, taskIds, mode)
     }
 
     Component.onCompleted: refreshTasks()
@@ -204,7 +179,7 @@ Item
             {
                 width: root.width
                 height: 40
-                color: "white"
+                color: rowMouseArea.containsMouse ? "#f0f8ff" : "white"
                 border.color: "#eeeeee"
                 border.width: 1
 
@@ -228,7 +203,7 @@ Item
                     if (!taskData) return ""
                     var prefix = ""
                     if (taskData.localGraphState !== undefined && taskData.localGraphState !== 0)
-                        prefix = "* "
+                        prefix = "🔗 "
                     return prefix + taskData.title
                 }
 
@@ -372,6 +347,7 @@ Item
 
                 MouseArea
                 {
+                    id: rowMouseArea
                     anchors.fill: parent
                     hoverEnabled: true
                     acceptedButtons: Qt.RightButton

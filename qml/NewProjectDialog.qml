@@ -206,155 +206,14 @@ Dialog
                                 }
                             }
 
-                            Popup
+                            CalendarPopup
                             {
                                 id: calendarPopup
-                                width: 350
-                                height: 320
-                                x: parent.width - width
-                                y: 45
-                                modal: true
-                                focus: true
-
-                                onOpened:
+                                selectedDate: root.startDate
+                                onDateSelected: function(d)
                                 {
-                                    calendarYear = root.startDate.getFullYear()
-                                    calendarMonth = root.startDate.getMonth()
-                                    updateCalendarModel()
-                                }
-
-                                Rectangle
-                                {
-                                    anchors.fill: parent
-                                    color: "white"
-                                    border.color: "#cccccc"
-                                    border.width: 1
-                                    radius: 4
-
-                                    ColumnLayout
-                                    {
-                                        anchors.fill: parent
-                                        anchors.margins: 10
-                                        spacing: 10
-
-                                        RowLayout
-                                        {
-                                            Layout.fillWidth: true
-                                            Button
-                                            {
-                                                text: "<"
-                                                font.pixelSize: 14
-                                                Layout.preferredWidth: 40
-                                                onClicked:
-                                                {
-                                                    var newDate = new Date(calendarYear, calendarMonth - 1, 1)
-                                                    calendarYear = newDate.getFullYear()
-                                                    calendarMonth = newDate.getMonth()
-                                                    updateCalendarModel()
-                                                }
-                                            }
-                                            Label
-                                            {
-                                                Layout.fillWidth: true
-                                                horizontalAlignment: Text.AlignHCenter
-                                                font.pixelSize: 14
-                                                font.bold: true
-                                                text:
-                                                {
-                                                    var months = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-                                                                 "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
-                                                    return months[calendarMonth] + " " + calendarYear
-                                                }
-                                            }
-                                            Button
-                                            {
-                                                text: ">"
-                                                font.pixelSize: 14
-                                                Layout.preferredWidth: 40
-                                                onClicked:
-                                                {
-                                                    var newDate = new Date(calendarYear, calendarMonth + 1, 1)
-                                                    calendarYear = newDate.getFullYear()
-                                                    calendarMonth = newDate.getMonth()
-                                                    updateCalendarModel()
-                                                }
-                                            }
-                                        }
-
-                                        Rectangle
-                                        {
-                                            Layout.fillWidth: true
-                                            height: 30
-                                            color: "#f0f0f0"
-                                            Row
-                                            {
-                                                spacing: 2
-                                                Repeater
-                                                {
-                                                    model: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
-                                                    Label
-                                                    {
-                                                        width: 42
-                                                        height: 30
-                                                        text: modelData
-                                                        font.pixelSize: 12
-                                                        font.bold: true
-                                                        horizontalAlignment: Text.AlignHCenter
-                                                        verticalAlignment: Text.AlignVCenter
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        Grid
-                                        {
-                                            Layout.fillWidth: true
-                                            Layout.fillHeight: true
-                                            columns: 7
-                                            spacing: 2
-
-                                            Repeater
-                                            {
-                                                model: calendarModel
-                                                Rectangle
-                                                {
-                                                    width: 42
-                                                    height: 36
-                                                    color:
-                                                    {
-                                                        if (modelData === "") return "transparent"
-                                                        var cellDate = new Date(calendarYear, calendarMonth, modelData)
-                                                        if (cellDate.toDateString() === root.startDate.toDateString()) return "#0078d7"
-                                                        return "transparent"
-                                                    }
-                                                    radius: 3
-
-                                                    Text
-                                                    {
-                                                        anchors.centerIn: parent
-                                                        text: modelData
-                                                        color: parent.color === "#0078d7" ? "white" : "black"
-                                                        font.pixelSize: 13
-                                                    }
-
-                                                    MouseArea
-                                                    {
-                                                        anchors.fill: parent
-                                                        onClicked:
-                                                        {
-                                                            if (modelData !== "")
-                                                            {
-                                                                var newDate = new Date(calendarYear, calendarMonth, modelData)
-                                                                root.startDate = newDate
-                                                                dateField.text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
-                                                                calendarPopup.close()
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
+                                    root.startDate = d
+                                    dateField.text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
                                 }
                             }
                         }
@@ -509,31 +368,9 @@ Dialog
         }
     }
 
-    property int calendarYear: startDate.getFullYear()
-    property int calendarMonth: startDate.getMonth()
-    property var calendarModel: []
-
-    function updateCalendarModel()
-    {
-        var firstDay = new Date(calendarYear, calendarMonth, 1)
-        var startWeekday = firstDay.getDay()
-        var startIndex = (startWeekday === 0) ? 6 : startWeekday - 1
-        var daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate()
-        var result = []
-
-        for (var i = 0; i < startIndex; i++) result.push("")
-        for (var i = 1; i <= daysInMonth; i++) result.push(i)
-
-        var remaining = (7 - (result.length % 7)) % 7
-        for (var i = 0; i < remaining; i++) result.push("")
-
-        calendarModel = result
-    }
-
     Component.onCompleted:
     {
         dateField.text = Qt.formatDateTime(root.startDate, "dd.MM.yyyy")
-        updateCalendarModel()
         nameField.forceActiveFocus()
     }
 

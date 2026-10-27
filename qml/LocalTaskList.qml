@@ -122,7 +122,7 @@ Flickable
                 {
                     width: root.width
                     height: 40
-                    color: "white"
+                    color: taskRowMouseArea.containsMouse ? "#f0f8ff" : "white"
                     border.color: "#eeeeee"
                     border.width: 1
 
@@ -146,7 +146,7 @@ Flickable
                         if (!taskData) return ""
                         var prefix = ""
                         if (taskData.localGraphState !== undefined && taskData.localGraphState !== 0)
-                            prefix = "* "
+                            prefix = "🔗 "
                         return prefix + taskData.title
                     }
 
@@ -280,6 +280,7 @@ Flickable
 
                     MouseArea
                     {
+                        id: taskRowMouseArea
                         anchors.fill: parent
                         hoverEnabled: true
                         acceptedButtons: Qt.RightButton

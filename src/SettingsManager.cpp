@@ -58,10 +58,9 @@ void SettingsManager::setZoomLevel(GanttDefines::ZoomLevel level) {
     }
 }
 
-void SettingsManager::setZoomLevel(int level) {
-    if (level >= 0 && level <= 2) {
-        setZoomLevel(static_cast<GanttDefines::ZoomLevel>(level));
-    }
+void SettingsManager::setZoomLevel(int level)
+{
+    if (level >= 0 && level <= 1) setZoomLevel(static_cast<GanttDefines::ZoomLevel>(level));
 }
 
 bool SettingsManager::tracingEnabled() const { return m_tracingEnabled; }
@@ -351,8 +350,15 @@ void SettingsManager::loadSettings()
         QCoreApplication::applicationDirPath() + "/").toString();
     m_holidaysPath = m_settings->value("holidaysPath",
         QCoreApplication::applicationDirPath() + "/default_holidays.json").toString();
-    m_zoomLevel = static_cast<GanttDefines::ZoomLevel>(
-        m_settings->value("zoomLevel", 2).toInt());
+
+        m_zoomLevel = static_cast<GanttDefines::ZoomLevel>(
+            m_settings->value("zoomLevel", 1).toInt());
+
+        int zoomRaw = static_cast<int>(m_zoomLevel);
+        if (zoomRaw < 0 || zoomRaw > 1)
+        {
+            m_zoomLevel = GanttDefines::ZoomLevel::Daily;
+        }
     m_tracingEnabled = m_settings->value("tracingEnabled", false).toBool();
     m_editingLocked = m_settings->value("editingLocked", false).toBool();
     m_viewMode = static_cast<GanttDefines::ViewMode>(

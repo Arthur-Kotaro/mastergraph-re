@@ -17,6 +17,15 @@ Dialog
     property var cascadeModel: []
     property bool createWithoutDates: false
 
+    function groupNames()
+    {
+        if (!projectController || !projectController.projectData) return []
+        return projectController.projectData.groupModel.getGroupIds().map(function(id)
+        {
+            return projectController.projectData.groupModel.getGroup(id).name
+        })
+    }
+
     function buildCascade()
     {
         cascadeModel = []
@@ -145,10 +154,7 @@ Dialog
                         ComboBox
                         {
                             Layout.preferredWidth: 300
-                            model: projectController.projectData.groupModel.getGroupIds().map(function(id)
-                            {
-                                return projectController.projectData.groupModel.getGroup(id).name
-                            })
+                            model: root.groupNames()
                             onCurrentIndexChanged:
                             {
                                 if (cascadeModel[index]) cascadeModel[index].groupIndex = currentIndex

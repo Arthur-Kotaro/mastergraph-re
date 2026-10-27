@@ -26,8 +26,7 @@ enum class DependencyType {
 
 enum class ZoomLevel {
     Daily = 0,
-    Weekly,
-    Yearly
+    Weekly
 };
 
 enum class ViewMode {

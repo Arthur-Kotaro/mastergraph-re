@@ -40,6 +40,9 @@
         <file>qml/TaskContextMenu.qml</file>
         <file>qml/CurrentTimeLine.qml</file>
         <file>qml/TargetDatesLine.qml</file>
+        <file>qml/CalendarPopup.qml</file>
+        <file>qml/utils/RowBuilder.js</file>
+        <file>qml/utils/DateUtils.js</file>
         <file alias="default_typologies.json">resources/default_typologies.json</file>
         <file alias="default_tasks.json">resources/default_tasks.json</file>
         <file alias="default_holidays.json">resources/default_holidays.json</file>
