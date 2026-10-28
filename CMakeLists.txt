@@ -58,13 +58,15 @@ set(HEADERS
     include/GlobalDefines.h
 )
 
+# ---------- Основной бинарник ----------
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 
+# Отладочные сообщения включены (закомментированы подавления)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-    $<$<CONFIG:Release>:QT_NO_DEBUG_OUTPUT>
-    $<$<CONFIG:Release>:QT_NO_WARNING_OUTPUT>
+#    $<$<CONFIG:Release>:QT_NO_DEBUG_OUTPUT>
+#    $<$<CONFIG:Release>:QT_NO_WARNING_OUTPUT>
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -98,3 +100,51 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
+
+# ---------- export_renderer (offscreen export) ----------
+set(EXPORT_SOURCES
+    export_renderer/main.cpp
+    src/ProjectData.cpp
+    src/TaskModel.cpp
+    src/GroupModel.cpp
+    src/MilestoneModel.cpp
+    src/DependencyModel.cpp
+    src/HistoryEntry.cpp
+    src/ResourceManager.cpp
+    src/SettingsManager.cpp
+    src/ExportManager.cpp
+    src/ProjectController.cpp
+    src/SessionManager.cpp
+    qml.qrc
+)
+
+add_executable(export_renderer ${EXPORT_SOURCES} ${HEADERS})
+
+target_include_directories(export_renderer PRIVATE include)
+
+# Отладочные сообщения включены
+target_compile_definitions(export_renderer PRIVATE
+)
+
+target_link_libraries(export_renderer
+    Qt6::Core
+    Qt6::Quick
+    Qt6::QuickControls2
+    Qt6::Widgets
+    Qt6::OpenGL
+    Qt6::Svg
+    Qt6::PrintSupport
+)
+
+set_target_properties(export_renderer PROPERTIES MACOSX_BUNDLE FALSE WIN32_EXECUTABLE FALSE)
+
+foreach(RES_FILE ${RESOURCE_FILES})
+    get_filename_component(RES_NAME ${RES_FILE} NAME)
+    add_custom_command(
+        TARGET export_renderer POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${CMAKE_CURRENT_SOURCE_DIR}/${RES_FILE}
+            $<TARGET_FILE_DIR:export_renderer>/${RES_NAME}
+        COMMENT "Copying ${RES_NAME} to export_renderer build directory"
+    )
+endforeach()
