@@ -18,9 +18,10 @@ Flickable
     // Высота грида справа (для синхронизации линий и MouseArea)
     readonly property real gridHeight:
     {
-        if (mainWindow && mainWindow.hasGridArea && mainWindow.hasGridArea())
+        if (typeof mainWindow !== "undefined" && mainWindow
+            && mainWindow.hasGridArea && mainWindow.hasGridArea())
             return mainWindow.gridArea.contentHeight
-        return 0
+            return 0
     }
 
     function taskIds()

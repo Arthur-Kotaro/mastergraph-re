@@ -76,6 +76,7 @@ ApplicationWindow
     property alias confirmRemoveTaskDialog: confirmRemoveTaskDialog
     property alias setProgressDialog: setProgressDialog
     property alias taskContextMenu: taskContextMenu
+    property alias exportDialog: exportDialog
 
     // --- Файл ---
     Shortcut { sequence: "Ctrl+N"; enabled: !isLocalWindow; onActivated: if (projectController && !isLocalWindow) { newProjectDialog.refreshData(); newProjectDialog.open() } }
@@ -249,6 +250,7 @@ ApplicationWindow
     Item
     {
         id: contentArea
+        objectName: "contentArea"
         anchors.top: appToolBar.bottom
         anchors.bottom: infoPanel.top
         anchors.left: parent.left
@@ -451,6 +453,7 @@ ApplicationWindow
     DetachLocalGraphDialog { id: detachLocalGraphDialog }
     ConfirmRemoveTaskDialog { id: confirmRemoveTaskDialog }
     SetProgressDialog { id: setProgressDialog }
+    ExportDialog { id: exportDialog }
 
     TaskContextMenu
     {

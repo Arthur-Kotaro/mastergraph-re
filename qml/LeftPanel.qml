@@ -18,8 +18,10 @@ Rectangle
 
     readonly property real gridContentHeight:
     {
-        if (mainWindow && mainWindow.hasGridArea && mainWindow.hasGridArea()) return mainWindow.gridArea.contentHeight
-        return 0
+        if (typeof mainWindow !== "undefined" && mainWindow
+            && mainWindow.hasGridArea && mainWindow.hasGridArea())
+            return mainWindow.gridArea.contentHeight
+            return 0
     }
 
     readonly property int topBlockHeight: rowHeight * (isLocalMode ? 4 : 5)

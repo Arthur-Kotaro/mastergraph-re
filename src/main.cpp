@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QIcon>
+#include <QQuickWindow>
 
 #include "ProjectController.h"
 #include "TaskModel.h"
@@ -45,5 +46,14 @@ int main(int argc, char *argv[])
     { if (!obj && url == objUrl) QCoreApplication::exit(-1); }, Qt::QueuedConnection);
 
     engine.load(url);
+
+    // Передаём главное окно в ExportManager для экспорта
+    if (!engine.rootObjects().isEmpty())
+    {
+        QQuickWindow* window = qobject_cast<QQuickWindow*>(engine.rootObjects().first());
+        if (window)
+            controller.get_exportManager()->setMainWindow(window);
+    }
+
     return app.exec();
 }
