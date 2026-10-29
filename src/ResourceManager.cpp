@@ -1,5 +1,6 @@
 #include "ResourceManager.h"
 #include <QFile>
+#include <QSaveFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -80,16 +81,31 @@ bool ResourceManager::saveJsonFile(const QString& fileName, const QVariantMap& d
         }
     }
 
-    QFile file(fullPath);
+    // 1. Бэкап: если файл существует, копируем его в .bak (перезаписывая старый)
+    if (QFile::exists(fullPath))
+    {
+        QString backupPath = fullPath + ".bak";
+        QFile::remove(backupPath); // Удаляем старый бэкап, чтобы copy не упал
+        QFile::copy(fullPath, backupPath);
+    }
+
+    // 2. Атомарная запись через QSaveFile
+    QSaveFile file(fullPath);
     if (!file.open(QIODevice::WriteOnly))
     {
-        emit errorOccurred("Не удалось создать файл: " + fullPath);
+        emit errorOccurred("Не удалось открыть файл для записи: " + fullPath);
         return false;
     }
 
     QJsonDocument doc = QJsonDocument::fromVariant(data);
     file.write(doc.toJson());
-    file.close();
+
+    if (!file.commit())
+    {
+        emit errorOccurred("Ошибка записи файла: " + fullPath);
+        return false;
+    }
+
     qDebug() << "Project saved to:" << fullPath;
     return true;
 }
