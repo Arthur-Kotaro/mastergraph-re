@@ -78,15 +78,8 @@ Rectangle
         // Разделитель
         Rectangle { width: 1; height: 24; color: "#b0b0b0"; Layout.alignment: Qt.AlignVCenter }
 
-        // ---- Настройки, Блокировка ----
-        ToolButton
-        {
-            icon.source: "qrc:/qml/icons/settings.svg"
-            icon.width: 20; icon.height: 20
-            ToolTip.visible: hovered; ToolTip.delay: 400
-            ToolTip.text: "Настройки"
-            onClicked: mainWindow.settingsDialog.open()
-        }
+
+        // ---- Блокировка, Настройки ----
         ToolButton
         {
             icon.source: (projectController && projectController.settingsManager.editingLocked)
@@ -99,20 +92,61 @@ Rectangle
             onCheckedChanged: { if (projectController) projectController.settingsManager.editingLocked = checked }
         }
 
+        ToolButton
+        {
+            icon.source: "qrc:/qml/icons/settings.svg"
+            icon.width: 20; icon.height: 20
+            ToolTip.visible: hovered; ToolTip.delay: 400
+            ToolTip.text: "Настройки"
+            onClicked: mainWindow.settingsDialog.open()
+        }
+
+        Rectangle { width: 1; height: 24; color: "#b0b0b0"; Layout.alignment: Qt.AlignVCenter }
+
+        ToolButton
+        {
+            icon.source: "qrc:/qml/icons/refresh.svg"
+            icon.width: 18; icon.height: 18
+            Layout.preferredWidth: 28
+            ToolTip.visible: hovered; ToolTip.delay: 400
+            ToolTip.text: "Обновить"
+            onClicked: { if (mainWindow.hasGridArea()) mainWindow.gridArea.updateData() }
+        }
+
+        ToolButton
+        {
+            icon.source: "qrc:/qml/icons/collapse.svg"
+            icon.width: 18; icon.height: 18
+            Layout.preferredWidth: 28
+            ToolTip.visible: hovered; ToolTip.delay: 400
+            ToolTip.text: "Свернуть все группы"
+            onClicked: appToolBar.collapseAll()
+        }
+        ToolButton
+        {
+            icon.source: "qrc:/qml/icons/expand.svg"
+            icon.width: 18; icon.height: 18
+            Layout.preferredWidth: 28
+            ToolTip.visible: hovered; ToolTip.delay: 400
+            ToolTip.text: "Развернуть все группы"
+            onClicked: appToolBar.expandAll()
+        }
+
+        // Разделитель
         Rectangle { width: 1; height: 24; color: "#b0b0b0"; Layout.alignment: Qt.AlignVCenter }
 
         // ---- Каскад, Список ----
         Button
         {
             text: "Добавить каскад"
-            Layout.preferredWidth: 140
+            Layout.preferredWidth: 150
             font.pixelSize: 11
             onClicked: mainWindow.cascadeDialog.open()
         }
         Button
         {
             text: "Добавить список"
-            Layout.preferredWidth: 140
+            Layout.preferredWidth: 150
             font.pixelSize: 11
             onClicked: mainWindow.listDialog.open()
         }
@@ -186,7 +220,7 @@ Rectangle
             visible: !appToolBar.isLocalMode
             checked: mainWindow.hasGridArea() ? mainWindow.gridArea.showProgress : true
             checkable: true
-            Layout.preferredWidth: 80
+            Layout.preferredWidth: 95
             font.pixelSize: 11
             onCheckedChanged: { if(mainWindow.hasGridArea()) mainWindow.gridArea.showProgress = checked }
         }
@@ -195,7 +229,7 @@ Rectangle
             text: "Зависимости"
             checked: mainWindow.hasGridArea() ? mainWindow.gridArea.showDependencies : true
             checkable: true
-            Layout.preferredWidth: 105
+            Layout.preferredWidth: 125
             font.pixelSize: 11
             onCheckedChanged: { if(mainWindow.hasGridArea()) mainWindow.gridArea.showDependencies = checked }
         }
@@ -204,7 +238,7 @@ Rectangle
             text: "Переносы"
             checked: mainWindow.hasGridArea() ? mainWindow.gridArea.showTaskHistory : true
             checkable: true
-            Layout.preferredWidth: 80
+            Layout.preferredWidth: 95
             font.pixelSize: 11
             onCheckedChanged: { if (mainWindow.hasGridArea()) mainWindow.gridArea.showTaskHistory = checked }
         }
@@ -213,7 +247,7 @@ Rectangle
             text: "Комментарии"
             checked: mainWindow.hasGridArea() ? mainWindow.gridArea.showComments : true
             checkable: true
-            Layout.preferredWidth: 105
+            Layout.preferredWidth: 125
             font.pixelSize: 11
             onCheckedChanged: { if(mainWindow.hasGridArea()) mainWindow.gridArea.showComments = checked }
         }
@@ -222,7 +256,7 @@ Rectangle
             text: "Праздники"
             checked: projectController ? projectController.settingsManager.showHolidays : false
             checkable: true
-            Layout.preferredWidth: 85
+            Layout.preferredWidth: 105
             font.pixelSize: 11
             onCheckedChanged:
             {
@@ -230,34 +264,6 @@ Rectangle
                 if (mainWindow.hasGridArea()) mainWindow.gridArea.updateData()
                 if (mainWindow.calendarHeader) mainWindow.calendarHeader.refresh()
             }
-        }
-
-        ToolButton
-        {
-            text: "⊟"
-            font.pixelSize: 15
-            Layout.preferredWidth: 26
-            ToolTip.visible: hovered; ToolTip.delay: 400
-            ToolTip.text: "Свернуть все группы"
-            onClicked: appToolBar.collapseAll()
-        }
-        ToolButton
-        {
-            text: "⊞"
-            font.pixelSize: 15
-            Layout.preferredWidth: 26
-            ToolTip.visible: hovered; ToolTip.delay: 400
-            ToolTip.text: "Развернуть все группы"
-            onClicked: appToolBar.expandAll()
-        }
-        ToolButton
-        {
-            text: "🔄"
-            font.pixelSize: 15
-            Layout.preferredWidth: 30
-            ToolTip.visible: hovered; ToolTip.delay: 400
-            ToolTip.text: "Обновить"
-            onClicked: { if (mainWindow.hasGridArea()) mainWindow.gridArea.updateData() }
         }
 
         // Растяжка — один раз, чтобы прижать правую группу
@@ -273,7 +279,7 @@ Rectangle
         Button
         {
             text: "О программе"
-            Layout.preferredWidth: 105
+            Layout.preferredWidth: 120
             font.pixelSize: 11
             onClicked: mainWindow.aboutDialog.open()
         }

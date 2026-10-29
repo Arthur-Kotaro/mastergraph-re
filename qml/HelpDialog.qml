@@ -106,6 +106,8 @@ Window
                 Text { text: "Сохранить график";           font.pixelSize: 22 }
                 Text { text: "Ctrl+Shift+S"; font.bold: true; font.pixelSize: 22 }
                 Text { text: "Сохранить как";              font.pixelSize: 22 }
+                Text { text: "Ctrl+E"; font.bold: true; font.pixelSize: 22 }
+                Text { text: "Экспорт графика";            font.pixelSize: 22 }
             }
 
             Item { width: 1; height: 12 }

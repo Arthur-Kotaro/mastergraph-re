@@ -226,7 +226,8 @@ Rectangle
             var xs = dateToX(linkedStart)
             var xe = dateToX(linkedEnd)
             if (xs >= 0) { targetStartLineX = xs; showTargetStartLine = true; targetStartLineIsPredecessor = false }
-            if (xe >= 0) { targetEndLineX = xe; showTargetEndLine = true }
+            // Правая граница должна быть в конце дня завершения, а не в начале
+            if (xe >= 0) { targetEndLineX = xe + root.dayWidth; showTargetEndLine = true }
         }
 
         // Красная левая граница — дата завершения непосредственного предшественника.

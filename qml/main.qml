@@ -7,9 +7,9 @@ import GanttProject 1.0
 ApplicationWindow
 {
     id: mainWindow
-    width: 1700
+    width: 1810
     height: 750
-    minimumWidth: 1700
+    minimumWidth: 1810
     minimumHeight: 750
     visible: true
 
@@ -83,6 +83,7 @@ ApplicationWindow
     Shortcut { sequence: "Ctrl+O"; enabled: !isLocalWindow; onActivated: if (projectController && !isLocalWindow) openFileDialog.open() }
     Shortcut { sequence: "Ctrl+S"; enabled: inEditMode && !editingText; onActivated: if (projectController && inEditMode) projectController.saveProject() }
     Shortcut { sequence: "Ctrl+Shift+S"; enabled: inEditMode && !editingText; onActivated: if (projectController && inEditMode) saveAsDialog.open() }
+    Shortcut { sequence: "Ctrl+E"; enabled: inEditMode && !editingText; onActivated: if (mainWindow.exportDialog) mainWindow.exportDialog.open() }
 
     // --- Режимы отображения ---
     Shortcut {

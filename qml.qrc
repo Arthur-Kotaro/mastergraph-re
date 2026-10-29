@@ -52,6 +52,9 @@
         <file>qml/icons/settings.svg</file>
         <file>qml/icons/lock.svg</file>
         <file>qml/icons/unlock.svg</file>
+        <file>qml/icons/collapse.svg</file>
+        <file>qml/icons/expand.svg</file>
+        <file>qml/icons/refresh.svg</file>
         <file alias="default_typologies.json">resources/default_typologies.json</file>
         <file alias="default_tasks.json">resources/default_tasks.json</file>
         <file alias="default_holidays.json">resources/default_holidays.json</file>
