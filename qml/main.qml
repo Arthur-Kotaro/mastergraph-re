@@ -439,7 +439,6 @@ ApplicationWindow
     SettingsDialog { id: settingsDialog }
     EditTaskDialog { id: editTaskDialog }
     EditForecastDatesDialog { id: editForecastDatesDialog }
-    ChangeMilestoneDateDialog { id: changeMilestoneDateDialog }
     AboutDialog { id: aboutDialog }
     HelpDialog { id: helpDialog }
     DependencyDialog { id: dependencyDialog }

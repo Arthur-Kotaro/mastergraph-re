@@ -164,8 +164,3 @@ void SessionManager::notifyWindowClosed(const QString& taskId)
 
     emit localGraphSessionClosed(taskId);
 }
-
-void SessionManager::notifyLocalGraphSaved(const QString& taskId, const QString& filePath)
-{
-    emit localGraphSaved(taskId, filePath);
-}

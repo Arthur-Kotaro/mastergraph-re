@@ -33,10 +33,8 @@ void ExportManager::setExportSettings(const QVariantMap& settings)
     m_exportSettings = settings;
 }
 
-bool ExportManager::exportToPng(ProjectData* project, const QString& filePath, int width, int height)
+bool ExportManager::exportToPng(ProjectData* project, const QString& filePath)
 {
-    Q_UNUSED(width)
-    Q_UNUSED(height)
     if (!project) { emit exportFinished(false, "Нет данных проекта"); return false; }
     if (m_process) { emit exportFinished(false, "Экспорт уже выполняется"); return false; }
 

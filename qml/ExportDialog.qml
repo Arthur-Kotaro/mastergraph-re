@@ -192,9 +192,9 @@ Dialog
                     }
                     projectController.exportManager.setExportSettings(settings)
                     if (root.formatIndex === 0)
-                        projectController.exportToPng(root.filePath, 0, 0)
-                    else
-                        projectController.exportToPdf(root.filePath)
+                        projectController.exportToPng(root.filePath)
+                        else
+                            projectController.exportToPdf(root.filePath)
                 }
             }
 

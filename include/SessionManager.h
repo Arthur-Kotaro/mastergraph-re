@@ -22,7 +22,6 @@ public:
     Q_INVOKABLE void closeLocalGraphSession(const QString& taskId);
     Q_INVOKABLE bool isLocalGraphSessionOpen(const QString& taskId) const;
     Q_INVOKABLE void notifyWindowClosed(const QString& taskId);
-    Q_INVOKABLE void notifyLocalGraphSaved(const QString& taskId, const QString& filePath);
 
 signals:
     void localGraphSessionClosed(const QString& taskId);

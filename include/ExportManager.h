@@ -23,7 +23,7 @@ public:
     void setMainWindow(QQuickWindow* window);
     Q_INVOKABLE void setExportSettings(const QVariantMap& settings);
 
-    Q_INVOKABLE bool exportToPng(ProjectData* project, const QString& filePath, int width, int height);
+    Q_INVOKABLE bool exportToPng(ProjectData* project, const QString& filePath);
     Q_INVOKABLE bool exportToPdf(ProjectData* project, const QString& filePath, const QDate& exportDate);
 
 signals:

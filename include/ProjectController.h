@@ -36,7 +36,7 @@ public:
     Q_INVOKABLE bool openLocalGraphFile(const QString& filePath);
     Q_INVOKABLE void saveProject();
     Q_INVOKABLE void saveProjectAs(const QString& filePath);
-    Q_INVOKABLE void exportToPng(const QString& filePath, int width, int height);
+    Q_INVOKABLE void exportToPng(const QString& filePath);
     Q_INVOKABLE void exportToPdf(const QString& filePath);
 
     Q_INVOKABLE void addTask(const QString& groupId, const QString& title, const QString& responsible, const QDate& startDate, const QDate& endDate);

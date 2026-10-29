@@ -159,9 +159,9 @@ void ProjectController::saveProjectAs(const QString& filePath)
     saveProject();
 }
 
-void ProjectController::exportToPng(const QString& filePath, int width, int height)
+void ProjectController::exportToPng(const QString& filePath)
 {
-    m_exportManager->exportToPng(m_projectData, filePath, width, height);
+    m_exportManager->exportToPng(m_projectData, filePath);
 }
 
 void ProjectController::exportToPdf(const QString& filePath)
