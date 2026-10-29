@@ -1,5 +1,6 @@
 import QtQuick 6.0
 import QtQuick.Controls 6.0
+import "utils/RowBuilder.js" as RowBuilder
 
 Rectangle
 {
@@ -377,30 +378,11 @@ Rectangle
                 if (!hasDatesL && !isUnapprovedL)
                     nodeXL = root.nodeXByTaskTarget[tdL.id] !== undefined ? root.nodeXByTaskTarget[tdL.id] : dayWidth / 2
 
-                items.push({
-                    type: "task",
-                    rowKind: "target",
-                    taskId: tdL.id,
-                    rowIndex: taskCounter,
-                    taskTitle: tdL.title,
-                    taskResponsible: tdL.responsible,
-                    taskStart: tdL.startDate,
-                    taskEnd: tdL.endDate,
-                    forecastStart: tdL.forecastStart,
-                    forecastEnd: tdL.forecastEnd,
-                    taskStatus: tdL.status,
-                    taskComment: tdL.comment,
-                    isCompleted: isCompletedL,
-                    hasDates: hasDatesL,
-                    hasForecast: hasFcL,
-                    isUnapproved: isUnapprovedL,
-                    nodeX: nodeXL,
-                    localGraphState: tdL.localGraphState,
-                    progressCurrent: tdL.progressCurrent,
-                    progressTotal: tdL.progressTotal,
-                    hasConflict: conflictSet[tdL.id] === true
-                })
-                taskCounter++
+                    var itemL = RowBuilder.createGridItem(tdL, tdL.id, "target", isCompletedL, hasDatesL, isUnapprovedL, nodeXL)
+                    itemL.rowIndex = taskCounter
+                    itemL.hasConflict = conflictSet[tdL.id] === true
+                    items.push(itemL)
+                    taskCounter++
             }
         }
         else
@@ -423,70 +405,51 @@ Rectangle
                         var taskData = projectController.projectData.taskModel.getTask(tasks[j])
                         if (!taskData) continue
 
-                        var isCompleted = (taskData.status === 1)
-                        var hasDates = hasTaskDates(taskData)
-                        var hasFc = hasTaskForecast(taskData)
-                        var isUnapproved = !hasDates && hasFc
+                            var isCompleted = (taskData.status === 1)
+                            var hasDates = hasTaskDates(taskData)
+                            var hasFc = hasTaskForecast(taskData)
+                            var isUnapproved = !hasDates && hasFc
 
-                        function pushRow(kind, startDate, endDate, rowHasDates, rowIsUnapproved)
-                        {
-                            var nodeXVal = 0
-                            if (!rowHasDates && !rowIsUnapproved)
+                            function pushRow(kind, startDate, endDate, rowHasDates, rowIsUnapproved)
                             {
-                                if (kind === "target")
-                                    nodeXVal = root.nodeXByTaskTarget[tasks[j]] !== undefined ? root.nodeXByTaskTarget[tasks[j]] : dayWidth / 2
-                                else
-                                    nodeXVal = root.nodeXByTaskForecast[tasks[j]] !== undefined ? root.nodeXByTaskForecast[tasks[j]] : dayWidth / 2
+                                var nodeXVal = 0
+                                if (!rowHasDates && !rowIsUnapproved)
+                                {
+                                    if (kind === "target")
+                                        nodeXVal = root.nodeXByTaskTarget[tasks[j]] !== undefined ? root.nodeXByTaskTarget[tasks[j]] : dayWidth / 2
+                                        else
+                                            nodeXVal = root.nodeXByTaskForecast[tasks[j]] !== undefined ? root.nodeXByTaskForecast[tasks[j]] : dayWidth / 2
+                                }
+
+                                var item = RowBuilder.createGridItem(taskData, tasks[j], kind, isCompleted, rowHasDates, rowIsUnapproved, nodeXVal)
+                                item.rowIndex = taskCounter
+                                item.hasConflict = conflictSet[tasks[j]] === true
+                                items.push(item)
+                                taskCounter++
                             }
 
-                            items.push({
-                                type: "task",
-                                rowKind: kind,
-                                taskId: tasks[j],
-                                rowIndex: taskCounter,
-                                taskTitle: taskData.title,
-                                taskResponsible: taskData.responsible,
-                                taskStart: startDate,
-                                taskEnd: endDate,
-                                forecastStart: taskData.forecastStart,
-                                forecastEnd: taskData.forecastEnd,
-                                taskStatus: taskData.status,
-                                taskComment: taskData.comment,
-                                isCompleted: isCompleted,
-                                hasDates: rowHasDates,
-                                hasForecast: hasFc,
-                                isUnapproved: rowIsUnapproved,
-                                nodeX: nodeXVal,
-                                localGraphState: taskData.localGraphState,
-                                progressCurrent: taskData.progressCurrent,
-                                progressTotal: taskData.progressTotal,
-                                hasConflict: conflictSet[tasks[j]] === true
-                            })
-                            taskCounter++
-                        }
-
-                        if (mode === 0)
-                        {
-                            pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
-                        }
-                        else if (mode === 1)
-                        {
-                            if (isCompleted || !hasFc) pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
+                            if (mode === 0)
+                            {
+                                pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
+                            }
+                            else if (mode === 1)
+                            {
+                                if (isCompleted || !hasFc) pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
+                                    else
+                                    {
+                                        var fHasDates1 = isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
+                                        pushRow("forecast", taskData.forecastStart, taskData.forecastEnd, fHasDates1, isUnapproved)
+                                    }
+                            }
                             else
                             {
-                                var fHasDates1 = isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
-                                pushRow("forecast", taskData.forecastStart, taskData.forecastEnd, fHasDates1, isUnapproved)
+                                pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
+                                if (!isCompleted)
+                                {
+                                    var fHasDates2 = isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
+                                    pushRow("forecast", taskData.forecastStart, taskData.forecastEnd, fHasDates2, isUnapproved)
+                                }
                             }
-                        }
-                        else
-                        {
-                            pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
-                            if (!isCompleted)
-                            {
-                                var fHasDates2 = isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
-                                pushRow("forecast", taskData.forecastStart, taskData.forecastEnd, fHasDates2, isUnapproved)
-                            }
-                        }
                     }
                 }
             }

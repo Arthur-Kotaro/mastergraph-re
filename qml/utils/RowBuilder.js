@@ -1,11 +1,6 @@
 .pragma library
 
-// Строит список строк для задачи в левой панели и в сетке Ганта
-// с учётом режима отображения (0 = target, 1 = forecast, 2 = combined).
-//
-// Возвращает массив объектов:
-//   { taskId, rowKind: "target"|"forecast", data: <QVariantMap>, isCompleted: bool }
-
+// Строит список строк для левой панели (GroupDelegate)
 function buildGroupRows(taskModel, taskIds, mode)
 {
     var rows = []
@@ -36,9 +31,29 @@ function buildGroupRows(taskModel, taskIds, mode)
     return rows
 }
 
-// Для GridArea: возвращает true, если для задачи в данном режиме
-// должна быть только одна строка target (для completed в режиме 1).
-function isCompletedTargetOnly(taskData, mode)
+// Вспомогательная функция для формирования строки сетки (GridArea)
+function createGridItem(taskData, taskId, rowKind, isCompleted, hasDates, isUnapproved, nodeX)
 {
-    return mode === 1 && taskData && taskData.status === 1
+    return {
+        type: "task",
+        rowKind: rowKind,
+        taskId: taskId,
+        taskTitle: taskData.title,
+        taskResponsible: taskData.responsible,
+        taskStart: taskData.startDate,
+        taskEnd: taskData.endDate,
+        forecastStart: taskData.forecastStart,
+        forecastEnd: taskData.forecastEnd,
+        taskStatus: taskData.status,
+        taskComment: taskData.comment,
+        isCompleted: isCompleted,
+        hasDates: hasDates,
+        hasForecast: true, // Заполним позже, если нужно
+        isUnapproved: isUnapproved,
+        nodeX: nodeX,
+        localGraphState: taskData.localGraphState,
+        progressCurrent: taskData.progressCurrent,
+        progressTotal: taskData.progressTotal,
+        hasConflict: false // Заполним позже
+    }
 }
