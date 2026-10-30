@@ -13,13 +13,15 @@
         <file>qml/TaskRow.qml</file>
         <file>qml/CalendarHeader.qml</file>
         <file>qml/WelcomeScreen.qml</file>
+        <file>qml/GroupDelegate.qml</file>
+        <file>qml/MilestoneBar.qml</file>
+        <file>qml/TaskTooltip.qml</file>
+
         <file>qml/NewProjectDialog.qml</file>
         <file>qml/EditTaskDialog.qml</file>
         <file>qml/EditForecastDatesDialog.qml</file>
         <file>qml/SaveAsDialog.qml</file>
         <file>qml/SettingsDialog.qml</file>
-        <file>qml/GroupDelegate.qml</file>
-        <file>qml/MilestoneBar.qml</file>
         <file>qml/AboutDialog.qml</file>
         <file>qml/HelpDialog.qml</file>
         <file>qml/DependencyDialog.qml</file>
@@ -30,15 +32,19 @@
         <file>qml/CommentDialog.qml</file>
         <file>qml/ResponsibleDialog.qml</file>
         <file>qml/RenameTaskDialog.qml</file>
+        <file>qml/ExportDialog.qml</file>
         <file>qml/LocalGraphExistsDialog.qml</file>
         <file>qml/DetachLocalGraphDialog.qml</file>
         <file>qml/ConfirmRemoveTaskDialog.qml</file>
         <file>qml/SetProgressDialog.qml</file>
+
         <file>qml/TaskContextMenu.qml</file>
         <file>qml/CurrentTimeLine.qml</file>
         <file>qml/TargetDatesLine.qml</file>
         <file>qml/CalendarPopup.qml</file>
-        <file>qml/ExportDialog.qml</file>
+
+        <file>qml/TaskNode.qml</file>
+        <file>qml/TaskBar.qml</file>
 
         <file>qml/utils/GridLayoutBuilder.js</file>
         <file>qml/utils/RowBuilder.js</file>
