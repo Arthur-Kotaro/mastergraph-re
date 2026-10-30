@@ -147,7 +147,7 @@ Dialog
                 {
                     if (taskId && projectController)
                     {
-                        projectController.updateTaskDates(taskId, startDate, endDate)
+                        projectController.taskController.updateTaskDates(taskId, startDate, endDate)
                         projectController.projectData.taskModel.setTaskStatus(taskId, 1)
                     }
                     root.close()

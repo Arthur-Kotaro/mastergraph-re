@@ -140,7 +140,7 @@ Dialog
                     var c = parseInt(currentField.text)
                     var t = parseInt(totalField.text)
                     if (projectController && root.taskId)
-                        projectController.setTaskProgress(root.taskId, c, t)
+                        projectController.taskController.setTaskProgress(root.taskId, c, t)
                     root.close()
                 }
             }

@@ -58,7 +58,7 @@ Dialog
                 onClicked:
                 {
                     if (projectController && root.taskId)
-                        projectController.detachLocalGraph(root.taskId, true)
+                        projectController.localGraphController.detachLocalGraph(root.taskId, true)
                     root.close()
                 }
             }
@@ -71,7 +71,7 @@ Dialog
                 onClicked:
                 {
                     if (projectController && root.taskId)
-                        projectController.detachLocalGraph(root.taskId, false)
+                        projectController.localGraphController.detachLocalGraph(root.taskId, false)
                     root.close()
                 }
             }

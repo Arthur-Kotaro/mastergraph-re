@@ -61,7 +61,7 @@ Dialog
                 onClicked:
                 {
                     if (projectController && root.taskId)
-                        projectController.attachExistingLocalGraph(root.taskId)
+                        projectController.localGraphController.attachExistingLocalGraph(root.taskId)
                     root.close()
                 }
             }
@@ -75,7 +75,7 @@ Dialog
                 onClicked:
                 {
                     if (projectController && root.taskId)
-                        projectController.createLocalGraphOverwrite(root.taskId)
+                        projectController.localGraphController.createLocalGraphOverwrite(root.taskId)
                     root.close()
                 }
             }

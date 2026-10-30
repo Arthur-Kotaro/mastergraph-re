@@ -227,7 +227,7 @@ Dialog
 
             if (root.createWithoutDates)
             {
-                projectController.addTaskWithoutDates(groupId, item.title, item.responsible)
+                projectController.taskController.addTaskWithoutDates(groupId, item.title, item.responsible)
                 var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
                 newTaskId = tasks[tasks.length - 1]
             }
@@ -235,7 +235,7 @@ Dialog
             {
                 var endDate = new Date(item.startDate)
                 endDate.setDate(endDate.getDate() + item.duration - 1)
-                projectController.addTask(groupId, item.title, item.responsible, item.startDate, endDate)
+                projectController.taskController.addTask(groupId, item.title, item.responsible, item.startDate, endDate)
                 var tasks2 = projectController.projectData.taskModel.getTasksForGroup(groupId)
                 newTaskId = tasks2[tasks2.length - 1]
             }

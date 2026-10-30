@@ -244,12 +244,12 @@ Rectangle
 
     function updateTaskDates(taskId, newStart, newEnd)
     {
-        if (projectController) projectController.updateTaskDates(taskId, newStart, newEnd)
+        if (projectController) projectController.taskController.updateTaskDates(taskId, newStart, newEnd)
     }
 
     function updateForecastDates(taskId, newStart, newEnd)
     {
-        if (projectController) projectController.updateForecastDates(taskId, newStart, newEnd)
+        if (projectController) projectController.taskController.updateForecastDates(taskId, newStart, newEnd)
     }
 
     Connections

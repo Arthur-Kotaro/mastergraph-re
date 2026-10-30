@@ -121,9 +121,9 @@ Dialog
         if (groupId && projectController)
         {
             if (root.createWithoutDates)
-                projectController.addTaskWithoutDates(groupId, taskTitle, responsible)
+                projectController.taskController.addTaskWithoutDates(groupId, taskTitle, responsible)
             else
-                projectController.addTask(groupId, taskTitle, responsible, startDate, endDate)
+                projectController.taskController.addTask(groupId, taskTitle, responsible, startDate, endDate)
 
             if (comment)
             {

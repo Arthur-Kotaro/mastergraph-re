@@ -225,7 +225,7 @@ ApplicationWindow
         {
             if (projectController)
             {
-                projectController.refreshLocalGraphForecast(taskId, filePath, true)
+                projectController.localGraphController.refreshLocalGraphForecast(taskId, filePath, true)
                 console.log("=== refreshLocalGraphForecast done")
                 if (mainWindow.hasGridArea())
                 {

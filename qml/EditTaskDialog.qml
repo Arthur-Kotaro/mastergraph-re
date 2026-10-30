@@ -259,7 +259,7 @@ Dialog
                             }
                         }
 
-                        projectController.updateTaskDates(taskId, startDate, endDate)
+                        projectController.taskController.updateTaskDates(taskId, startDate, endDate)
                         root.close()
                     }
                     else

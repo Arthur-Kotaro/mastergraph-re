@@ -195,7 +195,7 @@ Dialog
                     if (root.forecastStart <= root.forecastEnd)
                     {
                         if (projectController)
-                            projectController.updateForecastDates(root.taskId, root.forecastStart, root.forecastEnd)
+                            projectController.taskController.updateForecastDates(root.taskId, root.forecastStart, root.forecastEnd)
                         root.close()
                     }
                     else

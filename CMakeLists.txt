@@ -41,6 +41,9 @@ set(SOURCES
     src/ProjectController.cpp
     src/SessionManager.cpp
     src/ProjectValidator.cpp
+    src/TaskController.cpp
+    src/LocalGraphController.cpp
+    src/DependencyController.cpp
     qml.qrc
 )
 
@@ -58,6 +61,9 @@ set(HEADERS
     include/SessionManager.h
     include/GlobalDefines.h
     include/ProjectValidator.h
+    include/TaskController.h
+    include/LocalGraphController.h
+    include/DependencyController.h
 )
 
 # ---------- Основной бинарник ----------
@@ -117,6 +123,9 @@ set(EXPORT_SOURCES
     src/ProjectController.cpp
     src/SessionManager.cpp
     src/ProjectValidator.cpp
+    src/TaskController.cpp
+    src/LocalGraphController.cpp
+    src/DependencyController.cpp
     qml.qrc
 )
 

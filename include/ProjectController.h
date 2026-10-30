@@ -7,6 +7,9 @@
 #include "ResourceManager.h"
 #include "SettingsManager.h"
 #include "ExportManager.h"
+#include "TaskController.h"
+#include "LocalGraphController.h"
+#include "DependencyController.h"
 
 class ProjectController : public QObject
 {
@@ -15,6 +18,9 @@ class ProjectController : public QObject
     Q_PROPERTY(ResourceManager* resourceManager READ get_resourceManager CONSTANT)
     Q_PROPERTY(SettingsManager* settingsManager READ get_settingsManager CONSTANT)
     Q_PROPERTY(ExportManager* exportManager READ get_exportManager CONSTANT)
+    Q_PROPERTY(TaskController* taskController READ get_taskController CONSTANT)
+    Q_PROPERTY(LocalGraphController* localGraphController READ get_localGraphController CONSTANT)
+    Q_PROPERTY(DependencyController* dependencyController READ get_dependencyController CONSTANT)
     Q_PROPERTY(bool inEditMode READ get_inEditMode WRITE set_InEditMode NOTIFY inEditModeChanged)
 
 public:
@@ -24,6 +30,9 @@ public:
     ResourceManager* get_resourceManager() const;
     SettingsManager* get_settingsManager() const;
     ExportManager* get_exportManager() const;
+    TaskController* get_taskController() const;
+    LocalGraphController* get_localGraphController() const;
+    DependencyController* get_dependencyController() const;
 
     bool get_inEditMode() const;
     void set_InEditMode(bool editMode);
@@ -39,26 +48,6 @@ public:
     Q_INVOKABLE void exportToPng(const QString& filePath);
     Q_INVOKABLE void exportToPdf(const QString& filePath);
 
-    Q_INVOKABLE void addTask(const QString& groupId, const QString& title, const QString& responsible, const QDate& startDate, const QDate& endDate);
-    Q_INVOKABLE void addTaskWithoutDates(const QString& groupId, const QString& title, const QString& responsible);
-    Q_INVOKABLE void removeTask(const QString& taskId);
-    Q_INVOKABLE void updateTaskDates(const QString& taskId, const QDate& newStart, const QDate& newEnd);
-    Q_INVOKABLE void updateForecastDates(const QString& taskId, const QDate& newForecastStart, const QDate& newForecastEnd);
-    Q_INVOKABLE void acceptForecastAsTarget(const QString& taskId);
-    Q_INVOKABLE void addDependency(const QString& predecessorId, const QString& successorId);
-    Q_INVOKABLE void removeDependency(const QString& dependencyId);
-
-    Q_INVOKABLE void markTaskRequiresLocalGraph(const QString& taskId);
-    Q_INVOKABLE bool createLocalGraph(const QString& taskId);
-    Q_INVOKABLE bool createLocalGraphOverwrite(const QString& taskId);
-    Q_INVOKABLE bool attachExistingLocalGraph(const QString& taskId);
-    Q_INVOKABLE QString getLocalGraphPath(const QString& taskId) const;
-    Q_INVOKABLE bool localGraphFileExists(const QString& taskId) const;
-    Q_INVOKABLE void detachLocalGraph(const QString& taskId, bool deleteFile);
-    Q_INVOKABLE void refreshLocalGraphForecast(const QString& taskId, const QString& localGraphPath, bool markModified);
-    Q_INVOKABLE void confirmRemoveTask(const QString& taskId);
-    Q_INVOKABLE void setTaskProgress(const QString& taskId, int current, int total);
-
 signals:
     void inEditModeChanged();
     void projectLoaded();
@@ -68,23 +57,17 @@ signals:
     void projectDataChanged();
     void confirmRemoveTaskWithLocalGraph(const QString& taskId);
 
-private slots:
-    void onTaskDatesChanged(const QString& taskId);
-    void updateDependentTasks(const QString& taskId, const QDate& newEndDate);
-    void onTaskForecastDatesChanged(const QString& taskId);
-    void updateDependentForecasts(const QString& taskId, QSet<QString>& visited);
-
 private:
     ProjectData* m_projectData;
     ResourceManager* m_resourceManager;
     SettingsManager* m_settingsManager;
     ExportManager* m_exportManager;
-    bool m_inEditMode;
-    QSet<QString> m_updatingTasks;
+    
+    TaskController* m_taskController;
+    LocalGraphController* m_localGraphController;
+    DependencyController* m_dependencyController;
 
-    QDate endOfPredecessor(const QVariantMap& predTask) const;
-    QString localGraphDirectory() const;
-    void refreshAllLocalGraphForecasts();
+    bool m_inEditMode;
 };
 
 #endif

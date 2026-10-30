@@ -40,7 +40,7 @@ bool SessionManager::openLocalGraphSession(const QString& taskId)
         return true;
     }
 
-    QString path = m_masterController->getLocalGraphPath(taskId);
+    QString path = m_masterController->get_localGraphController()->getLocalGraphPath(taskId);
     if (path.isEmpty() || !QFile::exists(path))
     {
         qWarning() << "SessionManager: local graph file not found for task" << taskId;
@@ -150,10 +150,10 @@ void SessionManager::notifyWindowClosed(const QString& taskId)
     // Обновляем прогноз в мастер-графике по актуальному файлу ЛГ
     if (m_masterController && !taskId.isEmpty())
     {
-        QString path = m_masterController->getLocalGraphPath(taskId);
+        QString path = m_masterController->get_localGraphController()->getLocalGraphPath(taskId);
         if (!path.isEmpty() && QFile::exists(path))
         {
-            m_masterController->refreshLocalGraphForecast(taskId, path, true);
+            m_masterController->get_localGraphController()->refreshLocalGraphForecast(taskId, path, true);
             emit localGraphSaved(taskId, path);
         }
     }

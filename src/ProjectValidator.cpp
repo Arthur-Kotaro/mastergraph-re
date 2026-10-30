@@ -19,18 +19,31 @@ bool ProjectValidator::validate(const QVariantMap& json)
 
 void ProjectValidator::checkRequiredFields(const QVariantMap& json)
 {
-    if (!json.contains("projectName") || json["projectName"].toString().isEmpty()) {
+    if (!json.contains("projectName") || json["projectName"].toString().isEmpty())
+    {
         m_errors.append("Отсутствует или пустое поле 'projectName'.");
     }
-    if (!json.contains("startDate")) {
-        m_errors.append("Отсутствует поле 'startDate'.");
-    } else {
-        QDate d = QDate::fromString(json["startDate"].toString(), "dd.MM.yyyy");
-        if (!d.isValid()) {
-            m_errors.append("Поле 'startDate' имеет неверный формат (ожидается dd.MM.yyyy).");
+    // ЛГ определяется либо по graphKind, либо по наличию linkedMasterTaskId
+    bool isLocal = (json["graphKind"].toString() == "local")
+    || json.contains("linkedMasterTaskId");
+
+    if (!isLocal)
+    {
+        if (!json.contains("startDate"))
+        {
+            m_errors.append("Отсутствует поле 'startDate'.");
+        }
+        else
+        {
+            QDate d = QDate::fromString(json["startDate"].toString(), "dd.MM.yyyy");
+            if (!d.isValid())
+            {
+                m_errors.append("Поле 'startDate' имеет неверный формат (ожидается dd.MM.yyyy).");
+            }
         }
     }
-    if (!json.contains("tasks") || !json["tasks"].canConvert<QVariantList>()) {
+    if (!json.contains("tasks") || !json["tasks"].canConvert<QVariantList>())
+    {
         m_errors.append("Отсутствует или неверный тип поля 'tasks' (ожидается список).");
     }
 }
@@ -62,11 +75,13 @@ void ProjectValidator::checkTasks(const QVariantMap& json)
     for (const auto& g : groups) validGroupIds.insert(g.toMap()["id"].toString());
 
     QSet<QString> taskIds;
-    for (int i = 0; i < tasks.size(); ++i) {
+    for (int i = 0; i < tasks.size(); ++i)
+    {
         QVariantMap task = tasks[i].toMap();
         QString id = task["id"].toString();
         
-        if (id.isEmpty()) {
+        if (id.isEmpty())
+        {
             m_errors.append(QString("Задача #%1 без поля 'id'.").arg(i));
             continue;
         }
@@ -75,9 +90,15 @@ void ProjectValidator::checkTasks(const QVariantMap& json)
         }
         taskIds.insert(id);
 
-        if (!groups.isEmpty()) {
+        // Проверяем groupId только если это Мастерграфик (есть группы)
+        // ЛГ определяется либо по graphKind, либо по наличию linkedMasterTaskId
+        bool isLocal = (json["graphKind"].toString() == "local")
+        || json.contains("linkedMasterTaskId");
+        if (!isLocal && !groups.isEmpty())
+        {
             QString gid = task["groupId"].toString();
-            if (gid.isEmpty() || !validGroupIds.contains(gid)) {
+            if (gid.isEmpty() || !validGroupIds.contains(gid))
+            {
                 m_errors.append(QString("Задача '%1': неверный или отсутствующий 'groupId' (%2).").arg(id).arg(gid));
             }
         }

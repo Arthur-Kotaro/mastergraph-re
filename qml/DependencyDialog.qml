@@ -123,9 +123,9 @@ Dialog
         if (targetTaskId && sourceTaskId)
         {
             if (downstream)
-                projectController.addDependency(sourceTaskId, targetTaskId)
+                projectController.dependencyController.addDependency(sourceTaskId, targetTaskId)
             else
-                projectController.addDependency(targetTaskId, sourceTaskId)
+                projectController.dependencyController.addDependency(targetTaskId, sourceTaskId)
         }
     }
 

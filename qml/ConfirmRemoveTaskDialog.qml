@@ -61,7 +61,7 @@ Dialog
                 onClicked:
                 {
                     if (projectController && root.taskId)
-                        projectController.confirmRemoveTask(root.taskId)
+                        projectController.taskController.confirmRemoveTask(root.taskId)
                     root.close()
                 }
             }

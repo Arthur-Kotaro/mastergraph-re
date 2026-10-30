@@ -128,7 +128,7 @@ Menu
         onTriggered:
         {
             if (root.taskId && projectController)
-                projectController.acceptForecastAsTarget(root.taskId)
+                projectController.taskController.acceptForecastAsTarget(root.taskId)
         }
     }
 
@@ -189,7 +189,7 @@ Menu
             onTriggered:
             {
                 if (root.taskId && projectController)
-                    projectController.markTaskRequiresLocalGraph(root.taskId)
+                    projectController.localGraphController.markTaskRequiresLocalGraph(root.taskId)
             }
         }
 
@@ -201,14 +201,14 @@ Menu
             onTriggered:
             {
                 if (!root.taskId || !projectController) return
-                if (projectController.localGraphFileExists(root.taskId))
+                if (projectController.localGraphController.localGraphFileExists(root.taskId))
                 {
                     if (mainWindow && mainWindow.localGraphExistsDialog)
                         mainWindow.localGraphExistsDialog.openForTask(root.taskId)
                 }
                 else
                 {
-                    projectController.createLocalGraph(root.taskId)
+                    projectController.localGraphController.createLocalGraph(root.taskId)
                 }
             }
         }
@@ -263,7 +263,7 @@ Menu
         text: "Удалить"
         onTriggered:
         {
-            if(root.taskId && projectController) projectController.removeTask(root.taskId)
+            if(root.taskId && projectController) projectController.taskController.removeTask(root.taskId)
         }
     }
 }

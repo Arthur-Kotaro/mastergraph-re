@@ -198,14 +198,9 @@ void TaskModel::updateTaskDates(const QString& taskId, const QDate& newStart, co
         task.startDate = newStart;
         task.endDate = newEnd;
 
-        bool hasLocalGraph = (task.localGraphState == GanttDefines::LocalGraphState::Attached
-                              || task.localGraphState == GanttDefines::LocalGraphState::Missing);
-
-        // Прогноз = целевым:
-        // - для завершённых задач всегда,
-        // - для задач без ЛГ (пока не привязан ЛГ, прогноз совпадает с целевым).
-        if (task.status == GanttDefines::TaskStatus::Completed
-            || !hasLocalGraph)
+        // Прогноз обновляем ТОЛЬКО для завершённых задач (у них факт = план).
+        // В остальных случаях прогноз и цель независимы.
+        if (task.status == GanttDefines::TaskStatus::Completed)
         {
             task.forecastStart = newStart;
             task.forecastEnd = newEnd;
@@ -215,10 +210,9 @@ void TaskModel::updateTaskDates(const QString& taskId, const QDate& newStart, co
         emit dataChanged(modelIndex, modelIndex);
         emit taskDatesChanged(taskId);
 
-        // Если прогноз изменился вместе с целевым — эмитим и сигнал прогноза,
+        // Если прогноз изменился вместе с целевым (для завершённых) — эмитим и сигнал прогноза,
         // чтобы пересчитались зависимые задачи.
-        if (task.status == GanttDefines::TaskStatus::Completed
-            || !hasLocalGraph)
+        if (task.status == GanttDefines::TaskStatus::Completed)
         {
             emit taskForecastDatesChanged(taskId);
         }

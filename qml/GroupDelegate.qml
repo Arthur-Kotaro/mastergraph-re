@@ -488,7 +488,7 @@ Item
         {
             var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
             for (var i = tasks.length - 1; i >= 0; i--)
-                projectController.removeTask(tasks[i])
+                projectController.taskController.removeTask(tasks[i])
             projectController.projectData.groupModel.removeGroup(groupId)
         }
     }
