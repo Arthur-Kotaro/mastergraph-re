@@ -1,4 +1,5 @@
 #include "ProjectData.h"
+#include "ProjectValidator.h"
 #include <QDebug>
 
 ProjectData::ProjectData(QObject *parent): QObject(parent), m_modified(false)
@@ -311,6 +312,13 @@ QVariantMap ProjectData::toJson() const
 
 bool ProjectData::fromJson(const QVariantMap& json)
 {
+    ProjectValidator validator;
+    if (!validator.validate(json))
+    {
+        m_validationErrors = validator.errors();
+        return false;
+    }
+    m_validationErrors.clear();
     clear();
 
     set_ProjectName(json["projectName"].toString());
@@ -362,6 +370,19 @@ bool ProjectData::fromJson(const QVariantMap& json)
         QString taskId = taskMap["id"].toString();
         QString groupId = taskMap["groupId"].toString();
 
+        // Если группы нет, создаем "Без группы"
+        if (m_graphKind == GanttDefines::GraphKind::Master && !groupId.isEmpty())
+        {
+            if (m_groupModel->getGroupIds().indexOf(groupId) < 0)
+            {
+                QString fallbackId = "fallback-group";
+                if (m_groupModel->getGroupIds().indexOf(fallbackId) < 0)
+                {
+                    m_groupModel->addGroupWithId(fallbackId, "Без группы");
+                }
+                groupId = fallbackId;
+            }
+        }
         m_taskModel->addTaskWithId(taskId, groupId,
                                    taskMap["title"].toString(),
                                    taskMap["responsible"].toString(),

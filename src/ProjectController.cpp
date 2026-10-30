@@ -4,6 +4,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QJsonDocument>
+#include <QTextStream>
 #include <QJsonObject>
 
 ProjectController::ProjectController(QObject *parent): QObject(parent), m_projectData(nullptr), m_inEditMode(false)
@@ -97,7 +98,18 @@ void ProjectController::openProject(const QString& filePath)
 
     if (!m_projectData->fromJson(projectData))
     {
-        emit errorOccurred("Ошибка загрузки данных проекта");
+        // Сохраняем лог валидации рядом с файлом проекта
+        QString logPath = filePath + ".validation.log";
+        QFile logFile(logPath);
+        if (logFile.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            QTextStream out(&logFile);
+            out << "Валидация проекта не пройдена: " << filePath << "\n\n";
+            for (const QString& err : m_projectData->getValidationErrors())
+                out << "- " << err << "\n";
+            logFile.close();
+        }
+        emit errorOccurred("Файл проекта повреждён. Подробности в " + logPath);
         return;
     }
 
@@ -120,7 +132,18 @@ bool ProjectController::openLocalGraphFile(const QString& filePath)
 
     if (!m_projectData->fromJson(projectData))
     {
-        emit errorOccurred("Ошибка загрузки данных локального графика");
+        // Сохраняем лог валидации рядом с файлом ЛГ
+        QString logPath = filePath + ".validation.log";
+        QFile logFile(logPath);
+        if (logFile.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            QTextStream out(&logFile);
+            out << "Валидация локального графика не пройдена: " << filePath << "\n\n";
+            for (const QString& err : m_projectData->getValidationErrors())
+                out << "- " << err << "\n";
+            logFile.close();
+        }
+        emit errorOccurred("Файл локального графика повреждён. Подробности в " + logPath);
         return false;
     }
 

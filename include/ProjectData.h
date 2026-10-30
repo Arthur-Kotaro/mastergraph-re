@@ -5,6 +5,7 @@
 #include <QDate>
 #include <QDateTime>
 #include <QString>
+#include <QStringList>
 #include "TaskModel.h"
 #include "GroupModel.h"
 #include "MilestoneModel.h"
@@ -92,6 +93,8 @@ public:
     Q_INVOKABLE int getConflictCount() const;
     Q_INVOKABLE QVariantList getConflictingTaskIds() const;
 
+    Q_INVOKABLE QStringList getValidationErrors() const { return m_validationErrors; }
+
 signals:
     void projectNameChanged();
     void projectTypeChanged();
@@ -119,6 +122,8 @@ private:
     QDate m_linkedTargetEnd;
     QString m_linkedMasterTaskId;
     QDate m_linkedPredecessorEndDate;
+
+    QStringList m_validationErrors;
 
     TaskModel* m_taskModel;
     GroupModel* m_groupModel;

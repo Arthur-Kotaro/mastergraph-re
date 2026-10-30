@@ -40,6 +40,7 @@ set(SOURCES
     src/ExportManager.cpp
     src/ProjectController.cpp
     src/SessionManager.cpp
+    src/ProjectValidator.cpp
     qml.qrc
 )
 
@@ -56,6 +57,7 @@ set(HEADERS
     include/ProjectController.h
     include/SessionManager.h
     include/GlobalDefines.h
+    include/ProjectValidator.h
 )
 
 # ---------- Основной бинарник ----------
@@ -63,7 +65,6 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 
-# Отладочные сообщения включены (закомментированы подавления)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
 #    $<$<CONFIG:Release>:QT_NO_DEBUG_OUTPUT>
 #    $<$<CONFIG:Release>:QT_NO_WARNING_OUTPUT>
@@ -115,6 +116,7 @@ set(EXPORT_SOURCES
     src/ExportManager.cpp
     src/ProjectController.cpp
     src/SessionManager.cpp
+    src/ProjectValidator.cpp
     qml.qrc
 )
 
@@ -122,8 +124,9 @@ add_executable(export_renderer ${EXPORT_SOURCES} ${HEADERS})
 
 target_include_directories(export_renderer PRIVATE include)
 
-# Отладочные сообщения включены
 target_compile_definitions(export_renderer PRIVATE
+#    $<$<CONFIG:Release>:QT_NO_DEBUG_OUTPUT>
+#    $<$<CONFIG:Release>:QT_NO_WARNING_OUTPUT>
 )
 
 target_link_libraries(export_renderer
