@@ -6,10 +6,14 @@
 #include <QDateTime>
 #include <QString>
 #include <QStringList>
+#include <QVariantMap>
+#include <QVariantList>
 #include "TaskModel.h"
 #include "GroupModel.h"
 #include "MilestoneModel.h"
 #include "DependencyModel.h"
+
+class ProjectSerializer;
 
 class ProjectData : public QObject
 {
@@ -124,6 +128,8 @@ private:
     QDate m_linkedPredecessorEndDate;
 
     QStringList m_validationErrors;
+
+    ProjectSerializer* m_serializer;
 
     TaskModel* m_taskModel;
     GroupModel* m_groupModel;

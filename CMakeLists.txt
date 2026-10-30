@@ -30,6 +30,7 @@ qt6_standard_project_setup()
 set(SOURCES
     src/main.cpp
     src/ProjectData.cpp
+    src/ProjectSerializer.cpp
     src/TaskModel.cpp
     src/GroupModel.cpp
     src/MilestoneModel.cpp
@@ -49,6 +50,7 @@ set(SOURCES
 
 set(HEADERS
     include/ProjectData.h
+    include/ProjectSerializer.h
     include/TaskModel.h
     include/GroupModel.h
     include/MilestoneModel.h
@@ -112,6 +114,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 set(EXPORT_SOURCES
     export_renderer/main.cpp
     src/ProjectData.cpp
+    src/ProjectSerializer.cpp
     src/TaskModel.cpp
     src/GroupModel.cpp
     src/MilestoneModel.cpp
