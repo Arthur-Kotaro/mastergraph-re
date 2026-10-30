@@ -39,8 +39,13 @@
         <file>qml/TargetDatesLine.qml</file>
         <file>qml/CalendarPopup.qml</file>
         <file>qml/ExportDialog.qml</file>
+
+        <file>qml/utils/GridLayoutBuilder.js</file>
         <file>qml/utils/RowBuilder.js</file>
         <file>qml/utils/DateUtils.js</file>
+        <file>qml/utils/GridRange.js</file>
+        <file>qml/utils/NodeLayout.js</file>
+
         <file>qml/icons/new.svg</file>
         <file>qml/icons/open.svg</file>
         <file>qml/icons/save.svg</file>
@@ -51,6 +56,7 @@
         <file>qml/icons/collapse.svg</file>
         <file>qml/icons/expand.svg</file>
         <file>qml/icons/refresh.svg</file>
+
         <file alias="default_typologies.json">resources/default_typologies.json</file>
         <file alias="default_tasks.json">resources/default_tasks.json</file>
         <file alias="default_holidays.json">resources/default_holidays.json</file>

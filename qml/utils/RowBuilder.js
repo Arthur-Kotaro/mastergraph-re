@@ -1,5 +1,10 @@
 .pragma library
 
+function isValidDate(d)
+{
+    return d !== undefined && d !== null && !isNaN(new Date(d).getTime())
+}
+
 // Строит список строк для левой панели (GroupDelegate)
 function buildGroupRows(taskModel, taskIds, mode)
 {
@@ -40,20 +45,20 @@ function createGridItem(taskData, taskId, rowKind, isCompleted, hasDates, isUnap
         taskId: taskId,
         taskTitle: taskData.title,
         taskResponsible: taskData.responsible,
-        taskStart: taskData.startDate,
-        taskEnd: taskData.endDate,
         forecastStart: taskData.forecastStart,
         forecastEnd: taskData.forecastEnd,
         taskStatus: taskData.status,
         taskComment: taskData.comment,
         isCompleted: isCompleted,
         hasDates: hasDates,
-        hasForecast: true, // Заполним позже, если нужно
         isUnapproved: isUnapproved,
         nodeX: nodeX,
         localGraphState: taskData.localGraphState,
         progressCurrent: taskData.progressCurrent,
         progressTotal: taskData.progressTotal,
-        hasConflict: false // Заполним позже
+        hasConflict: false,
+        rowIndex: 0,
+        taskStart: null,
+        taskEnd: null
     }
 }

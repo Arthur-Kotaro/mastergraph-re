@@ -1,6 +1,7 @@
 import QtQuick 6.0
 import QtQuick.Controls 6.0
-import "utils/RowBuilder.js" as RowBuilder
+import "utils/GridRange.js" as GridRange
+import "utils/GridLayoutBuilder.js" as GridLayoutBuilder
 
 Rectangle
 {
@@ -23,8 +24,6 @@ Rectangle
     property real contentHeight: 0
     property var visibleItems: []
     property int updateCounter: 0
-    property var nodeXByTaskTarget: ({})
-    property var nodeXByTaskForecast: ({})
     property var taskContextMenu: null
     property var timeLineRef: currentTimeLine
 
@@ -105,106 +104,6 @@ Rectangle
         return projectController && projectController.settingsManager ? projectController.settingsManager.viewMode : 0
     }
 
-    function isValidDate(d)
-    {
-        return d !== undefined && d !== null && !isNaN(new Date(d).getTime())
-    }
-
-    function hasTaskDates(taskData)
-    {
-        return taskData && isValidDate(taskData.startDate) && isValidDate(taskData.endDate)
-    }
-
-    function hasTaskForecast(taskData)
-    {
-        return taskData && isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
-    }
-
-    function daysFromStart(dateValue)
-    {
-        return Math.floor((new Date(dateValue) - root.displayStart) / 86400000)
-    }
-
-    function dateToX(dateValue)
-    {
-        if (!isValidDate(dateValue)) return -1
-        return daysFromStart(dateValue) * dayWidth
-    }
-
-    function computeNodePositions(allTasks)
-    {
-        var taskById = {}
-        for (var i = 0; i < allTasks.length; i++)
-            taskById[allTasks[i].id] = allTasks[i]
-
-        var targetNodes = {}
-        var forecastNodes = {}
-
-        for (var k = 0; k < allTasks.length; k++)
-        {
-            var task = allTasks[k]
-            if (hasTaskDates(task)) continue
-            if (hasTaskForecast(task)) continue
-
-            targetNodes[task.id] = computeNodeX(task.id, "target", taskById, targetNodes)
-            forecastNodes[task.id] = computeNodeX(task.id, "forecast", taskById, forecastNodes)
-        }
-
-        root.nodeXByTaskTarget = targetNodes
-        root.nodeXByTaskForecast = forecastNodes
-    }
-
-    function computeNodeX(taskId, kind, taskById, nodes)
-    {
-        if (nodes[taskId] !== undefined) return nodes[taskId]
-
-        var preds = projectController.projectData.dependencyModel.getPredecessors(taskId)
-        var maxPredEnd = null
-        var maxPredNodeX = -1
-
-        for (var i = 0; i < preds.length; i++)
-        {
-            var pid = preds[i]
-            var predTask = taskById[pid]
-            if (!predTask) continue
-
-            var pEnd = null
-
-            if (kind === "target")
-            {
-                if (hasTaskDates(predTask)) pEnd = new Date(predTask.endDate)
-                else if (hasTaskForecast(predTask)) pEnd = new Date(predTask.forecastEnd)
-            }
-            else
-            {
-                if (hasTaskForecast(predTask)) pEnd = new Date(predTask.forecastEnd)
-                else if (hasTaskDates(predTask))
-                    pEnd = new Date(predTask.endDate)
-            }
-
-            if (pEnd !== null)
-            {
-                if (maxPredEnd === null || pEnd > maxPredEnd) maxPredEnd = pEnd
-            }
-            else
-            {
-                var pNodeX = computeNodeX(pid, kind, taskById, nodes)
-                if (pNodeX > maxPredNodeX) maxPredNodeX = pNodeX
-            }
-        }
-
-        var result
-        if (maxPredEnd !== null) result = (daysFromStart(maxPredEnd) + 1) * dayWidth + dayWidth / 2
-        else if (maxPredNodeX >= 0)
-            result = maxPredNodeX + 3 * dayWidth
-        else
-            result = dayWidth / 2
-
-        if (result < dayWidth / 2) result = dayWidth / 2
-        nodes[taskId] = result
-        return result
-    }
-
     function updateTargetDateLines()
     {
         showTargetStartLine = false
@@ -222,21 +121,17 @@ Rectangle
         var linkedEnd = projectController.projectData.getLinkedTargetEnd()
         var predEnd = projectController.projectData.getLinkedPredecessorEndDate()
 
-        if (isValidDate(linkedStart) && isValidDate(linkedEnd))
+        if (GridRange.isValidDate(linkedStart) && GridRange.isValidDate(linkedEnd))
         {
-            var xs = dateToX(linkedStart)
-            var xe = dateToX(linkedEnd)
+            var xs = GridRange.dateToX(linkedStart, root.displayStart, root.dayWidth)
+            var xe = GridRange.dateToX(linkedEnd, root.displayStart, root.dayWidth)
             if (xs >= 0) { targetStartLineX = xs; showTargetStartLine = true; targetStartLineIsPredecessor = false }
-            // Правая граница должна быть в конце дня завершения, а не в начале
             if (xe >= 0) { targetEndLineX = xe + root.dayWidth; showTargetEndLine = true }
         }
 
-        // Красная левая граница — дата завершения непосредственного предшественника.
-        // Линия ставится на конец дня predEnd (начало следующего дня), т.к. задача-последователь
-        // может начаться не раньше, чем на следующий день.
-        if (isValidDate(predEnd))
+        if (GridRange.isValidDate(predEnd))
         {
-            var xp = dateToX(predEnd)
+            var xp = GridRange.dateToX(predEnd, root.displayStart, root.dayWidth)
             if (xp >= 0)
             {
                 targetStartLineX = xp + root.dayWidth
@@ -247,66 +142,24 @@ Rectangle
         }
     }
 
-    function computeLocalDisplayRange(linkedStart, linkedEnd, earliest, latest)
-    {
-        var s = new Date(linkedStart)
-        var e = new Date(linkedEnd)
-
-        var durationDays = Math.floor((e - s) / 86400000) + 1
-        if (durationDays < 30)
-        {
-            var ms = new Date(s.getFullYear(), s.getMonth(), 1)
-            ms.setDate(ms.getDate() - 14)
-            ms.setHours(0, 0, 0, 0)
-            var me = new Date(e.getFullYear(), e.getMonth() + 1, 0)
-            me.setDate(me.getDate() + 14)
-            me.setHours(23, 59, 59, 999)
-            s = ms
-            e = me
-        }
-        else
-        {
-            s.setDate(s.getDate() - 14)
-            s.setHours(0, 0, 0, 0)
-            e.setDate(e.getDate() + 14)
-            e.setHours(23, 59, 59, 999)
-        }
-
-        if (isValidDate(earliest) && earliest < s) s = new Date(earliest)
-        if (isValidDate(latest) && latest > e) e = new Date(latest)
-
-        while (s.getDay() !== 1) s.setDate(s.getDate() - 1)
-
-        return { start: s, end: e }
-    }
-
     function updateData()
     {
         if (!projectController || !projectController.projectData) return
 
         var localMode = (projectController.projectData.graphKind === 1)
 
-        var conflictSet = {}
-        if (localMode)
-        {
-            var conflictIds = projectController.projectData.getConflictingTaskIds()
-            for (var ci = 0; ci < conflictIds.length; ci++)
-                conflictSet[conflictIds[ci]] = true
-        }
-
+        // 1. Расчет диапазона дат
         if (localMode)
         {
             var linkedStart = projectController.projectData.getLinkedTargetStart()
             var linkedEnd = projectController.projectData.getLinkedTargetEnd()
-
             var earliest = projectController.projectData.getEarliestDate()
             var latest = projectController.projectData.getLatestDate()
-
             var s, e
 
-            if (isValidDate(linkedStart) && isValidDate(linkedEnd))
+            if (GridRange.isValidDate(linkedStart) && GridRange.isValidDate(linkedEnd))
             {
-                var range = computeLocalDisplayRange(linkedStart, linkedEnd, earliest, latest)
+                var range = GridRange.computeLocalDisplayRange(linkedStart, linkedEnd, earliest, latest)
                 s = range.start
                 e = range.end
             }
@@ -317,8 +170,8 @@ Rectangle
                 e = new Date(now.getFullYear(), now.getMonth() + 2, 0)
                 s.setHours(0, 0, 0, 0)
                 e.setHours(23, 59, 59, 999)
-                if (isValidDate(earliest) && earliest < s) s = new Date(earliest)
-                if (isValidDate(latest) && latest > e) e = new Date(latest)
+                if (GridRange.isValidDate(earliest) && earliest < s) s = new Date(earliest)
+                if (GridRange.isValidDate(latest) && latest > e) e = new Date(latest)
                 while (s.getDay() !== 1) s.setDate(s.getDate() - 1)
             }
 
@@ -351,110 +204,26 @@ Rectangle
             }
         }
 
-        var allTasks = []
-        var ids = projectController.projectData.taskModel.getAllTasks()
-        for (var ai = 0; ai < ids.length; ai++)
-        {
-            var t = projectController.projectData.taskModel.getTask(ids[ai].id)
-            if (t) allTasks.push(t)
-        }
-
-        computeNodePositions(allTasks)
-
-        var mode = currentViewMode()
-        var items = []
-        var taskCounter = 0
-
+        // 2. Сбор конфликтов
+        var conflictSet = {}
         if (localMode)
         {
-            for (var li = 0; li < allTasks.length; li++)
-            {
-                var tdL = allTasks[li]
-                var isCompletedL = (tdL.status === 1)
-                var hasDatesL = hasTaskDates(tdL)
-                var hasFcL = hasTaskForecast(tdL)
-                var isUnapprovedL = !hasDatesL && hasFcL
-                var nodeXL = 0
-                if (!hasDatesL && !isUnapprovedL)
-                    nodeXL = root.nodeXByTaskTarget[tdL.id] !== undefined ? root.nodeXByTaskTarget[tdL.id] : dayWidth / 2
-
-                    var itemL = RowBuilder.createGridItem(tdL, tdL.id, "target", isCompletedL, hasDatesL, isUnapprovedL, nodeXL)
-                    itemL.rowIndex = taskCounter
-                    itemL.hasConflict = conflictSet[tdL.id] === true
-                    items.push(itemL)
-                    taskCounter++
-            }
-        }
-        else
-        {
-            var groups = projectController.projectData.groupModel
-
-            for (var i = 0; i < groups.rowCount(); i++)
-            {
-                var groupId = groups.getGroupId(i)
-                var groupName = groups.getGroupName(i)
-                var expanded = groups.isExpanded(i)
-
-                items.push({type: "group", id: groupId, name: groupName})
-
-                if (expanded)
-                {
-                    var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
-                    for (var j = 0; j < tasks.length; j++)
-                    {
-                        var taskData = projectController.projectData.taskModel.getTask(tasks[j])
-                        if (!taskData) continue
-
-                            var isCompleted = (taskData.status === 1)
-                            var hasDates = hasTaskDates(taskData)
-                            var hasFc = hasTaskForecast(taskData)
-                            var isUnapproved = !hasDates && hasFc
-
-                            function pushRow(kind, startDate, endDate, rowHasDates, rowIsUnapproved)
-                            {
-                                var nodeXVal = 0
-                                if (!rowHasDates && !rowIsUnapproved)
-                                {
-                                    if (kind === "target")
-                                        nodeXVal = root.nodeXByTaskTarget[tasks[j]] !== undefined ? root.nodeXByTaskTarget[tasks[j]] : dayWidth / 2
-                                        else
-                                            nodeXVal = root.nodeXByTaskForecast[tasks[j]] !== undefined ? root.nodeXByTaskForecast[tasks[j]] : dayWidth / 2
-                                }
-
-                                var item = RowBuilder.createGridItem(taskData, tasks[j], kind, isCompleted, rowHasDates, rowIsUnapproved, nodeXVal)
-                                item.rowIndex = taskCounter
-                                item.hasConflict = conflictSet[tasks[j]] === true
-                                items.push(item)
-                                taskCounter++
-                            }
-
-                            if (mode === 0)
-                            {
-                                pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
-                            }
-                            else if (mode === 1)
-                            {
-                                if (isCompleted || !hasFc) pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
-                                    else
-                                    {
-                                        var fHasDates1 = isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
-                                        pushRow("forecast", taskData.forecastStart, taskData.forecastEnd, fHasDates1, isUnapproved)
-                                    }
-                            }
-                            else
-                            {
-                                pushRow("target", taskData.startDate, taskData.endDate, hasDates, isUnapproved)
-                                if (!isCompleted)
-                                {
-                                    var fHasDates2 = isValidDate(taskData.forecastStart) && isValidDate(taskData.forecastEnd)
-                                    pushRow("forecast", taskData.forecastStart, taskData.forecastEnd, fHasDates2, isUnapproved)
-                                }
-                            }
-                    }
-                }
-            }
+            var conflictIds = projectController.projectData.getConflictingTaskIds()
+            for (var ci = 0; ci < conflictIds.length; ci++)
+                conflictSet[conflictIds[ci]] = true
         }
 
+        // 3. Вызов Билдера для сборки items
+        var items = GridLayoutBuilder.buildLayout({
+            localMode: localMode,
+            displayStart: displayStart,
+            dayWidth: dayWidth,
+            mode: currentViewMode(),
+            conflictSet: conflictSet,
+            projectData: projectController.projectData
+        })
+
+        // 4. Применение результатов
         visibleItems = items
         updateCounter++
         totalRows = visibleItems.length
@@ -526,7 +295,6 @@ Rectangle
         id: backgroundCanvas
         anchors.fill: parent
         z: 0
-
         displayStart: root.displayStart
         displayEnd: root.displayEnd
         totalDays: root.totalDays
@@ -541,7 +309,6 @@ Rectangle
         id: dependencyCanvas
         anchors.fill: parent
         z: 5
-
         visibleItems: root.visibleItems
         displayStart: root.displayStart
         dayWidth: root.dayWidth
