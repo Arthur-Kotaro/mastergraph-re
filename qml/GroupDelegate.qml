@@ -145,7 +145,7 @@ Item
             {
                 width: root.width
                 height: 40
-                color: rowMouseArea.containsMouse ? "#f0f8ff" : "white"
+                color: "white"
                 border.color: "#eeeeee"
                 border.width: 1
 
@@ -245,8 +245,27 @@ Item
                     id: rowMouseArea
                     anchors.fill: parent
                     hoverEnabled: true
-                    acceptedButtons: Qt.RightButton
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
                     cursorShape: Qt.ArrowCursor
+                    
+                    onPositionChanged: {
+                        if (mainWindow && mainWindow.hasGridArea()) {
+                            if (mainWindow.gridArea.hoveredTaskId !== taskId)
+                                mainWindow.gridArea.hoveredTaskId = taskId
+                        }
+                    }
+                    
+                    onExited: {
+                        if (mainWindow && mainWindow.hasGridArea() && mainWindow.gridArea.hoveredTaskId === taskId) {
+                            mainWindow.gridArea.hoveredTaskId = ""
+                        }
+                    }
+                    
+                    onDoubleClicked: {
+                        if (mainWindow && mainWindow.hasGridArea()) 
+                            mainWindow.gridArea.centerOnTask(taskId)
+                    }
+                    
                     onClicked: function(mouse)
                     {
                         if (mouse.button === Qt.RightButton && taskId)

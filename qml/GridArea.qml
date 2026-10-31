@@ -25,6 +25,7 @@ Rectangle
     property var visibleItems: []
     property int updateCounter: 0
     property var taskContextMenu: null
+    property string hoveredTaskId: ""
     property var timeLineRef: currentTimeLine
 
     property bool showTargetStartLine: false
@@ -231,6 +232,64 @@ Rectangle
         if (currentTimeLine) currentTimeLine.updateLinePosition()
     }
 
+    function centerOnTask(taskId)
+    {
+        if (!externalFlickable) return
+
+            var targetCenterX = -1
+            var targetRow = -1
+
+            for (var i = 0; i < visibleItems.length; i++) {
+                if (visibleItems[i].type === "task" && visibleItems[i].taskId === taskId) {
+                    var item = visibleItems[i]
+
+                    // Определяем, по какой строке центрировать.
+                    // В комбинированном (mode 2) и прогнозном (mode 1) ищем целевую строку (rowKind === "target").
+                    // В целевом (mode 0) берем первую попавшуюся.
+                    var isTargetRow = (item.rowKind === "target")
+                    var isForecastRow = (item.rowKind === "forecast")
+
+                    var currentMode = currentViewMode()
+
+                    // Если режим не целевой, отдаем приоритет целевой строке
+                    if (currentMode !== 0 && !isTargetRow && !isForecastRow) continue
+
+                        // Нашли подходящую строку
+                        if (currentMode !== 0 && isTargetRow || currentMode === 0) {
+                            // Вычисляем координаты
+                            if (item.hasDates === true || item.isUnapproved === true) {
+                                // Полоса Ганта
+                                var startVal = (item.hasDates === true) ? item.taskStart : item.forecastStart
+                                var endVal = (item.hasDates === true) ? item.taskEnd : item.forecastEnd
+
+                                if (GridRange.isValidDate(startVal) && GridRange.isValidDate(endVal)) {
+                                    var xStart = GridRange.dateToX(startVal, displayStart, dayWidth)
+                                    var xEnd = GridRange.dateToX(endVal, displayStart, dayWidth) + dayWidth
+                                    targetCenterX = xStart + (xEnd - xStart) / 2
+                                    targetRow = i
+                                    break
+                                }
+                            } else if (item.hasDates !== true && item.isUnapproved !== true) {
+                                // Узел (задача без дат)
+                                targetCenterX = item.nodeX
+                                targetRow = i
+                                break
+                            }
+                        }
+                }
+            }
+
+            if (targetCenterX >= 0) {
+                // Центрируем по X
+                var newContentX = targetCenterX - (externalFlickable.width / 2)
+                externalFlickable.contentX = Math.max(0, newContentX)
+
+                // Прокручиваем по Y, чтобы строка была в центре
+                var newContentY = (targetRow * rowHeight) - (externalFlickable.height / 2) + (rowHeight / 2)
+                externalFlickable.contentY = Math.max(0, newContentY)
+            }
+    }
+
     function updateTaskDates(taskId, newStart, newEnd)
     {
         if (projectController && projectController.taskController)
@@ -332,6 +391,9 @@ Rectangle
             updateCounter: root.updateCounter
             externalFlickable: root.externalFlickable
             taskContextMenu: root.taskContextMenu
+
+            // П.2: Передача ID для подсветки
+            hoveredTaskId: root.hoveredTaskId
 
             onTaskDatesChanged: function(taskId, newStart, newEnd) { root.updateTaskDates(taskId, newStart, newEnd) }
             onForecastDatesChanged: function(taskId, newStart, newEnd) { root.updateForecastDates(taskId, newStart, newEnd) }

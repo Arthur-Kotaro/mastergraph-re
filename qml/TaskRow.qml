@@ -5,9 +5,10 @@ Rectangle
 {
     id: root
     height: 40
-    color: "transparent"
+    color: (rowData && rowData.type === "task" && rowData.taskId === hoveredTaskId) ? "#4000aaff" : "transparent"
 
     property var rowData
+    property string hoveredTaskId: ""
     property int rowHeight: 40
     property date displayStart: new Date()
     property int dayWidth: 30
