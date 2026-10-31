@@ -149,7 +149,14 @@ bool ProjectSerializer::fromJson(ProjectData* project, const QVariantMap& json, 
         int status = taskMap["status"].toInt();
         int progressCurrent = taskMap.contains("progressCurrent") ? taskMap["progressCurrent"].toInt() : -1;
         int progressTotal = taskMap.contains("progressTotal") ? taskMap["progressTotal"].toInt() : -1;
-        GanttDefines::LocalGraphState lgs = GanttDefines::stringToLocalGraphState(taskMap["localGraphState"].toString());
+        GanttDefines::LocalGraphState lgs = GanttDefines::LocalGraphState::NotRequired;
+        QVariant lgsVal = taskMap["localGraphState"];
+        if (lgsVal.typeId() == QMetaType::Int || lgsVal.canConvert<int>()) {
+            int val = lgsVal.toInt();
+            if (val >= 0 && val <= 3) lgs = static_cast<GanttDefines::LocalGraphState>(val);
+        } else if (lgsVal.typeId() == QMetaType::QString) {
+            lgs = GanttDefines::stringToLocalGraphState(lgsVal.toString());
+        }
 
         QString taskId = taskMap["id"].toString();
         QString groupId = taskMap["groupId"].toString();

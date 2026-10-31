@@ -158,17 +158,30 @@ void TaskController::updateForecastDates(const QString& taskId, const QDate& new
         emit errorOccurred("Редактирование заблокировано");
         return;
     }
+
     QVariantMap task = m_projectData->get_taskModel()->getTask(taskId);
+    if (task.isEmpty()) return;
+
     if (task["status"].toInt() == static_cast<int>(GanttDefines::TaskStatus::Completed)) {
         emit errorOccurred("Нельзя редактировать прогноз завершённой задачи");
         return;
     }
-    if (newForecastStart > newForecastEnd) {
-        emit errorOccurred("Дата завершения прогноза не может быть раньше даты начала");
-        return;
-    }
-    m_projectData->get_taskModel()->updateForecastDates(taskId, newForecastStart, newForecastEnd);
-    m_projectData->set_Modified(true);
+
+    // П.5: Запрет изменения прогноза для задач с ЛГ
+    int lgs = task["localGraphState"].toInt();
+    if (lgs == static_cast<int>(GanttDefines::LocalGraphState::Attached) ||
+        lgs == static_cast<int>(GanttDefines::LocalGraphState::Missing)) {
+        emit errorOccurred("Редактирование прогноза заблокировано: задача имеет локальный график");
+    return;
+        }
+
+        if (newForecastStart > newForecastEnd) {
+            emit errorOccurred("Дата завершения прогноза не может быть раньше даты начала");
+            return;
+        }
+
+        m_projectData->get_taskModel()->updateForecastDates(taskId, newForecastStart, newForecastEnd);
+        m_projectData->set_Modified(true);
 }
 
 void TaskController::acceptForecastAsTarget(const QString& taskId)

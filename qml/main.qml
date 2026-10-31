@@ -316,6 +316,8 @@ ApplicationWindow
                     id: calendarHeader
                     x: -flickableRight.contentX
                     width: calendarHeader.contentWidth
+                    displayStart: gridArea.displayStart
+                    displayEnd: gridArea.displayEnd
                 }
 
                 Flickable

@@ -28,13 +28,17 @@ Rectangle
     property string hoveredTaskId: ""
     property var timeLineRef: currentTimeLine
 
+    // Свойства для синих границ (целевых)
     property bool showTargetStartLine: false
     property bool showTargetEndLine: false
     property real targetStartLineX: 0
     property real targetEndLineX: 0
     property bool targetStartLineArrows: true
     property bool targetEndLineArrows: true
-    property bool targetStartLineIsPredecessor: false
+
+    // Свойства для красной границы (предшественника)
+    property bool showPredecessorLine: false
+    property real predecessorLineX: 0
 
     property int effectiveRows: totalRows
 
@@ -60,6 +64,7 @@ Rectangle
         dayWidth: root.dayWidth
     }
 
+    // Левая синяя граница
     TargetDatesLine
     {
         id: targetStartLine
@@ -67,9 +72,10 @@ Rectangle
         x: root.targetStartLineX
         showArrows: root.targetStartLineArrows
         arrowDirection: "right"
-        lineColor: root.targetStartLineIsPredecessor ? "#FF4444" : "#2266cc"
+        lineColor: "#2266cc"
     }
 
+    // Правая синяя граница
     TargetDatesLine
     {
         id: targetEndLine
@@ -77,6 +83,18 @@ Rectangle
         x: root.targetEndLineX
         showArrows: root.targetEndLineArrows
         arrowDirection: "left"
+        lineColor: "#2266cc"
+    }
+
+    // Красная граница (предшественник)
+    TargetDatesLine
+    {
+        id: predecessorLine
+        visible: root.isLocalMode && root.showPredecessorLine
+        x: root.predecessorLineX
+        showArrows: true
+        arrowDirection: "right"
+        lineColor: "#FF4444"
     }
 
     Connections
@@ -109,11 +127,12 @@ Rectangle
     {
         showTargetStartLine = false
         showTargetEndLine = false
+        showPredecessorLine = false
         targetStartLineX = 0
         targetEndLineX = 0
+        predecessorLineX = 0
         targetStartLineArrows = true
         targetEndLineArrows = true
-        targetStartLineIsPredecessor = false
 
         if (!isLocalMode) return
         if (!projectController || !projectController.projectData) return
@@ -122,23 +141,34 @@ Rectangle
         var linkedEnd = projectController.projectData.getLinkedTargetEnd()
         var predEnd = projectController.projectData.getLinkedPredecessorEndDate()
 
-        if (GridRange.isValidDate(linkedStart) && GridRange.isValidDate(linkedEnd))
+        // 1. Левая синяя (целевое начало)
+        if (GridRange.isValidDate(linkedStart))
         {
             var xs = GridRange.dateToX(linkedStart, root.displayStart, root.dayWidth)
-            var xe = GridRange.dateToX(linkedEnd, root.displayStart, root.dayWidth)
-            if (xs >= 0) { targetStartLineX = xs; showTargetStartLine = true; targetStartLineIsPredecessor = false }
-            if (xe >= 0) { targetEndLineX = xe + root.dayWidth; showTargetEndLine = true }
+            if (xs >= 0) { 
+                targetStartLineX = xs
+                showTargetStartLine = true 
+            }
         }
 
+        // 2. Правая синяя (целевое завершение)
+        if (GridRange.isValidDate(linkedEnd))
+        {
+            var xe = GridRange.dateToX(linkedEnd, root.displayStart, root.dayWidth)
+            if (xe >= 0) { 
+                targetEndLineX = xe + root.dayWidth
+                showTargetEndLine = true 
+            }
+        }
+
+        // 3. Красная (предшественник)
         if (GridRange.isValidDate(predEnd))
         {
             var xp = GridRange.dateToX(predEnd, root.displayStart, root.dayWidth)
             if (xp >= 0)
             {
-                targetStartLineX = xp + root.dayWidth
-                showTargetStartLine = true
-                targetStartLineArrows = true
-                targetStartLineIsPredecessor = true
+                predecessorLineX = xp + root.dayWidth
+                showPredecessorLine = true
             }
         }
     }
@@ -155,57 +185,51 @@ Rectangle
             var linkedEnd = projectController.projectData.getLinkedTargetEnd()
             var earliest = projectController.projectData.getEarliestDate()
             var latest = projectController.projectData.getLatestDate()
+            var predEnd = projectController.projectData.getLinkedPredecessorEndDate()
+
+            var dates = []
+
+            // 1. Собираем все возможные даты (если они валидны)
+            if (GridRange.isValidDate(linkedStart)) dates.push(new Date(linkedStart))
+            if (GridRange.isValidDate(linkedEnd)) dates.push(new Date(linkedEnd))
+            if (GridRange.isValidDate(earliest)) dates.push(new Date(earliest))
+            if (GridRange.isValidDate(latest)) dates.push(new Date(latest))
+            if (GridRange.isValidDate(predEnd)) dates.push(new Date(predEnd))
+
             var s, e
 
-            if (GridRange.isValidDate(linkedStart) && GridRange.isValidDate(linkedEnd))
+            // 2. Если дат нет вообще — текущий месяц
+            if (dates.length === 0)
             {
-                var range = GridRange.computeLocalDisplayRange(linkedStart, linkedEnd, earliest, latest)
-                s = range.start; e = range.end
+                var now = new Date()
+                s = new Date(now.getFullYear(), now.getMonth(), 1)
+                e = new Date(now.getFullYear(), now.getMonth() + 2, 0)
             }
             else
             {
-                // 1. Собираем все важные даты для центрирования
-                var predEnd = projectController.projectData.getLinkedPredecessorEndDate()
-                var hasEarliest = GridRange.isValidDate(earliest)
-                var hasLatest = GridRange.isValidDate(latest)
-                var hasPredEnd = GridRange.isValidDate(predEnd)
-
-                // 2. Если нет ни одной даты (пустой ЛГ) — берем текущий месяц
-                if (!hasEarliest && !hasLatest && !hasPredEnd)
-                {
-                    var now = new Date()
-                    s = new Date(now.getFullYear(), now.getMonth(), 1)
-                    e = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+                // 3. Ищем минимум и максимум
+                var minD = dates[0]
+                var maxD = dates[0]
+                for (var i = 1; i < dates.length; i++) {
+                    if (dates[i] < minD) minD = dates[i]
+                    if (dates[i] > maxD) maxD = dates[i]
                 }
-                else
-                {
-                    // 3. Берем самую раннюю и самую позднюю из доступных дат
-                    var minD = null
-                    var maxD = null
-
-                    if (hasEarliest) { minD = new Date(earliest); maxD = new Date(latest) }
-                    if (hasLatest) { if (!maxD || latest > maxD) maxD = new Date(latest) }
-                    if (hasPredEnd) {
-                        if (!minD || predEnd < minD) minD = new Date(predEnd)
-                            if (!maxD || predEnd > maxD) maxD = new Date(predEnd)
-                    }
-
-                    s = new Date(minD)
-                    e = new Date(maxD)
-                }
-
-                // 4. Добавляем отступы (padding): 2 недели слева, 3 недели справа
-                s.setDate(s.getDate() - 14)
-                s.setHours(0, 0, 0, 0)
-
-                e.setDate(e.getDate() + 21) // 3 недели справа
-                e.setHours(23, 59, 59, 999)
-
-                // 5. Выравниваем левую границу по понедельнику
-                while (s.getDay() !== 1) s.setDate(s.getDate() - 1)
+                s = new Date(minD)
+                e = new Date(maxD)
             }
 
-            displayStart = s; displayEnd = e
+            // 4. Добавляем отступы (2 недели слева и 2 недели справа)
+            s.setDate(s.getDate() - 14)
+            s.setHours(0, 0, 0, 0)
+            
+            e.setDate(e.getDate() + 14)
+            e.setHours(23, 59, 59, 999)
+
+            // 5. Выравниваем левую границу по понедельнику
+            while (s.getDay() !== 1) s.setDate(s.getDate() - 1)
+
+            displayStart = s
+            displayEnd = e
             totalDays = Math.max(1, Math.floor((e - s) / 86400000) + 1)
             gridWidth = totalDays * dayWidth
         }
@@ -268,58 +292,46 @@ Rectangle
     {
         if (!externalFlickable) return
 
-            var targetCenterX = -1
-            var targetRow = -1
+        var targetCenterX = -1
+        var targetRow = -1
 
-            for (var i = 0; i < visibleItems.length; i++) {
-                if (visibleItems[i].type === "task" && visibleItems[i].taskId === taskId) {
-                    var item = visibleItems[i]
+        for (var i = 0; i < visibleItems.length; i++) {
+            if (visibleItems[i].type === "task" && visibleItems[i].taskId === taskId) {
+                var item = visibleItems[i]
+                var isTargetRow = (item.rowKind === "target")
+                var isForecastRow = (item.rowKind === "forecast")
+                var currentMode = currentViewMode()
 
-                    // Определяем, по какой строке центрировать.
-                    // В комбинированном (mode 2) и прогнозном (mode 1) ищем целевую строку (rowKind === "target").
-                    // В целевом (mode 0) берем первую попавшуюся.
-                    var isTargetRow = (item.rowKind === "target")
-                    var isForecastRow = (item.rowKind === "forecast")
+                if (currentMode !== 0 && !isTargetRow && !isForecastRow) continue
 
-                    var currentMode = currentViewMode()
+                if (currentMode !== 0 && isTargetRow || currentMode === 0) {
+                    if (item.hasDates === true || item.isUnapproved === true) {
+                        var startVal = (item.hasDates === true) ? item.taskStart : item.forecastStart
+                        var endVal = (item.hasDates === true) ? item.taskEnd : item.forecastEnd
 
-                    // Если режим не целевой, отдаем приоритет целевой строке
-                    if (currentMode !== 0 && !isTargetRow && !isForecastRow) continue
-
-                        // Нашли подходящую строку
-                        if (currentMode !== 0 && isTargetRow || currentMode === 0) {
-                            // Вычисляем координаты
-                            if (item.hasDates === true || item.isUnapproved === true) {
-                                // Полоса Ганта
-                                var startVal = (item.hasDates === true) ? item.taskStart : item.forecastStart
-                                var endVal = (item.hasDates === true) ? item.taskEnd : item.forecastEnd
-
-                                if (GridRange.isValidDate(startVal) && GridRange.isValidDate(endVal)) {
-                                    var xStart = GridRange.dateToX(startVal, displayStart, dayWidth)
-                                    var xEnd = GridRange.dateToX(endVal, displayStart, dayWidth) + dayWidth
-                                    targetCenterX = xStart + (xEnd - xStart) / 2
-                                    targetRow = i
-                                    break
-                                }
-                            } else if (item.hasDates !== true && item.isUnapproved !== true) {
-                                // Узел (задача без дат)
-                                targetCenterX = item.nodeX
-                                targetRow = i
-                                break
-                            }
+                        if (GridRange.isValidDate(startVal) && GridRange.isValidDate(endVal)) {
+                            var xStart = GridRange.dateToX(startVal, displayStart, dayWidth)
+                            var xEnd = GridRange.dateToX(endVal, displayStart, dayWidth) + dayWidth
+                            targetCenterX = xStart + (xEnd - xStart) / 2
+                            targetRow = i
+                            break
                         }
+                    } else if (item.hasDates !== true && item.isUnapproved !== true) {
+                        targetCenterX = item.nodeX
+                        targetRow = i
+                        break
+                    }
                 }
             }
+        }
 
-            if (targetCenterX >= 0) {
-                // Центрируем по X
-                var newContentX = targetCenterX - (externalFlickable.width / 2)
-                externalFlickable.contentX = Math.max(0, newContentX)
+        if (targetCenterX >= 0) {
+            var newContentX = targetCenterX - (externalFlickable.width / 2)
+            externalFlickable.contentX = Math.max(0, newContentX)
 
-                // Прокручиваем по Y, чтобы строка была в центре
-                var newContentY = (targetRow * rowHeight) - (externalFlickable.height / 2) + (rowHeight / 2)
-                externalFlickable.contentY = Math.max(0, newContentY)
-            }
+            var newContentY = (targetRow * rowHeight) - (externalFlickable.height / 2) + (rowHeight / 2)
+            externalFlickable.contentY = Math.max(0, newContentY)
+        }
     }
 
     function updateTaskDates(taskId, newStart, newEnd)
@@ -424,7 +436,6 @@ Rectangle
             externalFlickable: root.externalFlickable
             taskContextMenu: root.taskContextMenu
 
-            // П.2: Передача ID для подсветки
             hoveredTaskId: root.hoveredTaskId
 
             onTaskDatesChanged: function(taskId, newStart, newEnd) { root.updateTaskDates(taskId, newStart, newEnd) }

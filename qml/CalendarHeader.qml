@@ -209,7 +209,6 @@ Rectangle
 
     function refresh()
     {
-        updateDisplayRange()
         rebuildData()
     }
 

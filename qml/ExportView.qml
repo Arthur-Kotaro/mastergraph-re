@@ -63,6 +63,8 @@ ApplicationWindow
                     id: calendarHeader
                     x: 0
                     width: calendarHeader.contentWidth
+                    displayStart: gridArea.displayStart
+                    displayEnd: gridArea.displayEnd
                 }
 
                 Item
