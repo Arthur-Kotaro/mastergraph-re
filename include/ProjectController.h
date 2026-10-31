@@ -47,6 +47,7 @@ public:
     Q_INVOKABLE void saveProjectAs(const QString& filePath);
     Q_INVOKABLE void exportToPng(const QString& filePath);
     Q_INVOKABLE void exportToPdf(const QString& filePath);
+    Q_INVOKABLE void notifyMilestoneCompleted();
 
 signals:
     void inEditModeChanged();

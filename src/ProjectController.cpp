@@ -154,3 +154,8 @@ void ProjectController::saveProjectAs(const QString& filePath)
 
 void ProjectController::exportToPng(const QString& filePath) { m_exportManager->exportToPng(m_projectData, filePath); }
 void ProjectController::exportToPdf(const QString& filePath) { m_exportManager->exportToPdf(m_projectData, filePath, QDate::currentDate()); }
+
+void ProjectController::notifyMilestoneCompleted()
+{
+    emit errorOccurred("Перенос пройденной вехи запрещён");
+}

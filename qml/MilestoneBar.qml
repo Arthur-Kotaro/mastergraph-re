@@ -133,24 +133,26 @@ Rectangle
                 for (var i = 0; i < milestones.length; i++)
                 {
                     var ms = milestones[i]
-                    if (ms.color === "#888888" && !root.showRescheduled) continue
 
-                    var plannedDate = new Date(ms.plannedDate)
-                    var daysDiff = Math.floor((plannedDate - root.startDate) / (1000 * 60 * 60 * 24))
-                    var cx = daysDiff * root.dayWidth + root.dayWidth / 2
-                    var cy = 8
+                    // Исторические (серые) вехи не должны реагировать на клики
+                    if (ms.color === "#888888") continue
 
-                    if (Math.abs(mx - cx) < 12)
-                    {
-                        milestoneContextMenu.milestoneId = ms.milestoneId
-                        milestoneContextMenu.currentDate = ms.plannedDate
-                        milestoneContextMenu.currentStatus = ms.status !== undefined ? ms.status : 0
-                        milestoneContextMenu.currentAbbreviation = ms.abbreviation
-                        milestoneContextMenu.currentFullName = ms.fullName
-                        milestoneContextMenu.currentActualDate = ms.actualDate
-                        milestoneContextMenu.popup()
-                        return
-                    }
+                        var plannedDate = new Date(ms.plannedDate)
+                        var daysDiff = Math.floor((plannedDate - root.startDate) / (1000 * 60 * 60 * 24))
+                        var cx = daysDiff * root.dayWidth + root.dayWidth / 2
+                        var cy = 8
+
+                        if (Math.abs(mx - cx) < 12)
+                        {
+                            milestoneContextMenu.milestoneId = ms.milestoneId
+                            milestoneContextMenu.currentDate = ms.plannedDate
+                            milestoneContextMenu.currentStatus = ms.status !== undefined ? ms.status : 0
+                            milestoneContextMenu.currentAbbreviation = ms.abbreviation
+                            milestoneContextMenu.currentFullName = ms.fullName
+                            milestoneContextMenu.currentActualDate = ms.actualDate
+                            milestoneContextMenu.popup()
+                            return
+                        }
                 }
             }
         }
@@ -419,8 +421,13 @@ Rectangle
         MenuItem
         {
             text: "Перенести веху"
+            enabled: milestoneContextMenu.currentStatus !== 1
             onTriggered:
             {
+                if (milestoneContextMenu.currentStatus === 1) {
+                    projectController.notifyMilestoneCompleted()
+                    return
+                }
                 rescheduleMilestoneDialog.milestoneId = milestoneContextMenu.milestoneId
                 rescheduleMilestoneDialog.currentDate = milestoneContextMenu.currentDate
                 rescheduleMilestoneDialog.open()
