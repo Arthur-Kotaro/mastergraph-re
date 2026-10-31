@@ -38,6 +38,7 @@ public:
     void set_InEditMode(bool editMode);
 
     Q_INVOKABLE void notifyEditingLocked();
+    Q_INVOKABLE void setCursorShape(int shape);
     Q_INVOKABLE void notifyTaskCompleted();
 
     Q_INVOKABLE void createNewProject(const QString& projectName, const QString& projectType, const QDate& startDate, const QString& filePath, const QStringList& selectedTaskGroups);

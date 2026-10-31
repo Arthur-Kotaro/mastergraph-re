@@ -11,6 +11,18 @@ Rectangle
     property var externalFlickable: null
     property var taskContextMenu: null
     property var parentRow: null
+    property bool isResizing: false // Флаг для фиксации курсора
+
+    HoverHandler {
+        id: barHover
+        onHoveredChanged: {
+            if (!hovered) {
+                // Мышь ушла с полосы — сбрасываем курсор в стрелку
+                if (!root.isResizing && projectController)
+                    projectController.setCursorShape(0)
+            }
+        }
+    }
 
     signal taskDatesChanged(string taskId, date newStart, date newEnd)
     signal forecastDatesChanged(string taskId, date newStart, date newEnd)
@@ -138,10 +150,12 @@ Rectangle
         }
     }
 
+    // Полоса (Drag)
     MouseArea
     {
         id: moveArea
         anchors.fill: parent
+        anchors.rightMargin: 15 // Оставляем место для resizeHandle
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
 
@@ -155,17 +169,45 @@ Rectangle
             onTriggered: { moveArea.showTooltip = true; root.tooltipRequested(true, moveArea, false) }
         }
 
-        onEntered: tooltipDelay.restart()
-        onExited: { tooltipDelay.stop(); moveArea.showTooltip = false; root.tooltipHidden() }
+        onEntered: {
+            if (!root.isResizing) {
+                if (!(projectController && projectController.settingsManager.editingLocked) && 
+                    !root.isForecastLocked() && !(rowData && rowData.isCompleted)) {
+                    if (projectController) projectController.setCursorShape(2) // OpenHand
+                }
+            }
+            tooltipDelay.restart()
+        }
+        onExited: { 
+            // Убираем setCursorShape(0), чтобы не сбивать курсор при переходе в resizeArea
+            tooltipDelay.stop(); moveArea.showTooltip = false; root.tooltipHidden()
+        }
+        
+        onPositionChanged: function(mouse) {
+            // Принудительно ставим руку, если мы не тащим и не ресайзим
+            if (!drag.active && !root.isResizing) {
+                if (!(projectController && projectController.settingsManager.editingLocked) && 
+                    !root.isForecastLocked() && !(rowData && rowData.isCompleted)) {
+                    if (projectController) projectController.setCursorShape(2) // OpenHand
+                }
+            }
+            
+            if (!drag.active) return
+            if (root.isForecastLocked()) { drag.target = null; return }
+            if (projectController && projectController.settingsManager.editingLocked) { drag.target = null; return }
+            if (drag.target !== null && drag.target !== undefined) {
+                suppressClick = true
+                parent.x = Math.round(parent.x / root.dayWidth) * root.dayWidth
+            }
+        }
 
         onPressed: function(mouse)
         {
             if (mouse.button === Qt.RightButton) { drag.target = null; suppressClick = false; return }
-            if (root.isForecastLocked())
-            {
+            if (root.isForecastLocked()) {
                 if (projectController) projectController.notifyEditingLocked()
-                    drag.target = null
-                    return
+                drag.target = null
+                return
             }
             if (projectController && projectController.settingsManager.editingLocked) { projectController.notifyEditingLocked(); drag.target = null; return }
             if (rowData && rowData.isCompleted) { if (projectController) projectController.notifyTaskCompleted(); drag.target = null; return }
@@ -177,21 +219,11 @@ Rectangle
             if (root.externalFlickable) root.externalFlickable.interactive = false
         }
 
-        onPositionChanged: function(mouse)
-        {
-            if (!drag.active) return
-            if (root.isForecastLocked()) { drag.target = null; return }
-            if (projectController && projectController.settingsManager.editingLocked) { drag.target = null; return }
-            if (drag.target !== null && drag.target !== undefined) {
-                suppressClick = true
-                parent.x = Math.round(parent.x / root.dayWidth) * root.dayWidth
-            }
-        }
-
         onReleased: function(mouse)
         {
             if (root.externalFlickable) root.externalFlickable.interactive = true
             if (drag.active) { drag.target = null; parent.updateDates() }
+            if (projectController) projectController.setCursorShape(2) // OpenHand
         }
 
         onClicked: function(mouse)
@@ -202,49 +234,53 @@ Rectangle
         }
     }
 
+    // Правый край (Resize)
     Rectangle
     {
         id: resizeHandle
-        width: 10; height: parent.height; anchors.right: parent.right
-        color: Qt.darker(root.color, 1.5); radius: 2
-        visible: moveArea.containsMouse && !root.isForecastLocked()
-        enabled: !root.isForecastLocked()
+        width: 15
+        height: parent.height
+        anchors.right: parent.right
+        color: resizeArea.containsMouse ? Qt.darker(root.color, 1.5) : "transparent"
+        radius: 2
         z: 10
 
         MouseArea
         {
             id: resizeArea
             anchors.fill: parent
-            cursorShape: root.isForecastLocked() ? Qt.ArrowCursor : Qt.SizeHorCursor
+            hoverEnabled: true
 
             property real startWidth: 0
             property real startX: 0
 
-            onPressed: function(mouse)
-            {
-                if (root.isForecastLocked()) {
-                    if (projectController) projectController.notifyEditingLocked()
-                        return
+            onEntered: {
+                if (root.isResizing) return
+                if (!(projectController && projectController.settingsManager.editingLocked) && 
+                    !root.isForecastLocked() && !(rowData && rowData.isCompleted)) {
+                    if (projectController) projectController.setCursorShape(1) // SizeHor
                 }
-                if (projectController && projectController.settingsManager.editingLocked) { projectController.notifyEditingLocked(); return }
-                if (rowData && rowData.isCompleted) { if (projectController) projectController.notifyTaskCompleted(); return }
-
-                if (root.externalFlickable) root.externalFlickable.interactive = false
-                startWidth = root.width
-                // Запоминаем координату мыши относительно TaskRow (он не двигается)
-                startX = mapToItem(root.parentRow, mouse.x, mouse.y).x
-                root.width = startWidth // Ломаем биндинг
+            }
+            onExited: {
+                // Убираем setCursorShape(0), чтобы не сбивать курсор при переходе в moveArea
             }
 
             onPositionChanged: function(mouse)
             {
+                // Принудительно ставим SizeHor, если мы не тащим
+                if (!pressed && !root.isResizing) {
+                    if (!(projectController && projectController.settingsManager.editingLocked) && 
+                        !root.isForecastLocked() && !(rowData && rowData.isCompleted)) {
+                        if (projectController) projectController.setCursorShape(1) // SizeHor
+                    }
+                }
+
                 if (root.isForecastLocked()) return
                 if (projectController && projectController.settingsManager.editingLocked) return
                 if (rowData && rowData.isCompleted) return
 
                 if (pressed)
                 {
-                    // Текущая координата мыши относительно TaskRow
                     var currentX = mapToItem(root.parentRow, mouse.x, mouse.y).x
                     var delta = currentX - startX
                     var newWidth = startWidth + delta
@@ -253,8 +289,29 @@ Rectangle
                 }
             }
 
+            onPressed: function(mouse)
+            {
+                if (root.isForecastLocked()) {
+                    if (projectController) projectController.notifyEditingLocked()
+                    return
+                }
+                if (projectController && projectController.settingsManager.editingLocked) { projectController.notifyEditingLocked(); return }
+                if (rowData && rowData.isCompleted) { if (projectController) projectController.notifyTaskCompleted(); return }
+
+                root.isResizing = true // <-- УСТАНОВИТЬ ФЛАГ
+                if (projectController) projectController.setCursorShape(1) // SizeHor
+                
+                if (root.externalFlickable) root.externalFlickable.interactive = false
+                startWidth = root.width
+                startX = mapToItem(root.parentRow, mouse.x, mouse.y).x
+                root.width = startWidth
+            }
+
             onReleased: function(mouse)
             {
+                root.isResizing = false // <-- СБРОСИТЬ ФЛАГ
+                if (projectController) projectController.setCursorShape(1) // SizeHor
+                
                 if (root.externalFlickable) root.externalFlickable.interactive = true
                 if (projectController && projectController.settingsManager.editingLocked) return
                 if (rowData && rowData.isCompleted) return

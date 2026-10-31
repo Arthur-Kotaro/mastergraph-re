@@ -328,9 +328,6 @@ Rectangle
         if (targetCenterX >= 0) {
             var newContentX = targetCenterX - (externalFlickable.width / 2)
             externalFlickable.contentX = Math.max(0, newContentX)
-
-            var newContentY = (targetRow * rowHeight) - (externalFlickable.height / 2) + (rowHeight / 2)
-            externalFlickable.contentY = Math.max(0, newContentY)
         }
     }
 

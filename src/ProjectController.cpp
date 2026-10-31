@@ -6,6 +6,9 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
+#include <QGuiApplication>
+#include <QCursor>
+
 ProjectController::ProjectController(QObject *parent): QObject(parent), m_projectData(nullptr), m_inEditMode(false)
 {
     m_projectData = new ProjectData(this);
@@ -158,4 +161,16 @@ void ProjectController::exportToPdf(const QString& filePath) { m_exportManager->
 void ProjectController::notifyMilestoneCompleted()
 {
     emit errorOccurred("Перенос пройденной вехи запрещён");
+}
+
+void ProjectController::setCursorShape(int shape)
+{
+    while (QGuiApplication::overrideCursor())
+        QGuiApplication::restoreOverrideCursor();
+
+    switch (shape) {
+        case 1: QGuiApplication::setOverrideCursor(Qt::SizeHorCursor); break;
+        case 2: QGuiApplication::setOverrideCursor(Qt::OpenHandCursor); break;
+        default: break; // Arrow (стек уже очищен)
+    }
 }

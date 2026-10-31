@@ -282,6 +282,7 @@ ApplicationWindow
             Rectangle
             {
                 id: splitter
+                z: 10
                 width: 6
                 height: parent.height
                 color: "#888888"
@@ -291,7 +292,11 @@ ApplicationWindow
                     anchors.fill: parent
                     anchors.leftMargin: -4
                     anchors.rightMargin: -4
-                    cursorShape: Qt.SizeHorCursor
+                    hoverEnabled: true
+
+                    onEntered: if (projectController) projectController.setCursorShape(1) // SizeHor
+                    onExited: if (projectController) projectController.setCursorShape(0)  // Arrow
+
                     drag.target: splitter
                     drag.axis: Drag.XAxis
                     drag.minimumX: 525
