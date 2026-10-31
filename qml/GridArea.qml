@@ -148,7 +148,6 @@ Rectangle
 
         var localMode = (projectController.projectData.graphKind === 1)
 
-        // 1. Расчет диапазона дат
         if (localMode)
         {
             var linkedStart = projectController.projectData.getLinkedTargetStart()
@@ -160,23 +159,20 @@ Rectangle
             if (GridRange.isValidDate(linkedStart) && GridRange.isValidDate(linkedEnd))
             {
                 var range = GridRange.computeLocalDisplayRange(linkedStart, linkedEnd, earliest, latest)
-                s = range.start
-                e = range.end
+                s = range.start; e = range.end
             }
             else
             {
                 var now = new Date()
                 s = new Date(now.getFullYear(), now.getMonth() - 1, 1)
                 e = new Date(now.getFullYear(), now.getMonth() + 2, 0)
-                s.setHours(0, 0, 0, 0)
-                e.setHours(23, 59, 59, 999)
+                s.setHours(0, 0, 0, 0); e.setHours(23, 59, 59, 999)
                 if (GridRange.isValidDate(earliest) && earliest < s) s = new Date(earliest)
                 if (GridRange.isValidDate(latest) && latest > e) e = new Date(latest)
                 while (s.getDay() !== 1) s.setDate(s.getDate() - 1)
             }
 
-            displayStart = s
-            displayEnd = e
+            displayStart = s; displayEnd = e
             totalDays = Math.max(1, Math.floor((e - s) / 86400000) + 1)
             gridWidth = totalDays * dayWidth
         }
@@ -189,14 +185,12 @@ Rectangle
             {
                 var start = new Date(earliest)
                 while (start.getDay() !== 1) start.setDate(start.getDate() - 1)
-                start.setDate(start.getDate() - 28)
-                start.setHours(0, 0, 0, 0)
+                start.setDate(start.getDate() - 28); start.setHours(0, 0, 0, 0)
                 displayStart = start
 
                 var end = new Date(latest)
                 while (end.getDay() !== 0) end.setDate(end.getDate() + 1)
-                end.setDate(end.getDate() + 14)
-                end.setHours(23, 59, 59, 999)
+                end.setDate(end.getDate() + 14); end.setHours(23, 59, 59, 999)
                 displayEnd = end
 
                 totalDays = Math.max(1, Math.floor((end - start) / 86400000) + 1)
@@ -204,17 +198,14 @@ Rectangle
             }
         }
 
-        // 2. Сбор конфликтов
         var conflictSet = {}
         if (localMode)
         {
             var conflictIds = projectController.projectData.getConflictingTaskIds()
-            for (var ci = 0; ci < conflictIds.length; ci++)
-                conflictSet[conflictIds[ci]] = true
+            for (var ci = 0; ci < conflictIds.length; ci++) conflictSet[conflictIds[ci]] = true
         }
 
-        // 3. Вызов Билдера для сборки items
-        var items = GridLayoutBuilder.buildLayout({
+        visibleItems = GridLayoutBuilder.buildLayout({
             localMode: localMode,
             displayStart: displayStart,
             dayWidth: dayWidth,
@@ -223,8 +214,6 @@ Rectangle
             projectData: projectController.projectData
         })
 
-        // 4. Применение результатов
-        visibleItems = items
         updateCounter++
         totalRows = visibleItems.length
 
@@ -244,21 +233,25 @@ Rectangle
 
     function updateTaskDates(taskId, newStart, newEnd)
     {
-        if (projectController) projectController.taskController.updateTaskDates(taskId, newStart, newEnd)
+        if (projectController && projectController.taskController)
+            projectController.taskController.updateTaskDates(taskId, newStart, newEnd)
     }
 
     function updateForecastDates(taskId, newStart, newEnd)
     {
-        if (projectController) projectController.taskController.updateForecastDates(taskId, newStart, newEnd)
+        if (projectController && projectController.taskController)
+            projectController.taskController.updateForecastDates(taskId, newStart, newEnd)
     }
 
     Connections
     {
         target: projectController?.projectData?.taskModel ?? null
-        function onDataChanged(topLeft, bottomRight, roles) { updateData() }
         function onRowsInserted(parent, first, last) { updateData() }
         function onRowsRemoved(parent, first, last) { updateData() }
         function onModelReset() { updateData() }
+        function onDataChanged(topLeft, bottomRight, roles) {
+            Qt.callLater(root.updateData)
+        }
     }
 
     Connections
@@ -309,12 +302,12 @@ Rectangle
         id: dependencyCanvas
         anchors.fill: parent
         z: 5
-        visibleItems: root.visibleItems
         displayStart: root.displayStart
         dayWidth: root.dayWidth
         rowHeight: root.rowHeight
         showDependencies: root.showDependencies
         viewMode: root.currentViewMode()
+        visibleItems: root.visibleItems
     }
 
     Repeater

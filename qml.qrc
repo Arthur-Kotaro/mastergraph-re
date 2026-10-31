@@ -16,6 +16,8 @@
         <file>qml/GroupDelegate.qml</file>
         <file>qml/MilestoneBar.qml</file>
         <file>qml/TaskTooltip.qml</file>
+        <file>qml/GroupContextMenu.qml</file>
+        <file>qml/RenameGroupDialog.qml</file>
 
         <file>qml/NewProjectDialog.qml</file>
         <file>qml/EditTaskDialog.qml</file>

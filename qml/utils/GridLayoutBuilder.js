@@ -1,9 +1,7 @@
 .pragma library
-.import "GridRange.js" as GridRange
 .import "NodeLayout.js" as NodeLayout
 .import "RowBuilder.js" as RowBuilder
 
-// Главная функция сборки данных для сетки
 function buildLayout(context)
 {
     var localMode = context.localMode
@@ -21,7 +19,6 @@ function buildLayout(context)
         if (t) allTasks.push(t)
     }
 
-    // Считаем позиции узлов (для задач без дат)
     var nodes = NodeLayout.computeNodePositions(allTasks, projectData.dependencyModel, displayStart, dayWidth)
     var targetNodes = nodes.target
     var forecastNodes = nodes.forecast
@@ -34,19 +31,16 @@ function buildLayout(context)
         var nodeXVal = 0
         if (!rowHasDates && !rowIsUnapproved)
         {
-            if (kind === "target")
-                nodeXVal = targetNodes[taskId] !== undefined ? targetNodes[taskId] : dayWidth / 2
-            else
-                nodeXVal = forecastNodes[taskId] !== undefined ? forecastNodes[taskId] : dayWidth / 2
+            if (kind === "target") nodeXVal = targetNodes[taskId] !== undefined ? targetNodes[taskId] : dayWidth / 2
+            else nodeXVal = forecastNodes[taskId] !== undefined ? forecastNodes[taskId] : dayWidth / 2
         }
 
         var item = RowBuilder.createGridItem(taskData, taskId, kind, (taskData.status === 1), rowHasDates, rowIsUnapproved, nodeXVal)
-        
-        // Дополняем поля, которые зависят от контекста
         item.rowIndex = taskCounter
         item.hasConflict = conflictSet[taskId] === true
         item.taskStart = startDate
         item.taskEnd = endDate
+        item.type = "task"
         
         items.push(item)
         taskCounter++
@@ -73,7 +67,8 @@ function buildLayout(context)
             var groupName = groups.getGroupName(i)
             var expanded = groups.isExpanded(i)
 
-            items.push({type: "group", id: groupId, name: groupName})
+            items.push({type: "group", id: groupId, name: groupName, rowIndex: taskCounter})
+            taskCounter++
 
             if (expanded)
             {

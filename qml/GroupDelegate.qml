@@ -1,7 +1,6 @@
 import QtQuick 6.0
 import QtQuick.Controls 6.0
 import QtQuick.Layouts 6.0
-
 import "utils/RowBuilder.js" as RowBuilder
 
 Item
@@ -28,7 +27,6 @@ Item
             rowsModel = []
             return
         }
-
         var mode = currentViewMode()
         var taskIds = projectController.projectData.taskModel.getTasksForGroup(groupId)
         rowsModel = RowBuilder.buildGroupRows(projectController.projectData.taskModel, taskIds, mode)
@@ -49,21 +47,10 @@ Item
     {
         target: projectController && projectController.projectData ? projectController.projectData.groupModel : null
         function onDataChanged() { refreshTasks() }
-
         function onGroupExpandedChanged(changedGroupId)
         {
-            if (changedGroupId === groupId)
-            {
-                var savedY = root.flickableRight ? root.flickableRight.contentY : 0
-                refreshTasks()
-                if (root.flickableRight)
-                {
-                    var maxY = Math.max(0, root.flickableRight.contentHeight - root.flickableRight.height)
-                    root.flickableRight.contentY = Math.min(savedY, maxY)
-                }
-            }
+            if (changedGroupId === groupId) refreshTasks()
         }
-
         function onRowsInserted() { refreshTasks() }
         function onRowsRemoved() { refreshTasks() }
     }
@@ -96,11 +83,7 @@ Item
                 MouseArea
                 {
                     anchors.fill: parent
-                    onClicked:
-                    {
-                        if (projectController && projectController.projectData)
-                            projectController.projectData.groupModel.setGroupExpanded(groupId, !root.expanded)
-                    }
+                    onClicked: if (projectController && projectController.projectData) projectController.projectData.groupModel.setGroupExpanded(groupId, !root.expanded)
                 }
             }
 
@@ -121,44 +104,27 @@ Item
             acceptedButtons: Qt.RightButton
             onClicked: function(mouse)
             {
-                if (mouse.button === Qt.RightButton)
+                if (mouse.button === Qt.RightButton) {
+                    groupContextMenu.groupId = groupId
+                    groupContextMenu.groupName = groupName
                     groupContextMenu.popup()
+                }
             }
         }
 
-        Menu
+        GroupContextMenu
         {
             id: groupContextMenu
-
-            MenuItem
-            {
-                text: "Добавить задачу"
-                onTriggered:
-                {
-                    if (projectController && projectController.projectData)
-                    {
-                        mainWindow.newTaskDialog.openForGroup(groupId)
-                        refreshTasks()
-                        if (typeof mainWindow !== "undefined" && mainWindow && mainWindow.gridArea)
-                            mainWindow.gridArea.updateData()
-                    }
+            onAddTaskClicked: {
+                if (projectController && projectController.projectData) {
+                    mainWindow.newTaskDialog.openForGroup(groupId)
+                    refreshTasks()
                 }
             }
-
-            MenuItem
-            {
-                text: "Переименовать"
-                onTriggered: renameGroupDialog.openWithGroup(groupId, groupName)
-            }
-
-            MenuSeparator {}
-
-            MenuItem { text: "Добавить группу сверху"; onTriggered: addGroupAbove() }
-            MenuItem { text: "Добавить группу снизу"; onTriggered: addGroupBelow() }
-
-            MenuSeparator {}
-
-            MenuItem { text: "Удалить"; onTriggered: deleteGroup() }
+            onRenameClicked: renameGroupDialog.openWithGroup(groupId, groupName)
+            onAddAboveClicked: addGroupAbove()
+            onAddBelowClicked: addGroupBelow()
+            onDeleteClicked: deleteGroup()
         }
     }
 
@@ -187,59 +153,37 @@ Item
                 property string rowKind: modelData ? modelData.rowKind : "target"
                 property var taskData: modelData ? modelData.data : null
 
-                function isValidDate(d)
-                {
-                    return d !== undefined && d !== null && !isNaN(new Date(d).getTime())
-                }
+                function isValidDate(d) { return d !== undefined && d !== null && !isNaN(new Date(d).getTime()) }
+                function hasDates() { return taskData && isValidDate(taskData.startDate) && isValidDate(taskData.endDate) }
 
-                function hasDates()
-                {
-                    if (!taskData) return false
-                    return isValidDate(taskData.startDate) && isValidDate(taskData.endDate)
-                }
-
-                function titleText()
-                {
+                function titleText() {
                     if (!taskData) return ""
                     var prefix = ""
-                    if (taskData.localGraphState !== undefined && taskData.localGraphState !== 0)
-                        prefix = "🔗 "
+                    if (taskData.localGraphState !== undefined && taskData.localGraphState !== 0) prefix = "🔗 "
                     return prefix + taskData.title
                 }
 
-                function responsibleText()
-                {
+                function responsibleText() {
                     if (!taskData) return ""
                     var r = taskData.responsible
                     return (r && r.length > 0) ? r : "—"
                 }
 
-                function startDateText()
-                {
+                function startDateText() {
                     if (!taskData) return "—"
-                    var d
-                    if (rowKind === "forecast" && !modelData.isCompleted)
-                        d = taskData.forecastStart
-                    else
-                        d = taskData.startDate
+                    var d = (rowKind === "forecast" && !modelData.isCompleted) ? taskData.forecastStart : taskData.startDate
                     if (!isValidDate(d)) return "—"
                     return Qt.formatDateTime(new Date(d), "dd.MM.yyyy")
                 }
 
-                function endDateText()
-                {
+                function endDateText() {
                     if (!taskData) return "—"
-                    var d
-                    if (rowKind === "forecast" && !modelData.isCompleted)
-                        d = taskData.forecastEnd
-                    else
-                        d = taskData.endDate
+                    var d = (rowKind === "forecast" && !modelData.isCompleted) ? taskData.forecastEnd : taskData.endDate
                     if (!isValidDate(d)) return "—"
                     return Qt.formatDateTime(new Date(d), "dd.MM.yyyy")
                 }
 
-                function viewLabelText()
-                {
+                function viewLabelText() {
                     if (rowKind === "forecast") return "Прогноз"
                     if (modelData && modelData.isCompleted) return "Факт"
                     if (!hasDates()) return "Драфт"
@@ -258,90 +202,41 @@ Item
                         width: parent.width - 265
                         height: parent.height
                         color: "transparent"
-
                         Row
                         {
                             anchors.fill: parent
                             Rectangle
                             {
-                                width: parent.width * 0.64
-                                height: parent.height
-                                color: "transparent"
-                                Text
-                                {
-                                    text: titleText()
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 10
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    elide: Text.ElideRight
-                                    width: parent.width - 20
-                                    font.pixelSize: 12
-                                    color: "#222222"
+                                width: parent.width * 0.64; height: parent.height; color: "transparent"
+                                Text {
+                                    text: titleText(); anchors.left: parent.left; anchors.leftMargin: 10
+                                    anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+                                    width: parent.width - 20; font.pixelSize: 12; color: "#222222"
                                 }
                             }
                             Rectangle
                             {
-                                width: parent.width * 0.36
-                                height: parent.height
-                                color: "transparent"
-                                Text
-                                {
-                                    text: responsibleText()
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 20
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    elide: Text.ElideRight
-                                    width: parent.width - 10
-                                    font.pixelSize: 12
+                                width: parent.width * 0.36; height: parent.height; color: "transparent"
+                                Text {
+                                    text: responsibleText(); anchors.left: parent.left; anchors.leftMargin: 20
+                                    anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+                                    width: parent.width - 10; font.pixelSize: 12
                                 }
                             }
                         }
                     }
 
-                    Rectangle
-                    {
-                        width: 65
-                        height: parent.height
-                        color: "transparent"
-                        Text
-                        {
-                            text: viewLabelText()
-                            anchors.left: parent.left
-                            anchors.leftMargin: 4
-                            anchors.verticalCenter: parent.verticalCenter
-                            font.pixelSize: 12
-                            color: "#444444"
-                        }
+                    Rectangle {
+                        width: 65; height: parent.height; color: "transparent"
+                        Text { text: viewLabelText(); anchors.left: parent.left; anchors.leftMargin: 4; anchors.verticalCenter: parent.verticalCenter; font.pixelSize: 12; color: "#444444" }
                     }
-
-                    Rectangle
-                    {
-                        width: 100
-                        height: parent.height
-                        color: "transparent"
-                        Text
-                        {
-                            text: startDateText()
-                            anchors.left: parent.left
-                            anchors.leftMargin: 30
-                            anchors.verticalCenter: parent.verticalCenter
-                            font.pixelSize: 12
-                        }
+                    Rectangle {
+                        width: 100; height: parent.height; color: "transparent"
+                        Text { text: startDateText(); anchors.left: parent.left; anchors.leftMargin: 30; anchors.verticalCenter: parent.verticalCenter; font.pixelSize: 12 }
                     }
-
-                    Rectangle
-                    {
-                        width: 100
-                        height: parent.height
-                        color: "transparent"
-                        Text
-                        {
-                            text: endDateText()
-                            anchors.left: parent.left
-                            anchors.leftMargin: 30
-                            anchors.verticalCenter: parent.verticalCenter
-                            font.pixelSize: 12
-                        }
+                    Rectangle {
+                        width: 100; height: parent.height; color: "transparent"
+                        Text { text: endDateText(); anchors.left: parent.left; anchors.leftMargin: 30; anchors.verticalCenter: parent.verticalCenter; font.pixelSize: 12 }
                     }
                 }
 
@@ -372,86 +267,10 @@ Item
         }
     }
 
-    Dialog
-    {
-        id: renameGroupDialog
-        title: "Переименовать группу"
-        width: 400
-        height: 230
-        modal: true
-        standardButtons: Dialog.NoButton
-        anchors.centerIn: Overlay.overlay
+    RenameGroupDialog { id: renameGroupDialog }
 
-        property string groupId: ""
-
-        function openWithGroup(gId, gName)
-        {
-            groupId = gId
-            newNameField.text = gName
-            open()
-        }
-
-        ColumnLayout
-        {
-            anchors.fill: parent
-            anchors.margins: 15
-            spacing: 15
-
-            Label { text: "Новое название группы:"; Layout.fillWidth: true; font.pixelSize: 13 }
-
-            TextField
-            {
-                id: newNameField
-                Layout.fillWidth: true
-                Layout.preferredHeight: 35
-                placeholderText: "Введите название группы"
-                font.pixelSize: 13
-                focus: true
-                onAccepted:
-                {
-                    if (newNameField.text !== "")
-                        renameGroupDialog.accept()
-                }
-            }
-
-            Item { Layout.fillHeight: true }
-
-            RowLayout
-            {
-                Layout.fillWidth: true
-                spacing: 10
-
-                Button
-                {
-                    text: "Отмена"
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 35
-                    onClicked: renameGroupDialog.close()
-                }
-
-                Button
-                {
-                    text: "ОК"
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 35
-                    enabled: newNameField.text !== ""
-                    onClicked: renameGroupDialog.accept()
-                }
-            }
-        }
-
-        onAccepted:
-        {
-            if (newNameField.text !== "" && projectController && projectController.projectData && groupId)
-                projectController.projectData.groupModel.renameGroup(groupId, newNameField.text)
-        }
-    }
-
-    function addTaskAbove(existingTaskId)
-    {
-        mainWindow.newTaskDialog.openForGroup(groupId, existingTaskId)
-    }
-
+    function addTaskAbove(existingTaskId) { mainWindow.newTaskDialog.openForGroup(groupId, existingTaskId) }
+    
     function addTaskBelow(existingTaskId)
     {
         var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
@@ -462,8 +281,7 @@ Item
 
     function addGroupAbove()
     {
-        if (projectController && projectController.projectData)
-        {
+        if (projectController && projectController.projectData) {
             var groupIds = projectController.projectData.groupModel.getGroupIds()
             var index = groupIds.indexOf(groupId)
             if (index < 0) index = 0
@@ -473,8 +291,7 @@ Item
 
     function addGroupBelow()
     {
-        if (projectController && projectController.projectData)
-        {
+        if (projectController && projectController.projectData) {
             var groupIds = projectController.projectData.groupModel.getGroupIds()
             var index = groupIds.indexOf(groupId)
             if (index < 0) index = groupIds.length
@@ -484,11 +301,9 @@ Item
 
     function deleteGroup()
     {
-        if (projectController && projectController.projectData)
-        {
+        if (projectController && projectController.projectData) {
             var tasks = projectController.projectData.taskModel.getTasksForGroup(groupId)
-            for (var i = tasks.length - 1; i >= 0; i--)
-                projectController.taskController.removeTask(tasks[i])
+            for (var i = tasks.length - 1; i >= 0; i--) projectController.removeTask(tasks[i])
             projectController.projectData.groupModel.removeGroup(groupId)
         }
     }
