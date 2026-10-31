@@ -100,7 +100,7 @@ Menu
 
     MenuItem
     {
-        text: "Изменить сроки"
+        text: "Изменить целевые сроки"
         onTriggered:
         {
             if (root.taskId && typeof mainWindow !== "undefined" && mainWindow.editTaskDialog)

@@ -189,7 +189,10 @@ void TaskModel::updateTaskDates(const QString& taskId, const QDate& newStart, co
     {
         Task& task = m_tasks[index];
 
-        if (addToHistory)
+        // П.7: Запоминаем, были ли у задачи сроки ДО изменения (чтобы не сохранять "пустой" след в историю)
+        bool hadDates = task.startDate.isValid() && task.endDate.isValid();
+
+        if (addToHistory && hadDates)
         {
             QPair<QDate, QDate> oldDates(task.startDate, task.endDate);
             task.dateHistory.append(oldDates);
@@ -198,9 +201,9 @@ void TaskModel::updateTaskDates(const QString& taskId, const QDate& newStart, co
         task.startDate = newStart;
         task.endDate = newEnd;
 
-        // Прогноз обновляем ТОЛЬКО для завершённых задач (у них факт = план).
-        // В остальных случаях прогноз и цель независимы.
-        if (task.status == GanttDefines::TaskStatus::Completed)
+        // П.6: Если у задачи не было сроков (это первая установка), или она завершена —
+        // прогноз должен стать равным целевому.
+        if (!hadDates || task.status == GanttDefines::TaskStatus::Completed)
         {
             task.forecastStart = newStart;
             task.forecastEnd = newEnd;
@@ -210,9 +213,8 @@ void TaskModel::updateTaskDates(const QString& taskId, const QDate& newStart, co
         emit dataChanged(modelIndex, modelIndex);
         emit taskDatesChanged(taskId);
 
-        // Если прогноз изменился вместе с целевым (для завершённых) — эмитим и сигнал прогноза,
-        // чтобы пересчитались зависимые задачи.
-        if (task.status == GanttDefines::TaskStatus::Completed)
+        // Эмитим сигнал прогноза, если он изменился (для завершённых или при первой установке)
+        if (!hadDates || task.status == GanttDefines::TaskStatus::Completed)
         {
             emit taskForecastDatesChanged(taskId);
         }

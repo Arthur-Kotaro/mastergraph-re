@@ -164,12 +164,44 @@ Rectangle
             }
             else
             {
-                var now = new Date()
-                s = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-                e = new Date(now.getFullYear(), now.getMonth() + 2, 0)
-                s.setHours(0, 0, 0, 0); e.setHours(23, 59, 59, 999)
-                if (GridRange.isValidDate(earliest) && earliest < s) s = new Date(earliest)
-                if (GridRange.isValidDate(latest) && latest > e) e = new Date(latest)
+                // 1. Собираем все важные даты для центрирования
+                var predEnd = projectController.projectData.getLinkedPredecessorEndDate()
+                var hasEarliest = GridRange.isValidDate(earliest)
+                var hasLatest = GridRange.isValidDate(latest)
+                var hasPredEnd = GridRange.isValidDate(predEnd)
+
+                // 2. Если нет ни одной даты (пустой ЛГ) — берем текущий месяц
+                if (!hasEarliest && !hasLatest && !hasPredEnd)
+                {
+                    var now = new Date()
+                    s = new Date(now.getFullYear(), now.getMonth(), 1)
+                    e = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+                }
+                else
+                {
+                    // 3. Берем самую раннюю и самую позднюю из доступных дат
+                    var minD = null
+                    var maxD = null
+
+                    if (hasEarliest) { minD = new Date(earliest); maxD = new Date(latest) }
+                    if (hasLatest) { if (!maxD || latest > maxD) maxD = new Date(latest) }
+                    if (hasPredEnd) {
+                        if (!minD || predEnd < minD) minD = new Date(predEnd)
+                            if (!maxD || predEnd > maxD) maxD = new Date(predEnd)
+                    }
+
+                    s = new Date(minD)
+                    e = new Date(maxD)
+                }
+
+                // 4. Добавляем отступы (padding): 2 недели слева, 3 недели справа
+                s.setDate(s.getDate() - 14)
+                s.setHours(0, 0, 0, 0)
+
+                e.setDate(e.getDate() + 21) // 3 недели справа
+                e.setHours(23, 59, 59, 999)
+
+                // 5. Выравниваем левую границу по понедельнику
                 while (s.getDay() !== 1) s.setDate(s.getDate() - 1)
             }
 

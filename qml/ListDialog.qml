@@ -15,6 +15,7 @@ Dialog
     property int taskCount: 0
     property var listModel: []
     property bool createWithoutDates: false
+    property bool isLocalMode: projectController && projectController.projectData && projectController.projectData.graphKind === 1
 
     function groupNames()
     {
@@ -107,13 +108,14 @@ Dialog
 
         ScrollView
         {
+            id: scrollView
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
 
             ColumnLayout
             {
-                width: parent.width
+                width: scrollView.availableWidth
                 spacing: 5
 
                 Repeater
@@ -124,6 +126,7 @@ Dialog
                     delegate: RowLayout
                     {
                         Layout.fillWidth: true
+                        width: parent.width
                         spacing: 5
 
                         Label { text: (index + 1) + "."; Layout.preferredWidth: 25 }
@@ -131,6 +134,7 @@ Dialog
                         ComboBox
                         {
                             Layout.preferredWidth: 300
+                            visible: !root.isLocalMode
                             model: root.groupNames()
                             onCurrentIndexChanged:
                             {
@@ -140,7 +144,7 @@ Dialog
 
                         TextField
                         {
-                            Layout.preferredWidth: 220
+                            Layout.preferredWidth: 200
                             text: modelData ? modelData.title : ""
                             placeholderText: "Название"
                             onTextChanged:
@@ -151,8 +155,9 @@ Dialog
 
                         TextField
                         {
-                            Layout.preferredWidth: 250
-                            placeholderText: "Ответств."
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 150
+                            placeholderText: "Ответственный"
                             text: modelData ? modelData.responsible : ""
                             onTextChanged:
                             {
@@ -199,7 +204,8 @@ Dialog
 
                         TextField
                         {
-                            Layout.preferredWidth: 300
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 200
                             placeholderText: "Комментарий"
                             text: modelData ? modelData.comment : ""
                             onTextChanged:

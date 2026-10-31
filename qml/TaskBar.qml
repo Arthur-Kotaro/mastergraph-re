@@ -161,7 +161,12 @@ Rectangle
         onPressed: function(mouse)
         {
             if (mouse.button === Qt.RightButton) { drag.target = null; suppressClick = false; return }
-            if (root.isForecastLocked()) { drag.target = null; return }
+            if (root.isForecastLocked())
+            {
+                if (projectController) projectController.notifyEditingLocked()
+                    drag.target = null
+                    return
+            }
             if (projectController && projectController.settingsManager.editingLocked) { projectController.notifyEditingLocked(); drag.target = null; return }
             if (rowData && rowData.isCompleted) { if (projectController) projectController.notifyTaskCompleted(); drag.target = null; return }
 
@@ -217,7 +222,10 @@ Rectangle
 
             onPressed: function(mouse)
             {
-                if (root.isForecastLocked()) return
+                if (root.isForecastLocked()) {
+                    if (projectController) projectController.notifyEditingLocked()
+                        return
+                }
                 if (projectController && projectController.settingsManager.editingLocked) { projectController.notifyEditingLocked(); return }
                 if (rowData && rowData.isCompleted) { if (projectController) projectController.notifyTaskCompleted(); return }
 
